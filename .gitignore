@@ -1,3 +1,7 @@
+# R environment local files
+.Rprofile
+renv/
+
 # Large data files
 data/
 
