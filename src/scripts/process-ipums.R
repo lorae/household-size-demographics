@@ -16,6 +16,9 @@ library("ipumsr")
 library("readr")
 library("readxl")
 
+# These packages are implicitly needed; loading them here purely for renv visibility
+library("dbplyr")
+
 # temp: set working directory
 setwd("/scratch/gpfs/ls4540/household-size-demographics")
 

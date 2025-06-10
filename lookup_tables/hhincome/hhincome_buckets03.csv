@@ -1,0 +1,9 @@
+"bucket_name","lower_bound","upper_bound","specific_value"
+"negative",-1000000000000,0,NA
+"00-30k",0,30000,NA
+"30-60k",30000,60000,NA
+"60-100k",60000,1e+05,NA
+"100-150k",1e+05,150000,NA
+"150-200k",150000,2e+05,NA
+"200kplus",2e+05,1e+12,NA
+"N/A",NA,NA,9999999
