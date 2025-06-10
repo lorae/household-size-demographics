@@ -1,0 +1,10 @@
+"bucket_name","lower_bound","upper_bound","specific_value"
+"r000_020k",0,20000,NA
+"r020k_040k",20000,40000,NA
+"r040k_060k",40000,60000,NA
+"r060k_080k",60000,80000,NA
+"r080k_100k",80000,1e+05,NA
+"r100k_150k",1e+05,150000,NA
+"r150k_200k",150000,2e+05,NA
+"r200k_300k",2e+05,3e+05,NA
+"r300kplus",3e+05,Inf,NA

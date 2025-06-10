@@ -1,0 +1,7 @@
+"bucket_name","lower_bound","upper_bound","specific_value"
+"less_than_hs",0,6,NA
+"hs",NA,NA,6
+"some_college",7,10,NA
+"college_4yr+",NA,NA,10
+"college_4yr+",NA,NA,11
+"N/A",NA,NA,99
