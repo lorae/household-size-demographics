@@ -21,6 +21,11 @@ library("dplyr")
 library("duckdb")
 library("ipumsr")
 
+# These packages are implicitly needed; loading them here purely for renv visibility
+library("htmltools")
+library("shiny")
+library("DT")
+
 # temp: set working directory
 setwd("/scratch/gpfs/ls4540/household-size-demographics")
 
