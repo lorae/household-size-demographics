@@ -22,9 +22,13 @@ If you have cloned this repository from GitHub, it will include a `data` directo
 
 # running the code
 
-The code for this project is stored in the `src` folder. Code is divided into two main directories: `scripts` and `utils`. The `scripts` directory contains executable code which runs the analyses. The `utils` foler contains necessary accessory modules, typically in the form of functions, that are sourced when certain scripts run. These functions are separated due to their complexity. Codeunderlying them can be inspected more directly when they are isolated, and they are subject to a battery of unit tests.
+The code for this project is stored in the `src` folder. Code is divided into two main directories: `scripts` and `utils`. The `scripts` directory contains executable code which runs the analyses. The `utils` foler contains necessary accessory modules, typically in the form of functions, that are sourced when certain scripts run. These functions are separated due to their complexity. Code underlying them can be inspected more directly when they are isolated, and they are subject to a battery of unit tests.
 
-We'll now explain each of the `scripts` files in turn, which walk the researcher through data ingestion, througput generation, and generation of output and figures.
+We'll now explain each of the `scripts` files in turn, which walk the researcher through data ingestion, throughput generation, and generation of output and figures.
+
+**The scripts should be run in the following order**:
+1. `import-ipums.R`
+2. `process-ipums.R`
 
 ## import-ipums.R
 
@@ -47,5 +51,13 @@ This script leverages the `ipumsr` package for this purpose. Due to the relative
 Outputs are used downstream for graph labelling, re-attaching labels after KOB regressions are done, and more. 
 TODO: specify more here.
 
+----
+# File structure
 
-  
+
+----
+# TODOS / musings
+
+TODO: should the detailed headers on these scripts be fully supplanted by the contents of this README?
+
+TODO: I'm going to have to write more on dataduck, potentially rename the package and come up with a mroe strategic vision for it and how it can be used in conjunction with these 3(!) related projects.
