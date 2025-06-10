@@ -22,5 +22,26 @@ If you have cloned this repository from GitHub, it will include a `data` directo
 
 # running the code
 
-The code for this project is stored in the `src` folder. It involves data ingestion, data throughput creation and metadata generation, and generation of output. It also includes `utils` which are used 
+The code for this project is stored in the `src` folder. Code is divided into two main directories: `scripts` and `utils`. The `scripts` directory contains executable code which runs the analyses. The `utils` foler contains necessary accessory modules, typically in the form of functions, that are sourced when certain scripts run. These functions are separated due to their complexity. Codeunderlying them can be inspected more directly when they are isolated, and they are subject to a battery of unit tests.
+
+We'll now explain each of the `scripts` files in turn, which walk the researcher through data ingestion, througput generation, and generation of output and figures.
+
+## import-ipums.R
+TODO: should the detailed headers on these scripts be fully supplanted by the contents of this README?
+
+The purpose of this script is to read metadata from the .xml file (and the .dat.gz? Or not?) of the ipums data download and to save files into the docs/ folder that help with later data reconciliation and labelling.
+
+
+**Inputs**:
+- `data/ipums-microdata/usa_0020.xml`
+- `data/ipums-microdata/usa_0020.dat.gz` (TODO: verify if this second file is used. I actually don't think so.)
+
+**Outputs**:
+- `docs/ipums-data-dictionary.html`
+- `docs/ipums_value_labels.RData`
+
+Outputs are used downstream for graph labelling, re-attaching labels after KOB regressions are done, and more. 
+TODO: specify more here.
+
+
   
