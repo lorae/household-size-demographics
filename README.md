@@ -73,15 +73,14 @@ The purpose of this script is to attach essential accessory columns to the raw m
 - `gender`: equals "male" or "female"
 - `cpuma`: a character-encoded (rather than numeric) version of the [CPUMA0010 variable](https://usa.ipums.org/usa-action/variables/CPUMA0010)
 
-
-
 **Inputs**:
 - needs `dataduck` package
-- 
+- `data/db/ipums.duckdb`: `ipums` table
 
 **Outputs**:
+- `data/db/ipums.duckdb`: `ipums_processed` table
 
-Outputs are used downstream for 
+Outputs are used downstream for all subsequent analysis.
 
 ----
 # File structure
@@ -92,6 +91,7 @@ Outputs are used downstream for
 copy info about _db or _tb suffix on varnames
 
 In general, varnames that are gneerated in this project are all lowercase. varnames from original ipums are uppercase. TODO: formalize this across the code.
+
 ---
 # TODOS / musings
 
