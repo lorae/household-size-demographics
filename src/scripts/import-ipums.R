@@ -44,7 +44,9 @@ DBI::dbDisconnect(con)
 
 # Interactive HTML document outlining the variables from the 
 # data pull
-ipums_view(ddi, out_file = "docs/ipums-data-dictionary.html", launch = FALSE)
+# Temporarily disabled because I don't want to clutter the repo. If it causes
+# downstream issues, re-enable it below.
+# ipums_view(ddi, out_file = "docs/ipums-data-dictionary.html", launch = FALSE)
 
 # A list which provides the value labels for every variable
 # in the pull. The tibble of value labels for a variable
