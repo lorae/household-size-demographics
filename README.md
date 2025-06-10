@@ -12,10 +12,15 @@ If you have cloned this repository from GitHub, it will include a `data` directo
 2. Request a data extract with the following information:
 
   **Sample** (count: 2)
-  2000 5%
-  2019 ACS 5yr
+  -   2000 5%
+  -   2019 ACS 5yr
   
   **Variables** (count: 110)
-  [YEAR](https://usa.ipums.org/usa-action/variables/YEAR)
-  [MULTYEAR](https://usa.ipums.org/usa-action/variables/MULTYEAR)
+  - [YEAR](https://usa.ipums.org/usa-action/variables/YEAR)
+  - [MULTYEAR](https://usa.ipums.org/usa-action/variables/MULTYEAR)
+  - TODO: fill out the rest
+
+# running the code
+
+The code for this project is stored in the `src` folder. It involves data ingestion, data throughput creation and metadata generation, and generation of output. It also includes `utils` which are used 
   
