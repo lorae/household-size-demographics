@@ -3,7 +3,7 @@
 This repository provides full replication code for analyzing the extent to which American household sizes have changed over time, and by sociodemographic dimension. Detailed instructions for running the code follow.
 
 # `data` directory
-If you have cloned this repository from GitHub, it will include a `data` directory which contains an empty `ipums_microdata` file. Because of the large file size, this data is not stored on GitHub. Either request the file directly from the authors or follow these instructions to download the data from IPUMS directly:
+If you have cloned this repository from GitHub, it will include a `data` directory which contains an empty `ipums_microdata` directory. Because of the large file size, this data is not stored on GitHub. Either request the file directly from the authors or follow these instructions to download the data from IPUMS directly:
 
 ## Download from IPUMS USA
 
@@ -27,16 +27,20 @@ The code for this project is stored in the `src` folder. Code is divided into tw
 We'll now explain each of the `scripts` files in turn, which walk the researcher through data ingestion, througput generation, and generation of output and figures.
 
 ## import-ipums.R
-TODO: should the detailed headers on these scripts be fully supplanted by the contents of this README?
 
-The purpose of this script is to read metadata from the .xml file (and the .dat.gz? Or not?) of the ipums data download and to save files into the docs/ folder that help with later data reconciliation and labelling.
+This script serves two purposes:
+1. Read in the IPUMS USA microdata from its raw, brittle format in the source .dat.gz file into a DuckDB database, which can be more agilely manipulated and analyzed.
 
+2. Read IPUMS USA pull metadata and saved clean files into the docs/ folder that help with later data reconciliation and labelling.
+
+This script leverages the `ipumsr` package for this purpose. Due to the relatively large size of the source data (2 GB as of June 2025), it requires up to 5 minutes to run.
 
 **Inputs**:
 - `data/ipums-microdata/usa_0020.xml`
-- `data/ipums-microdata/usa_0020.dat.gz` (TODO: verify if this second file is used. I actually don't think so.)
+- `data/ipums-microdata/usa_0020.dat.gz`
 
 **Outputs**:
+- 
 - `docs/ipums-data-dictionary.html`
 - `docs/ipums_value_labels.RData`
 
