@@ -1,3 +1,13 @@
+# KOB cache and throughput directories (very large regression results)
+kob/cache/*
+kob/throughput/*
+
+# Keep .gitkeep marker files in these folders to ensure the directory structure
+# is preserved for replication code, even though their contents are ignored (because
+# of very large file size)
+!kob/cache/.gitkeep
+!kob/throughput/.gitkeep
+
 # R environment local files
 .Rprofile
 renv/
