@@ -83,6 +83,11 @@ The purpose of this script is to attach essential accessory columns to the raw m
 Outputs are used downstream for all subsequent analysis.
 
 ----
+# KOB decompsition
+See details here: https://lorae.github.io/household-size-demographics/kob-decomposition.html
+
+
+----
 # File structure
 
 
