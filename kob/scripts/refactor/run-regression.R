@@ -22,4 +22,10 @@ run_regression <- function(data, weights) {
   print(model)
 }
 
+# Example use
+synth_data <- readRDS("kob/synthetic-data/c-only.rds")
+input <- synth_data |> 
+  filter(year == 2000)
+
 run_regression(data= input, weights = "PERWT")
+
