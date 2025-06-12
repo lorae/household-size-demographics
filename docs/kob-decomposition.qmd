@@ -9,6 +9,8 @@ number-sections: true
 
 The purpose of this document is to detail the software that runs the Kitagawa-Oaxaca-Blinder decomposition.
 
+Code is located in the `scripts/` directory. A complex refactor is saved in the `scripts/refactor` directory.
+
 # Stages
 
 To produce a Kitagawa-Oaxaca-Blinder decomposition, it is necessary to [TODO: write a couple of paragraphs on this, citing original sources].
@@ -35,10 +37,7 @@ Let $S_i$ represent the predicted household size for person $i$ in survey year $
 $$
 S_{i, y} = \beta_{0,y} + \beta_{1,y}(\text{Race & Ethnicity}_i) + \beta_{2,y}(\text{Age}_i) + \beta_{3,y}(\text{Education}_i) + \beta_{4,y}(\text{CPI-U Adjusted Total Income}_i) + \beta_{5,y}(\text{US-Born}_i) + \beta_{6,y}(\text{Gender}_i) + \beta_{7,y}(\text{Tenure}) + \epsilon
 $$
-reg00_2019_results_se <- svyglm(
-  NUMPREC ~ RACE_ETH_bucket + AGE_bucket + EDUC_bucket + INCTOT_cpiu_2010_bucket 
-  + us_born + gender + tenure,
-  design = design)
+
 **Regression 1:**
 
 **Regression 2:**
