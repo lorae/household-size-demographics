@@ -1,31 +1,83 @@
 # kob/scripts/refactor/run-regression.R
-# The purpose of this script is to run the regressions as the first stage of the KOB
-# decomposition.
-library("rlang")
+# The purpose of this script is to run the regressions as the first stage of the 
+# KOB decomposition.
+library(rlang)
+library(glue)
+library(dplyr)
 
-# TODO: add a se_style argument that specifies the way standard errors are to be
-# calculated.
-# TODO: add formula argument
-run_regression <- function(data, weights) {
-  weights_col <- eval_tidy(sym(weights), data)
+run_regression <- function(
+    data,           # The source data set to run the regression on
+    weights,        # String name of the column containing weights
+    varnames_dict,  # Automatically parsed into the RHS of the formula
+    outcome_var     # String name of the outcome variable
+) {
+  message(glue("The name of the data set is: {deparse(substitute(data))}"))
+  glimpse(data)
   
+  # --- Validation checks ---
+  all_vars <- colnames(data)
+  
+  # Check varnames_dict keys
+  missing_predictors <- setdiff(names(varnames_dict), all_vars)
+  if (length(missing_predictors) > 0) {
+    stop(glue("The following predictors in varnames_dict are not in the data: {paste(missing_predictors, collapse = ', ')}"))
+  }
+  
+  # Check weights
+  if (!(weights %in% all_vars)) {
+    stop(glue("Weights column '{weights}' not found in the data."))
+  }
+  
+  # Check outcome variable
+  if (!(outcome_var %in% all_vars)) {
+    stop(glue("Outcome variable '{outcome_var}' not found in the data."))
+  }
+  
+  # --- Proceed with model construction ---
+  # weights
+  weights_col <- eval_tidy(sym(weights), data)
+  message(glue("The name of the weights variable is: {weights}"))
+  
+  # formula
+  rhs_string <- names(varnames_dict) |> paste(collapse = " + ")
+  formula_string <- paste(outcome_var, "~", rhs_string)
+  formula <- as.formula(formula_string)
+  message(glue("The formula_string is: {formula_string}"))
+  
+  # contrasts: setting used by `lm` function to specify dummy coding of categorical 
+  # variables with ordered factors
+  contrasts_list <- lapply(varnames_dict, function(x) "contr.treatment")
+  names(contrasts_list) <- names(varnames_dict)
+  message("The contrasts_list is:")
+  print(contrasts_list)
+  
+  # --- Run the model ---
   model <- lm(
-    formula = NUMPREC ~ HHINCOME_bucket + EDUC_bucket,
+    formula = formula,
     data = data,
     weights = weights_col,
-    contrasts = list(
-      HHINCOME_bucket = "contr.treatment",
-      EDUC_bucket = "contr.treatment"
-    )
+    contrasts = contrasts_list
   )
   
-  print(model)
+  print(summary(model))
 }
+
 
 # Example use
 synth_data <- readRDS("kob/synthetic-data/c-only.rds")
 input <- synth_data |> 
   filter(year == 2000)
 
-run_regression(data= input, weights = "PERWT")
+varnames_dict = list(
+  HHINCOME_bucket = c("less_than_10k", "from_10k_to_100k", "greater_than_100k"),
+  EDUC_bucket = c("less_than_hs", "hs", "some_college", "college_4yr_plus")
+)
+
+# Now that all arguments are specified, run the function
+run_regression(
+  data= input, 
+  weights = "PERWT", 
+  varnames_dict = varnames_dict, 
+  outcome_var = "NUMPREC"
+  )
 
