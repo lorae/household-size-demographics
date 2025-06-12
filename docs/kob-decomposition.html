@@ -77,7 +77,8 @@ window.Quarto = {
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
   <li><a href="#stages" id="toc-stages" class="nav-link" data-scroll-target="#stages"><span class="header-section-number">2</span> Stages</a>
   <ul class="collapse">
-  <li><a href="#mathematical-form" id="toc-mathematical-form" class="nav-link" data-scroll-target="#mathematical-form"><span class="header-section-number">2.1</span> Mathematical Form</a></li>
+  <li><a href="#regression-functional-forms" id="toc-regression-functional-forms" class="nav-link" data-scroll-target="#regression-functional-forms"><span class="header-section-number">2.1</span> Regression functional forms</a></li>
+  <li><a href="#kob-tranformation" id="toc-kob-tranformation" class="nav-link" data-scroll-target="#kob-tranformation"><span class="header-section-number">2.2</span> KOB Tranformation</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -113,8 +114,25 @@ window.Quarto = {
 <p>One of the beautiful things about Kitagawa’s original analysis was that it was fully categorical. Though she did not describe it that way, she essentially ran a fully interacted regression and used the resulting coefficients in her decomposition.</p>
 <p>The beauty of this approach is that <strong>population averages in the two reference periods are fully sufficient to produce the KOB decomposition</strong>: no microdata are needed.</p>
 <p>She did not include standard errors in her original estimates, but those are straightforward to produce in the outcome estimates using the technique described by the Census <a href="ADD%20A%20LINK!!!!!!">here</a>.</p>
-<section id="mathematical-form" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="mathematical-form"><span class="header-section-number">2.1</span> Mathematical Form</h2>
+<section id="regression-functional-forms" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="regression-functional-forms"><span class="header-section-number">2.1</span> Regression functional forms</h2>
+<p>Let <span class="math inline">\(S_i\)</span> represent the predicted household size for person <span class="math inline">\(i\)</span> in survey year <span class="math inline">\(y\)</span>. Regressions include all persons not in group quarters. All variables are discrete. Specifically:</p>
+<ul>
+<li><strong>Race &amp; Ethnicity</strong>: Mutually exclusive groups of AAPI, AIAN, Black, Hispanic, Multiracial, White, and Other. For more information on how categorizations are drawn, please refer to the <a href="TODO!">codebook</a>.</li>
+<li><strong>Age</strong>: Comprised of 17 5-year age buckets, spanning from 0-4, 5-9, 10-14, …, 80-84, and 85+.</li>
+<li><strong>Education</strong>: Highest education attained. Includes less than high school, high school only, less than 4 years of college, and 4+ years of college.</li>
+<li><strong>CPI-U Adjusted Total Income</strong>: Total personal income (TODO: factcheck that this is what the INCTOT variable represents), deflated/inflated to 2010 values and bucketed into negative, $0 - $29,999, $30,000 - $59,999, $60,000 - $100,000 … (TODO: what else?)</li>
+<li><strong>US-Born</strong>: True if born in the United States, False if otherwise.</li>
+<li><strong>Gender</strong>: Female or male.</li>
+<li><strong>Tenure</strong>: Homeowner or renter.</li>
+</ul>
+<p><strong>Regression 0:</strong> <span class="math display">\[
+S_{i, y} = \beta_{0,y} + \beta_{1,y}(\text{Race &amp; Ethnicity}_i) + \beta_{2,y}(\text{Age}_i) + \beta_{3,y}(\text{Education}_i) + \beta_{4,y}(\text{CPI-U Adjusted Total Income}_i) + \beta_{5,y}(\text{US-Born}_i) + \beta_{6,y}(\text{Gender}_i) + \beta_{7,y}(\text{Tenure}) + \epsilon
+\]</span> reg00_2019_results_se &lt;- svyglm( NUMPREC ~ RACE_ETH_bucket + AGE_bucket + EDUC_bucket + INCTOT_cpiu_2010_bucket + us_born + gender + tenure, design = design) <strong>Regression 1:</strong></p>
+<p><strong>Regression 2:</strong></p>
+</section>
+<section id="kob-tranformation" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="kob-tranformation"><span class="header-section-number">2.2</span> KOB Tranformation</h2>
 <p>On a fully categorical regression, this takes on the following functional form:</p>
 <p><span class="math display">\[
 \Delta \bar{Y} = (\bar{X}_A - \bar{X}_B) \cdot \beta_B + \bar{X}_B \cdot (\beta_A - \beta_B)

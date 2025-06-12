@@ -19,7 +19,32 @@ The beauty of this approach is that **population averages in the two reference p
 
 She did not include standard errors in her original estimates, but those are straightforward to produce in the outcome estimates using the technique described by the Census [here](ADD A LINK!!!!!!).
 
-## Mathematical Form
+## Regression functional forms
+
+Let $S_i$ represent the predicted household size for person $i$ in survey year $y$. Regressions include all persons not in group quarters. All variables are discrete. Specifically:
+
+- **Race & Ethnicity**: Mutually exclusive groups of AAPI, AIAN, Black, Hispanic, Multiracial, White, and Other. For more information on how categorizations are drawn, please refer to the [codebook](TODO!).
+- **Age**: Comprised of 17 5-year age buckets, spanning from 0-4, 5-9, 10-14, ..., 80-84, and 85+.
+- **Education**: Highest education attained. Includes less than high school, high school only, less than 4 years of college, and 4+ years of college.
+- **CPI-U Adjusted Total Income**: Total personal income (TODO: factcheck that this is what the INCTOT variable represents), deflated/inflated to 2010 values and bucketed into negative, \$0 - \$29,999, \$30,000 - \$59,999, \$60,000 - \$100,000 ... (TODO: what else?)
+- **US-Born**: True if born in the United States, False if otherwise.
+- **Gender**: Female or male.
+- **Tenure**: Homeowner or renter.
+
+**Regression 0:**
+$$
+S_{i, y} = \beta_{0,y} + \beta_{1,y}(\text{Race & Ethnicity}_i) + \beta_{2,y}(\text{Age}_i) + \beta_{3,y}(\text{Education}_i) + \beta_{4,y}(\text{CPI-U Adjusted Total Income}_i) + \beta_{5,y}(\text{US-Born}_i) + \beta_{6,y}(\text{Gender}_i) + \beta_{7,y}(\text{Tenure}) + \epsilon
+$$
+reg00_2019_results_se <- svyglm(
+  NUMPREC ~ RACE_ETH_bucket + AGE_bucket + EDUC_bucket + INCTOT_cpiu_2010_bucket 
+  + us_born + gender + tenure,
+  design = design)
+**Regression 1:**
+
+**Regression 2:**
+
+
+## KOB Tranformation
 
 On a fully categorical regression, this takes on the following functional form:
 
