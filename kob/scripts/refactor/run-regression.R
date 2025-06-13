@@ -23,6 +23,24 @@ run_regression <- function(
     stop(glue("The following predictors in varnames_dict are not in the data: {paste(missing_predictors, collapse = ', ')}"))
   }
   
+  # Check varnames_dict values
+  for (var in names(varnames_dict)) {
+    expected_values <- varnames_dict[[var]]
+    actual_values <- unique(data[[var]]) |> na.omit() |> as.character()
+    
+    # Values in dict but not in data → warn
+    unused_values <- setdiff(expected_values, actual_values)
+    if (length(unused_values) > 0) {
+      warning(glue("The following values for '{var}' are listed in varnames_dict but not found in data: {paste(unused_values, collapse = ', ')}"))
+    }
+    
+    # Values in data but not in dict → error
+    unexpected_values <- setdiff(actual_values, expected_values)
+    if (length(unexpected_values) > 0) {
+      stop(glue("The following values for '{var}' are found in the data but not listed in varnames_dict: {paste(unexpected_values, collapse = ', ')}"))
+    }
+  }
+  
   # Check weights
   if (!(weights %in% all_vars)) {
     stop(glue("Weights column '{weights}' not found in the data."))
