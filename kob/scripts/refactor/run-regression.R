@@ -59,25 +59,5 @@ run_regression <- function(
     contrasts = contrasts_list
   )
   
-  print(summary(model))
+  return(model)
 }
-
-
-# Example use
-synth_data <- readRDS("kob/synthetic-data/c-only.rds")
-input <- synth_data |> 
-  filter(year == 2000)
-
-varnames_dict = list(
-  HHINCOME_bucket = c("less_than_10k", "from_10k_to_100k", "greater_than_100k"),
-  EDUC_bucket = c("less_than_hs", "hs", "some_college", "college_4yr_plus")
-)
-
-# Now that all arguments are specified, run the function
-run_regression(
-  data= input, 
-  weights = "PERWT", 
-  varnames_dict = varnames_dict, 
-  outcome_var = "NUMPREC"
-  )
-

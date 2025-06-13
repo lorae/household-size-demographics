@@ -22,43 +22,48 @@ input <- synth_data |> filter(year == 2000)
 
 # ----- Step 2: Define expected model ----- #
 
-expected_model <- lm(
-  NUMPREC ~ HHINCOME_bucket + EDUC_bucket,
-  data = input,
-  weights = input$PERWT,
-  contrasts = list(
-    HHINCOME_bucket = "contr.treatment",
-    EDUC_bucket = "contr.treatment"
-  )
-)
 
 # ----- Step 3: Run the custom function ----- #
 # This test should just work.
-# Define model spec
-varnames_dict <- list(
-  HHINCOME_bucket = c("less_than_10k", "from_10k_to_100k", "greater_than_100k"),
-  EDUC_bucket = c("less_than_hs", "hs", "some_college", "college_4yr_plus")
-)
+test_that("Model output coefficients match expected values", {
 
-# Capture printed output so it doesn't pollute test output
-suppressMessages({
-  result <- capture.output({
-    run_regression(
-      data = input,
-      weights = "PERWT",
-      varnames_dict = varnames_dict,
-      outcome_var = "NUMPREC"
+  expected_model <- lm(
+    NUMPREC ~ HHINCOME_bucket + EDUC_bucket,
+    data = input,
+    weights = input$PERWT,
+    contrasts = list(
+      HHINCOME_bucket = "contr.treatment",
+      EDUC_bucket = "contr.treatment"
     )
-  })
+  )
+
+  # Define model spec
+  varnames_dict <- list(
+    HHINCOME_bucket = c("less_than_10k", "from_10k_to_100k", "greater_than_100k"),
+    EDUC_bucket = c("less_than_hs", "hs", "some_college", "college_4yr_plus")
+  )
+
+  # Capture printed output so it doesn't pollute test output
+  output_model <- suppressMessages(run_regression(
+    data = input,
+    weights = "PERWT",
+    varnames_dict = varnames_dict,
+    outcome_var = "NUMPREC"
+  ))
+
+  # Do coefficients for identical terms match?
+  expect_equal(expected_model$coefficients,
+               output_model$coefficients,
+               tolerance = 1e-6)
 })
 
-# ----- Step 4: Placeholder test -----
-
-test_that("Custom regression matches expected model coefficients", {
-  # TODO: Replace with actual comparison
-  # e.g., compare coefficients like:
-  # expect_equal(coef(expected_model), coef(model_output), tolerance = 1e-6)
-  
-  # Dummy placeholder
-  expect_true(TRUE)
-})
+# # ----- Step 4: Placeholder test -----
+# 
+# test_that("Custom regression matches expected model coefficients", {
+#   # TODO: Replace with actual comparison
+#   # e.g., compare coefficients like:
+#   # expect_equal(coef(expected_model), coef(model_output), tolerance = 1e-6)
+#   
+#   # Dummy placeholder
+#   expect_true(TRUE)
+# })
