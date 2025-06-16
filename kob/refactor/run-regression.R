@@ -1,6 +1,7 @@
 # kob/scripts/refactor/run-regression.R
 # The purpose of this script is to run the regressions as the first stage of the 
 # KOB decomposition.
+# TODO: may be deprecated in favor of reg-taylor, reg-sdr
 library(rlang)
 library(glue)
 library(dplyr)

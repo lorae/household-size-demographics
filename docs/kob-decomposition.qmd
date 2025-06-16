@@ -27,9 +27,15 @@ we need 4 ingredients for the KOB function:
 3. Population proportion estimates
 4. Standard errors on population proportions
 
-The methods used to calculate standard errors vary based on the sample used. For 2019, we use the **Successive Differences Replication (SDR)** method, outlined in detail [here](https://www.census.gov/content/dam/Census/library/publications/2010/acs/acs_design_methodology_ch12.pdf). This, in short, involves repeating the same calculation 80 times using a different weight column specified by the [`REPWTP`](https://usa.ipums.org/usa-action/variables/REPWTP) variables. This technique can be used to estimate standard errors around both the population proportion and the regression coefficient estimates. For 2000 data, we use a Taylor series design using the [`CLUSTER`](https://usa.ipums.org/usa-action/variables/CLUSTER) and [`STRATA`](https://usa.ipums.org/usa-action/variables/STRATA) variables to account for survey design.
+The methods used to calculate standard errors vary based on the sample used. For 2019, we use the **Successive Differences Replication (SDR)** method, outlined in detail [here](https://www.census.gov/content/dam/Census/library/publications/2010/acs/acs_design_methodology_ch12.pdf). This, in short, involves repeating the same calculation 80 times using a different weight column specified by the [`REPWTP`](https://usa.ipums.org/usa-action/variables/REPWTP) variables. The standard error is then calculated by applying a simple formula on the 80 estimates. This technique can be used to estimate standard errors around both the population proportion and the regression coefficient estimates. We use the XXX package for this purpose
 
-The functions used to calculate regressions and proportions using these techniques are called `prop_sdr()`, `prop_taylor()`, `reg_sdr()`, and `reg_taylor()`.
+For 2000 data, we use a Taylor series design using the [`CLUSTER`](https://usa.ipums.org/usa-action/variables/CLUSTER) and [`STRATA`](https://usa.ipums.org/usa-action/variables/STRATA) variables to account for survey design. For specifying design, we use the [`srvyr`](http://gdfe.co/srvyr/) R package. This package adds a `dplyr`-like syntax to the underlying [`survey`](https://cran.r-project.org/web/packages/survey/index.html) R package.
+
+Because the 2000 population proportions and regression results are particularly slow to calculate, we cache the results in `kob/cache`. 
+
+The functions used to calculate regressions and proportions and package them using these techniques are called `prop_sdr()`, `prop_taylor()`, `reg_sdr()`, and `reg_taylor()` in this repository.
+
+TODO: what do you do about standard errors around 0-estimates? Maybe not a problem for these regressions, anyway. [We decided not to address this issue unless we run into it].
 
 ## Regression functional forms
 
