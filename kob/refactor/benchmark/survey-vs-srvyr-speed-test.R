@@ -23,7 +23,6 @@
 library(srvyr)
 library(survey)
 library(tictoc)
-library(furrr)
 library(testthat)
 library(duckdb)
 library(dplyr)
