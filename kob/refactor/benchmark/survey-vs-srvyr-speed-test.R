@@ -18,6 +18,8 @@ library(survey)
 library(tictoc)
 library(furrr)
 library(testthat)
+library(duckdb)
+library(dplyr)
 
 # Database API connection
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
@@ -54,31 +56,54 @@ speed_test <- function(n_strata) {
   strata_sample = sampled_strata$STRATA[1:n_strata]
   ipums_2000_tb <- ipums_db |> 
     filter(YEAR == 2000, STRATA %in% strata_sample) |>
-    collect()
+    collect() |>
+    mutate(RACE_ETH_bucket = as.factor(RACE_ETH_bucket)) 
   
   # SURVEY section
+  tic("test survey props speed")
+  design_2000_survey <- svydesign(
+    ids = ~CLUSTER,
+    strata = ~STRATA,
+    weights = ~PERWT,
+    data = ipums_2000_tb,
+    nest = TRUE
+  ) |> 
+    subset(GQ %in% c(0,1,2))
+  
+  result_survey <- svymean(~RACE_ETH_bucket, design_2000_survey)
+
+  survey_time <- toc(quiet = TRUE)$toc - toc(quiet = TRUE)$tic
   
   # SRVYR section
+  tic("test srvyr props speed")
+  design_2000_srvyr <- as_survey_design(
+    ipums_2000_tb,
+    ids = CLUSTER,
+    strata = STRATA,
+    weights = PERWT,
+    nest = TRUE
+  ) |>
+    subset(GQ %in% c(0,1,2))
   
+  result_srvyr <- design_2000_srvyr |>
+    group_by(RACE_ETH_bucket) |>
+    summarize(proportion = survey_prop(vartype = "se"))
+
+  srvyr_time <- toc(quiet = TRUE)$toc - toc(quiet = TRUE)$tic
+  
+  # Output results
   return(
     list(
-      nrow_sample = nrow(ipums_2000_tb)#,
-      # survey = survey_time,
-      # srvyr = srvyr_time
+      nrow_sample = nrow(ipums_2000_tb),
+      survey = survey_time,
+      srvyr = srvyr_time
       )
     )
 }
 
-speed_test(5)
+# Example use
+speed_test(1)
 
-# "_precut" suffix indicates I've already filtered by GQ
-ipums_2000_precut_tb <- ipums_db |> 
-  filter(YEAR == 2000, GQ %in% c(0, 1, 2), STRATA %in% !!sampled_strata$STRATA) |>
-  collect()
-# Absence of "precut" means this sample is *not* pre-filtered by GQ
-ipums_2000_tb <- ipums_db |> 
-  filter(YEAR == 2000, STRATA %in% !!sampled_strata$STRATA) |>
-  collect()
 
 
 
