@@ -20,6 +20,7 @@ library(furrr)
 library(testthat)
 library(duckdb)
 library(dplyr)
+library(ggplot2)
 
 # Database API connection
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
@@ -53,29 +54,30 @@ sampled_strata <- strata_summary |>
 
 speed_test <- function(n_strata) {
   # Define the sample of strata in the survey (proxy for survey size)
-  strata_sample = sampled_strata$STRATA[1:n_strata]
-  ipums_2000_tb <- ipums_db |> 
+  strata_sample <- sampled_strata$STRATA[1:n_strata]
+  ipums_2000_tb <- ipums_db |>
     filter(YEAR == 2000, STRATA %in% strata_sample) |>
     collect() |>
-    mutate(RACE_ETH_bucket = as.factor(RACE_ETH_bucket)) 
+    mutate(RACE_ETH_bucket = as.factor(RACE_ETH_bucket))
   
   # SURVEY section
-  tic("test survey props speed")
+  tic("survey", log = TRUE)
   design_2000_survey <- svydesign(
     ids = ~CLUSTER,
     strata = ~STRATA,
     weights = ~PERWT,
     data = ipums_2000_tb,
     nest = TRUE
-  ) |> 
-    subset(GQ %in% c(0,1,2))
+  ) |>
+    subset(GQ %in% c(0, 1, 2))
   
   result_survey <- svymean(~RACE_ETH_bucket, design_2000_survey)
-
-  survey_time <- toc(quiet = TRUE)$toc - toc(quiet = TRUE)$tic
+  survey_log <- toc(log = TRUE)
+  survey_time <- survey_log$toc["elapsed"] - survey_log$tic["elapsed"]
+  tic.clearlog()
   
   # SRVYR section
-  tic("test srvyr props speed")
+  tic("srvyr", log = TRUE)
   design_2000_srvyr <- as_survey_design(
     ipums_2000_tb,
     ids = CLUSTER,
@@ -83,28 +85,58 @@ speed_test <- function(n_strata) {
     weights = PERWT,
     nest = TRUE
   ) |>
-    subset(GQ %in% c(0,1,2))
+    subset(GQ %in% c(0, 1, 2))
   
   result_srvyr <- design_2000_srvyr |>
     group_by(RACE_ETH_bucket) |>
     summarize(proportion = survey_prop(vartype = "se"))
-
-  srvyr_time <- toc(quiet = TRUE)$toc - toc(quiet = TRUE)$tic
+  
+  srvyr_log <- toc(log = TRUE)
+  srvyr_time <- srvyr_log$toc["elapsed"] - srvyr_log$tic["elapsed"]
+  tic.clearlog()
   
   # Output results
-  return(
-    list(
-      nrow_sample = nrow(ipums_2000_tb),
-      survey = survey_time,
-      srvyr = srvyr_time
-      )
-    )
+  return(list(
+    nrow_sample = nrow(ipums_2000_tb),
+    survey = as.numeric(survey_time),
+    srvyr = as.numeric(srvyr_time)
+  ))
 }
 
 # Example use
 speed_test(1)
 
+# --- Step 2C: Run benchmarks for different strata sizes --- #
+# 10:18pm
+# 10:2?pm
 
+strata_sizes <- c(1,2,3)
+
+benchmark_results <- purrr::map_dfr(strata_sizes, function(n) {
+  result <- speed_test(n)
+  print(paste("Speed test run for n =", n))
+  tibble(
+    n_strata = n,
+    nrow_sample = result$nrow_sample,
+    survey_time = result$survey,
+    srvyr_time = result$srvyr
+  )
+})
+
+# --- Step 2D: Plot results --- #
+
+ggplot(benchmark_results, aes(x = nrow_sample)) +
+  geom_line(aes(y = survey_time, color = "survey")) +
+  geom_line(aes(y = srvyr_time, color = "srvyr")) +
+  geom_point(aes(y = survey_time, color = "survey")) +
+  geom_point(aes(y = srvyr_time, color = "srvyr")) +
+  labs(
+    title = "Benchmark: survey vs srvyr mean calculation time",
+    x = "Number of rows in sample",
+    y = "Runtime (seconds)",
+    color = "Package"
+  ) +
+  theme_minimal()
 
 
 # ----- OLD: 
