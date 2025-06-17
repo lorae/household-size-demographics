@@ -47,7 +47,7 @@ ipums_2000_tb <- ipums_db |>
   collect()
 
 # --- Step 4b: design the survey
-design_2000_survey_large <- svydesign(
+design_2000_survey <- svydesign(
   ids = ~CLUSTER,
   strata = ~STRATA,
   weights = ~PERWT,
@@ -58,5 +58,35 @@ design_2000_survey_large <- svydesign(
 
 # --- Step 4c: Run non-parallelized operations
 tic("Non-parallelized")
-
+svymean(~RACE_ETH_bucket, design_2000_survey)
+svymean(~AGE_bucket, design_2000_survey)
+svymean(~INCTOT_cpiu_2010_bucket, design_2000_survey)
+svymean(~us_born, design_2000_survey)
+svymean(~tenure, design_2000_survey)
+svymean(~gender, design_2000_survey)
 toc()
+
+# ----- Step 4d: Parallelized operations ----- #
+
+# List of variable names
+vars_to_mean <- c("RACE_ETH_bucket", "AGE_bucket", "INCTOT_cpiu_2010_bucket", "us_born", "tenure", "gender")
+
+# Convert to one-sided formulas: ~varname
+formulas <- lapply(vars_to_mean, function(var) as.formula(paste0("~", var)))
+
+# Set up parallel plan (this will use available cores)
+options(future.globals.maxSize = 10 * 1024^3)
+plan(multicore)  # use multicore() on Linux/macOS
+
+tic("Parallelized (forked)")
+results <- future_map(formulas, ~svymean(.x, design_2000_survey))
+toc()
+
+# Optionally, name the list
+names(results) <- vars_to_mean
+
+print(results)
+
+# SUMMARY: When I run this test, it takes around 40 seconds for the non-parallelized 
+# version and 10 seconds for the parallelized version. That's a 4x improvement.
+

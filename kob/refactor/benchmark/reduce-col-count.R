@@ -3,6 +3,8 @@
 # The purpose of this file is to test the extent to which paring away unneeded
 # columns for a survey design estimation can increase speed.
 #
+# TODO: I can easily eliminate REPWTX columns from the 2000 sample toi make things run
+# a little faster. That will be a 10% perforamcne boost.
 
 # ----- STEP 0: Config ----- #
 
