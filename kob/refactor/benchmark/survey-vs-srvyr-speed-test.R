@@ -11,6 +11,8 @@
 # below. I test both on a subset of 2, 3, 5, 10, 15, and 20 strata and graph
 # their speeds. 
 #
+# It's clear that the survey package is way better.
+#
 # Outputs are found in 
 # kob/refactor/benchmark/benchmark-results/benchmark_results.csv (data)
 # kob/refactor/benchmark/benchmark-results/benchmark_plot.png (very intriguing plot)
@@ -112,8 +114,6 @@ speed_test <- function(n_strata) {
 speed_test(2)
 
 # --- Step 2C: Run benchmarks for different strata sizes --- #
-# 10:18pm
-# 10:2?pm
 
 strata_sizes <- c(2, 3, 5, 10, 15, 20)
 
@@ -147,7 +147,81 @@ benchmark_plot <- ggplot(benchmark_results, aes(x = nrow_sample)) +
 write.csv(benchmark_results, "kob/refactor/benchmark/benchmark-results/benchmark_results.csv", row.names = FALSE)
 ggsave("kob/refactor/benchmark/benchmark-results/benchmark_plot.png", plot = benchmark_plot, width = 8, height = 6, dpi = 300)
 
+# --- Appendix: Dummy-based srvyr benchmark (no group_by) --- #
 
+speed_test_dummy <- function(n_strata) {
+  strata_sample <- sampled_strata$STRATA[1:n_strata]
+  ipums_2000_tb <- ipums_db |>
+    filter(YEAR == 2000, STRATA %in% strata_sample) |>
+    collect() |>
+    filter(GQ %in% c(0, 1, 2)) |>
+    mutate(RACE_ETH_bucket = droplevels(as.factor(RACE_ETH_bucket)))
+  
+  # Create dummy columns for each RACE_ETH_bucket level
+  for (lvl in levels(ipums_2000_tb$RACE_ETH_bucket)) {
+    col <- paste0("prop_", lvl)
+    ipums_2000_tb[[col]] <- as.integer(ipums_2000_tb$RACE_ETH_bucket == lvl)
+  }
+  
+  # --- survey version ---
+  tic("survey", log = TRUE)
+  design_survey <- svydesign(
+    ids = ~CLUSTER,
+    strata = ~STRATA,
+    weights = ~PERWT,
+    data = ipums_2000_tb,
+    nest = TRUE
+  )
+  result_survey <- svymean(~RACE_ETH_bucket, design_survey)
+  survey_log <- toc(log = TRUE)
+  survey_time <- survey_log$toc["elapsed"] - survey_log$tic["elapsed"]
+  tic.clearlog()
+  
+  # --- srvyr version (no group_by) ---
+  tic("srvyr", log = TRUE)
+  design_srvyr <- as_survey_design(
+    ipums_2000_tb,
+    ids = CLUSTER,
+    strata = STRATA,
+    weights = PERWT,
+    nest = TRUE
+  )
+  result_srvyr <- design_srvyr |>
+    summarize(across(starts_with("prop_"), ~survey_mean(.x, vartype = "se")))
+  srvyr_log <- toc(log = TRUE)
+  srvyr_time <- srvyr_log$toc["elapsed"] - srvyr_log$tic["elapsed"]
+  tic.clearlog()
+  
+  return(tibble(
+    n_strata = n_strata,
+    nrow_sample = nrow(ipums_2000_tb),
+    survey_time = as.numeric(survey_time),
+    srvyr_time = as.numeric(srvyr_time)
+  ))
+}
+
+# Run the dummy-based benchmark for small strata sizes
+dummy_strata_sizes <- c(2, 3, 4, 5, 10, 15, 20)
+
+benchmark_dummy_results <- purrr::map_dfr(dummy_strata_sizes, speed_test_dummy)
+
+# View results
+print(benchmark_dummy_results)
+
+
+benchmark_dummy_plot <- ggplot(benchmark_dummy_results, aes(x = nrow_sample)) +
+  geom_line(aes(y = survey_time, color = "survey")) +
+  geom_line(aes(y = srvyr_time, color = "srvyr")) +
+  geom_point(aes(y = survey_time, color = "survey")) +
+  geom_point(aes(y = srvyr_time, color = "srvyr")) +
+  labs(
+    title = "Benchmark: survey vs srvyr population props calculation time",
+    x = "Number of rows in sample",
+    y = "Runtime (seconds)",
+    color = "Package"
+  ) +
+  theme_minimal()
+  
 
 
 
