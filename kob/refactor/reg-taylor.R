@@ -3,6 +3,7 @@
 library(srvyr)
 library(survey)
 library(tictoc)
+library(furrr)
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
@@ -76,3 +77,24 @@ tic("Proportion by race/eth bucket")
 result <- svymean(~RACE_ETH_bucket, design_2000)
 toc()
 
+
+# TODO: time this
+tic("Proportion by race/eth bucket")
+plan(multisession, workers = 7)  # Or whatever # cores you want
+
+# List of race buckets
+race_levels <- unique(design_2000$variables$RACE_ETH_bucket)
+
+tic("Proportion by race/eth bucket")
+# For each bucket, subset and compute proportion
+results <- future_map_dfr(race_levels, function(race) {
+  sub_design <- subset(design_2000, RACE_ETH_bucket == race)
+  
+  est <- svymean(~I(RACE_ETH_bucket == race), design_2000)
+  tibble(
+    RACE_ETH_bucket = race,
+    proportion = coef(est)[[1]],
+    proportion_se = SE(est)[[1]]
+  )
+})
+toc()
