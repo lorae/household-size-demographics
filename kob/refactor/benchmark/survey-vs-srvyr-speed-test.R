@@ -11,6 +11,76 @@
 # below. I test both on a subset of 2, 3, 5, 10, 15, and 20 strata and graph
 # their speeds. 
 
+# ----- STEP 0: Config ----- #
+
+library(srvyr)
+library(survey)
+library(tictoc)
+library(furrr)
+library(testthat)
+
+# Database API connection
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums_processed")
+
+# Pseudorandom seed
+set.seed(123)
+
+# ----- BENCHMARK 2: speed-test svymean against survey_prop ----- #
+# svymean is from the `survey` package. `survey_prop` is from the `srvyr` package
+
+# --- Step 2A: collect data from randomly sampled strata
+# I randomly select 20 strata. Then, of those, the first 2, then the first 3,
+# 5, 10, 15, and 20 are selected for speed tests.
+
+strata_summary <- ipums_db |> 
+  filter(YEAR == 2000) |>
+  select(STRATA, CLUSTER) |>
+  distinct() |> 
+  collect()
+
+sampled_strata <- strata_summary |> 
+  group_by(STRATA) |> 
+  filter(n() >= 2) |>  # Ensure stratum has at least 2 PSUs (they always will)
+  ungroup() |> 
+  distinct(STRATA) |> 
+  slice_sample(n = 20) # Predictable sample due to pseudorandom seed, set in config
+
+# --- Step 2B: Define a generic speed test function
+# This can be speed tested in multiple cases
+
+speed_test <- function(n_strata) {
+  # Define the sample of strata in the survey (proxy for survey size)
+  strata_sample = sampled_strata$STRATA[1:n_strata]
+  ipums_2000_tb <- ipums_db |> 
+    filter(YEAR == 2000, STRATA %in% strata_sample) |>
+    collect()
+  
+  # SURVEY section
+  
+  # SRVYR section
+  
+  return(
+    list(
+      nrow_sample = nrow(ipums_2000_tb)#,
+      # survey = survey_time,
+      # srvyr = srvyr_time
+      )
+    )
+}
+
+speed_test(5)
+
+# "_precut" suffix indicates I've already filtered by GQ
+ipums_2000_precut_tb <- ipums_db |> 
+  filter(YEAR == 2000, GQ %in% c(0, 1, 2), STRATA %in% !!sampled_strata$STRATA) |>
+  collect()
+# Absence of "precut" means this sample is *not* pre-filtered by GQ
+ipums_2000_tb <- ipums_db |> 
+  filter(YEAR == 2000, STRATA %in% !!sampled_strata$STRATA) |>
+  collect()
+
+
 
 # ----- OLD: 
 # TODO: REFACTOR!!!!! / organize
