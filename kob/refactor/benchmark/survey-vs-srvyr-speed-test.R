@@ -148,6 +148,8 @@ write.csv(benchmark_results, "kob/refactor/benchmark/benchmark-results/benchmark
 ggsave("kob/refactor/benchmark/benchmark-results/benchmark_plot.png", plot = benchmark_plot, width = 8, height = 6, dpi = 300)
 
 # --- Appendix: Dummy-based srvyr benchmark (no group_by) --- #
+# This is a more fair apples-to-apples test. Still, survey wins by a long shot.
+# Now the computation bloat looks less logarithmic and more linear for both, however.
 
 speed_test_dummy <- function(n_strata) {
   strata_sample <- sampled_strata$STRATA[1:n_strata]
