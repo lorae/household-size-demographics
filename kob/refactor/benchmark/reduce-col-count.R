@@ -21,7 +21,7 @@ ipums_db <- tbl(con, "ipums_processed")
 # Pseudorandom seed
 set.seed(123)
 
-# ----- BENCHMARK 2: reduce cols and see effect on performance ----- #
+# ----- BENCHMARK 3: reduce cols and see effect on performance ----- #
 # I randomly select 20 strata. 
 
 strata_summary <- ipums_db |> 
