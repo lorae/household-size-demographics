@@ -10,6 +10,11 @@
 # that `survey` is faster. However, the differences are quite stark, as you'll see
 # below. I test both on a subset of 2, 3, 5, 10, 15, and 20 strata and graph
 # their speeds. 
+#
+# Outputs are found in 
+# kob/refactor/benchmark/benchmark-results/benchmark_results.csv (data)
+# kob/refactor/benchmark/benchmark-results/benchmark_plot.png (very intriguing plot)
+
 
 # ----- STEP 0: Config ----- #
 
