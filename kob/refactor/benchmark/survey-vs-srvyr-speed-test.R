@@ -104,13 +104,13 @@ speed_test <- function(n_strata) {
 }
 
 # Example use
-speed_test(1)
+speed_test(2)
 
 # --- Step 2C: Run benchmarks for different strata sizes --- #
 # 10:18pm
 # 10:2?pm
 
-strata_sizes <- c(1,2,3)
+strata_sizes <- c(2, 3, 5, 10, 15, 20)
 
 benchmark_results <- purrr::map_dfr(strata_sizes, function(n) {
   result <- speed_test(n)
@@ -125,18 +125,26 @@ benchmark_results <- purrr::map_dfr(strata_sizes, function(n) {
 
 # --- Step 2D: Plot results --- #
 
-ggplot(benchmark_results, aes(x = nrow_sample)) +
+benchmark_plot <- ggplot(benchmark_results, aes(x = nrow_sample)) +
   geom_line(aes(y = survey_time, color = "survey")) +
   geom_line(aes(y = srvyr_time, color = "srvyr")) +
   geom_point(aes(y = survey_time, color = "survey")) +
   geom_point(aes(y = srvyr_time, color = "srvyr")) +
   labs(
-    title = "Benchmark: survey vs srvyr mean calculation time",
+    title = "Benchmark: survey vs srvyr population props calculation time",
     x = "Number of rows in sample",
     y = "Runtime (seconds)",
     color = "Package"
   ) +
   theme_minimal()
+
+# --- Step 2E: Save results
+write.csv(benchmark_results, "kob/refactor/benchmark/benchmark-results/benchmark_results.csv", row.names = FALSE)
+ggsave("kob/refactor/benchmark/benchmark-results/benchmark_plot.png", plot = benchmark_plot, width = 8, height = 6, dpi = 300)
+
+
+
+
 
 
 # ----- OLD: 
