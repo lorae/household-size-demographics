@@ -64,3 +64,6 @@ rsconnect/
 
 # SLURM logs
 slurm*
+
+# SLURM jobs - will commit once I'm ready to create templates
+jobs/
