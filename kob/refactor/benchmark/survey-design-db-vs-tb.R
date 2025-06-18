@@ -1,9 +1,8 @@
-# kob/refactor/coefs00_2000-dbsurvey
-# This script runs the props for regression 00 in 2000.
-
-# The purpose of this script is to mimic the functionality of coefs00-2000.R but 
-# see if I can base the survey design object off a DB directly, rather than pulling
-# the data into memory.
+# kob/refactor/benchmark/survey-design-db-vs-tb.R
+# The purpose of this script is to test the RAM and computational requirements of
+# a regression run on a survey design object based on an in-memory tibble against a 
+# regression run on a survey design object based on a duckdb.
+#
 
 # ----- STEP 0: Config ----- #
 
@@ -11,14 +10,71 @@ library(survey)
 library(tictoc)
 library(duckdb)
 library(dplyr)
-library(furrr)
 library(duckdb)
+library(glue)
 
+# Initialize a subset of data to write to a database connection\
 # Database API connection
-# open the DuckDB driver and connection
-drv <- duckdb::duckdb()
-con <- DBI::dbConnect(drv, "data/db/ipums.duckdb")
-#ipums_db <- tbl(con, "ipums_processed")
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums_processed")
+
+# Pseudorandom seed
+set.seed(123)
+
+# --- STEP 1: Select a sample of data and save as tb and db
+# This section creates two variables:
+# - `ipums_2000_sample_tb`: an in-memory tibble with a 1-million row sample of data
+# - `ipums_2000_sample_db`: a duckdb lazy table with the identical 1-million row sample
+#
+# TODO: migrate this entire process into process-ipums.R, so that the benchmark
+# dataset is made at the same time (and uploaded to a separate duckdb connection)
+# at the same time as the main db.
+# TODO: Then refactor all the benchmark tests to read from this db (and convert into
+# a tibble as needed, within the test).
+# TODO: rename the table in this benchmark db to _2000, and create a _2019 table
+# in the same db file so that code can be benchmarked on both surveys, which have
+# different design variables (and thus different methods for calculating SEs)
+
+# Select a sample including 5 strata from the underlying dataset
+strata_summary <- ipums_db |> 
+  filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |>
+  select(STRATA, CLUSTER) |>
+  distinct() |> 
+  collect()
+
+sampled_strata <- strata_summary |> 
+  group_by(STRATA) |> 
+  filter(n() >= 2) |>  # Ensure stratum has at least 2 PSUs (they always will)
+  ungroup() |> 
+  distinct(STRATA) |> 
+  slice_sample(n = 5) # Predictable sample due to pseudorandom seed, set in config
+
+# Collect the sample into memory
+ipums_2000_sample_tb <- ipums_db |> 
+  filter(YEAR == 2000, STRATA %in% !!sampled_strata$STRATA) |>
+  collect()
+
+# Write benchmark db to separate connection
+strata_list <- paste(sampled_strata$STRATA, collapse = ", ")
+
+query <- glue("
+  CREATE TABLE ipums_sample AS
+  SELECT * FROM source.ipums_processed
+  WHERE YEAR = 2000 AND STRATA IN ({strata_list})
+")
+
+dbExecute(benchmark_con, "DROP TABLE IF EXISTS ipums_sample")
+dbExecute(benchmark_con, query) # now we have an ipums_sample table in benchmark_con
+ipums_2000_sample_db <- tbl(benchmark_con, "sample")
+
+# Sanity_check: `ipums_2000_sample_tb` contains same data as the `ipums_2000_sample_db`
+# TODO: remove this check (we know it works) or also add into process-ipums.R once
+# code is migrated
+ipums_2000_sample_db_check <- ipums_2000_sample_db |> collect()
+all.equal( # must sort by `pers_id` before comparing, otherwise row order differs
+  ipums_2000_sample_tb |> arrange(pers_id),
+  ipums_2000_sample_db_check |> arrange(pers_id)
+)
 
 tic("Read survey design from duckdb")
 design_db <- svydesign(
