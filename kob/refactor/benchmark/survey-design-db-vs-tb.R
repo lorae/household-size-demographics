@@ -55,17 +55,12 @@ ipums_2000_sample_tb <- ipums_db |>
   collect()
 
 # Write benchmark db to separate connection
-strata_list <- paste(sampled_strata$STRATA, collapse = ", ")
-
-query <- glue("
-  CREATE TABLE ipums_sample AS
-  SELECT * FROM source.ipums_processed
-  WHERE YEAR = 2000 AND STRATA IN ({strata_list})
-")
-
-dbExecute(benchmark_con, "DROP TABLE IF EXISTS ipums_sample")
-dbExecute(benchmark_con, query) # now we have an ipums_sample table in benchmark_con
-ipums_2000_sample_db <- tbl(benchmark_con, "sample")
+# TODO: I do this by just loading from the in-memory sample db; this perhaps
+# should be refactored to directly querying from the db when I transfer this process
+# to process-ipums. Perhaps it's a different table or view in the same connection.
+# For now, however, this does the trick.
+copy_to(benchmark_con, ipums_2000_sample_tb, "ipums_sample", overwrite = TRUE)
+ipums_2000_sample_db <- tbl(benchmark_con, "ipums_sample")
 
 # Sanity_check: `ipums_2000_sample_tb` contains same data as the `ipums_2000_sample_db`
 # TODO: remove this check (we know it works) or also add into process-ipums.R once
