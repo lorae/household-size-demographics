@@ -71,17 +71,20 @@ all.equal( # must sort by `pers_id` before comparing, otherwise row order differ
   ipums_2000_sample_db_check |> arrange(pers_id)
 )
 
-tic("Read survey design from duckdb")
+# ----- Step 2: Create survey designs for the tb and db ----- #
+tic("Create survey design object from db sample")
+drv <- survey::DuckDB() # Define the driver object
+
 design_db <- svydesign(
   ids    = ~CLUSTER,
   strata = ~STRATA,
   weights= ~PERWT,
-  data   = NULL,                    # <- must be NULL for a DB‐backed design
-  dbname =  "data/db/ipums.duckdb",
-  dbtype =  drv,                    # <- pass the driver object, not a string
-  table  = "ipums_processed",       # <- name of the table in your DuckDB file
+  data   = NULL,                    # must be NULL for a DB‐backed design
+  dbname =  "data/db/benchmark.duckdb",
+  dbtype =  drv,                    # pass the driver object
+  table  = "ipums_sample",       
   nest   = TRUE
-) %>%
+) |>
   subset(GQ %in% c(0,1,2))
 toc()
 
