@@ -1,9 +1,8 @@
 # kob/refactor/benchmark/survey-design-db-vs-tb.R
-# The purpose of this script is to test the RAM and computational requirements of
-# a regression run on a survey design object based on an in-memory tibble against a 
-# regression run on a survey design object based on a duckdb.
+# The purpose of this script is to test whether the output from my `bootstrap_replicates`
+# and `se_from_bootstrap` functions match the SEs from the widely accepted 
+# `survey` package
 #
-
 # ----- STEP 0: Config ----- #
 
 library(survey)
@@ -12,6 +11,8 @@ library(duckdb)
 library(dplyr)
 library(duckdb)
 library(glue)
+
+devtools::load_all("../dataduck")
 
 # Initialize a subset of data to write to a database connection\
 # Database API connection
