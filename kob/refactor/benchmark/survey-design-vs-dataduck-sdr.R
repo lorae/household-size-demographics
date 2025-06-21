@@ -78,7 +78,7 @@ all.equal( # must sort by `pers_id` before comparing, otherwise row order differ
 
 # ----- Step 2: Create survey designs for the tb ----- #
 tic("Create survey design object from tb sample")
-design_2019_survey <- svrepdesign(
+design_2019_expected <- svrepdesign(
   weights = ~PERWT,
   repweights = "REPWTP[0-9]+",  # regex pattern to match columns
   type = "Fay",
@@ -89,21 +89,40 @@ design_2019_survey <- svrepdesign(
   subset(GQ %in% c(0,1,2))
 toc()
 
-tic("Read 2000 survey design as RDS")
-design_2000_survey <- readRDS("kob/throughput/design_2000_survey.rds")
+# Calculate results of a simple regression on survey design object
+tic("Calculate expected regression results")
+model_expected <- svyglm(NUMPREC ~ -1 + tenure, design = design_2019_expected)
 toc()
+summary(model_expected)
 
-# Calculate proportions
-prop_vars <- c(
-  "RACE_ETH_bucket", 
-  "AGE_bucket", 
-  "EDUC_bucket",
-  "INCTOT_cpiu_2010_bucket", 
-  "us_born", 
-  "tenure", 
-  "gender",
-  "cpuma"
+# Apply my custom SE pipeline.
+# Initialize two test functions
+hhsize_by_tenure <- function(
+    data,
+    wt_col, # string name of weight column in `data`
+    hhsize_col # string name of hhsize column in `data`
+) {
+  result <- data |>
+    group_by(tenure) |>
+    summarize(
+      weighted_mean = sum(.data[[hhsize_col]] * .data[[wt_col]])/sum(.data[[wt_col]]),
+      .groups = "drop"
+    )
+  
+  return(result)
+}
+actual_v1 <- hhsize_by_tenure(
+  data = ipums_2019_sample_tb,
+  wt_col = "PERWT",
+  hhsize_col = "NUMPREC"
 )
+
+# Before procceding to SEs, ensure the main results are the same
+actual_v1$weighted_mean
+model_expected$coefficients
+# So something weird is happening here. The homeowner avlues match but the
+# renter ones don't. Why?
+
 
 # Convert to one-sided formulas: ~varname
 formulas <- lapply(prop_vars, function(var) as.formula(paste0("~", var)))
