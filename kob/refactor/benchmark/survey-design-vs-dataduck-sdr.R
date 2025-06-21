@@ -91,9 +91,9 @@ toc()
 
 # Calculate results of a simple regression on survey design object
 tic("Calculate expected regression results")
-model_expected <- svyglm(NUMPREC ~ -1 + tenure, design = design_2019_expected)
+svyby(~NUMPREC, ~tenure, design = design_2019_expected, svymean)
 toc()
-summary(model_expected)
+
 
 # Apply my custom SE pipeline.
 # Initialize two test functions
@@ -112,7 +112,7 @@ hhsize_by_tenure <- function(
   return(result)
 }
 actual_v1 <- hhsize_by_tenure(
-  data = ipums_2019_sample_tb,
+  data = ipums_2019_sample_tb |> filter(GQ %in% c(0,1,2)),
   wt_col = "PERWT",
   hhsize_col = "NUMPREC"
 )
@@ -120,7 +120,7 @@ actual_v1 <- hhsize_by_tenure(
 # Before procceding to SEs, ensure the main results are the same
 actual_v1$weighted_mean
 model_expected$coefficients
-# So something weird is happening here. The homeowner avlues match but the
+# So something weird is happening here. The homeowner values match but the
 # renter ones don't. Why?
 
 
