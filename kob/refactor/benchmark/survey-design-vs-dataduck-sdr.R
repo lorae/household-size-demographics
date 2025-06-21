@@ -3,7 +3,7 @@
 # and `se_from_bootstrap` functions match the SEs from the widely accepted 
 # `survey` package
 #
-# ----- STEP 0: Config ----- #
+# ----- STEP 0: Setup and config ----- #
 
 library(survey)
 library(tictoc)
@@ -26,7 +26,7 @@ ipums_db <- tbl(con, "ipums_processed")
 # Pseudorandom seed
 set.seed(123)
 
-# --- STEP 1: Select a sample of data and save as tb and db
+# ----- STEP 1: Load and Prepare Benchmark Sample -----
 # This section creates two variables:
 # - `ipums_2019_sample_tb`: an in-memory tibble with a 1-million row sample of data
 # - `ipums_2019_sample_db`: a duckdb lazy table with the identical 1-million row sample
@@ -40,90 +40,92 @@ set.seed(123)
 # in the same db file so that code can be benchmarked on both surveys, which have
 # different design variables (and thus different methods for calculating SEs)
 
-# Select a sample including 5 strata from the underlying dataset
+# Connect to DuckDB
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
+ipums_db <- tbl(con, "ipums_processed")
+
+# Sample 5 strata from 2019 data where GQ ∈ [0,1,2] and each stratum has ≥ 2 PSUs
 strata_summary <- ipums_db |> 
-  filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |>
-  select(STRATA, CLUSTER) |>
-  distinct() |> 
+  filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |> 
+  distinct(STRATA, CLUSTER) |> 
   collect()
 
 sampled_strata <- strata_summary |> 
   group_by(STRATA) |> 
-  filter(n() >= 2) |>  # Ensure stratum has at least 2 PSUs (they always will)
+  filter(n() >= 2) |> 
   ungroup() |> 
   distinct(STRATA) |> 
-  slice_sample(n = 5) # Predictable sample due to pseudorandom seed, set in config
+  slice_sample(n = 5)
 
-# Collect the sample into memory
+# Collect the sampled data
 ipums_2019_sample_tb <- ipums_db |> 
-  filter(YEAR == 2019, STRATA %in% !!sampled_strata$STRATA) |>
+  filter(YEAR == 2019, STRATA %in% !!sampled_strata$STRATA) |> 
   collect()
 
-# Write benchmark db to separate connection
-# TODO: I do this by just loading from the in-memory sample db; this perhaps
-# should be refactored to directly querying from the db when I transfer this process
-# to process-ipums. Perhaps it's a different table or view in the same connection.
-# For now, however, this does the trick.
+# Write the benchmark data to a secondary DuckDB connection
 copy_to(benchmark_con, ipums_2019_sample_tb, "ipums_sample", overwrite = TRUE)
 ipums_2019_sample_db <- tbl(benchmark_con, "ipums_sample")
 
-# Sanity_check: `ipums_2000_sample_tb` contains same data as the `ipums_2000_sample_db`
-# TODO: remove this check (we know it works) or also add into process-ipums.R once
-# code is migrated
+# Optional sanity check
 ipums_2019_sample_db_check <- ipums_2019_sample_db |> collect()
-all.equal( # must sort by `pers_id` before comparing, otherwise row order differs
+stopifnot(all.equal(
   ipums_2019_sample_tb |> arrange(pers_id),
   ipums_2019_sample_db_check |> arrange(pers_id)
-)
+))
 
-# ----- Step 2: Create survey designs for the tb ----- #
-tic("Create survey design object from tb sample")
+# ----- Step 2: Create Survey Design and Benchmark Output ----- #
+# Build a survey design object using replicate weights
+tic("Create survey design")
 design_2019_expected <- svrepdesign(
   weights = ~PERWT,
-  repweights = "REPWTP[0-9]+",  # regex pattern to match columns
+  repweights = "REPWTP[0-9]+",
   type = "Fay",
   rho = 0.5,
   mse = TRUE,
   data = ipums_2019_sample_tb
-) |>
-  subset(GQ %in% c(0,1,2))
+) |> subset(GQ %in% c(0, 1, 2))
 toc()
 
-# Calculate results of a simple regression on survey design object
-tic("Calculate expected regression results")
-# Both of these produce the same result. Keeping them both here for reference.
-svyby(~NUMPREC, ~tenure, design = design_2019_expected, svymean)
-svyglm(NUMPREC ~ -1 + tenure, design = design_2019_expected)
+# Compute benchmark mean household size by tenure
+tic("Benchmark: svyglm and svyby")
+model_expected <- svyglm(NUMPREC ~ -1 + tenure, design = design_2019_expected)
+benchmark_means <- svyby(~NUMPREC, ~tenure, design = design_2019_expected, svymean)
 toc()
 
+# ----- STEP 3: Run Custom Point Estimate Pipeline ----- #
+# Filter for matching GQ criteria
+filtered_tb <- ipums_2019_sample_tb |> filter(GQ %in% c(0, 1, 2))
 
-# Apply my custom SE pipeline.
-# Initialize two test functions
-hhsize_by_tenure <- function(
-    data,
-    wt_col, # string name of weight column in `data`
-    hhsize_col # string name of hhsize column in `data`
-) {
-  result <- data |>
-    group_by(tenure) |>
-    summarize(
-      weighted_mean = sum(.data[[hhsize_col]] * .data[[wt_col]])/sum(.data[[wt_col]]),
-      .groups = "drop"
-    )
-  
-  return(result)
+# Custom weighted mean function
+hhsize_by_tenure <- function(data, wt_col, hhsize_col) {
+  data |> group_by(tenure) |> summarize(
+    weighted_mean = sum(.data[[hhsize_col]] * .data[[wt_col]]) / sum(.data[[wt_col]]),
+    .groups = "drop"
+  )
 }
+
+# Run custom estimate
 actual_v1 <- hhsize_by_tenure(
-  data = ipums_2019_sample_tb |> filter(GQ %in% c(0,1,2)),
+  data = filtered_tb,
   wt_col = "PERWT",
   hhsize_col = "NUMPREC"
 )
 
-# Before procceding to SEs, ensure the main results are the same
-actual_v1$weighted_mean
-model_expected$coefficients
-# So something weird is happening here. The homeowner values match but the
-# renter ones don't. Why?
+# Confirm that means match
+stopifnot(all.equal(
+  actual_v1$weighted_mean,
+  unname(model_expected$coefficients),
+  tolerance = 1e-6
+))
+
+# ----- STEP 4: Compare SEs from custom pipeline vs survey package ----- #
+# This is the main performance comparison. We test whether the standard errors
+# from `se_from_bootstrap()` match those from `svyglm` / `svyby`, which would
+# validate our faster alternative approach.
+
+##### --- end of refactor so far
+
 
 
 # Convert to one-sided formulas: ~varname
