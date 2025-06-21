@@ -120,145 +120,38 @@ stopifnot(all.equal(
 ))
 
 # ----- STEP 4: Compare SEs from custom pipeline vs survey package ----- #
-# This is the main performance comparison. We test whether the standard errors
-# from `se_from_bootstrap()` match those from `svyglm` / `svyby`, which would
-# validate our faster alternative approach.
+# Now that we've validated the main point estimates match, we test whether the 
+# standard errors from `se_from_bootstrap()` match those from `svyglm` / `svyby`.
+# If so, this could spell out large performance enhancements.
 
-##### --- end of refactor so far
-
-
-
-# Convert to one-sided formulas: ~varname
-formulas <- lapply(prop_vars, function(var) as.formula(paste0("~", var)))
-
-# Set up parallel plan (this will use available cores)
-options(future.globals.maxSize = 10 * 1024^3)
-plan(multicore)
-
-tic("Parallelized population proportions (forked)")
-props00_2000 <- future_map(formulas, ~svymean(.x, design_2000_survey))
-toc()
-
-names(props00_2000) <- prop_vars
-
-# Save results in throughput
-tic("Save props00_2000 to kob/throughput")
-saveRDS(props00_2000, file = "kob/throughput/props00_2000.rds")
-toc()
-
-
-# --------------
-
-
-# Input data
-input_data <- tibble(
-  per_id = c(1, 2, 3, 4, 5),
-  sex = c(1, 0, 1, 1, 0),
-  hhsize = c(2, 3, 2, 1, 1),
-  weight = c(10, 12, 15, 30, 20),
-  repwt1 = c(11, 13, 16, 28, 22),
-  repwt2 = c(8, 8, 16, 25, 22),
-  repwt3 = c(2, 4, 10, 14, 13),
-  repwt4 = c(18, 17, 11, 25, 15)
+input_bootstrap <- bootstrap_replicates(
+  data = ipums_2019_sample_tb |> filter(GQ %in% c(0,1,2)),
+  f = hhsize_by_tenure,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", 1:80),
+  hhsize_col = "NUMPREC",
+  id_cols = "tenure"
 )
 
-# Initialize two test functions
-hhsize_by_sex <- function(
-    data,
-    wt_col, # string name of weight column in `data`
-    hhsize_col # string name of hhsize column in `data`
-) {
-  result <- data |>
-    group_by(sex) |>
-    summarize(
-      weighted_mean = sum(.data[[hhsize_col]] * .data[[wt_col]], na.rm = TRUE)/sum(.data[[wt_col]], na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  return(result)
-}
-
-count_by_sex <- function(
-    data,
-    wt_col # string name of weight column in `data`
-) {
-  result <- data |>
-    group_by(sex) |>
-    summarize(
-      count = n(),
-      weighted_count = sum(.data[[wt_col]]),
-      .groups = "drop"
-    )
-  
-  return(result)
-}
-
-# Produce two test bootstrap_replicates input objects
-input_bootstrap_count <- bootstrap_replicates(
-  data = input_data,
-  f = count_by_sex,
-  wt_col = "weight",
-  repwt_cols = paste0("repwt", 1:4),
-  id_cols = "sex"
+model_output <- se_from_bootstrap(
+  bootstrap = input_bootstrap,
+  constant = 4/80,
+  se_cols = c("weighted_mean")
 )
+model_output
 
-input_bootstrap_hhsize <- bootstrap_replicates(
-  data = input_data,
-  f = hhsize_by_sex,
-  wt_col = "weight",
-  repwt_cols = paste0("repwt", 1:4),
-  hhsize_col = "hhsize",
-  id_cols = "sex"
-)
+summary(model_expected)
 
-# Expected results
-expected_count <- tibble(
-  sex = c(0, 1),
-  count = c(2, 3),
-  weighted_count = c(32, 55),
-  se_weighted_count = c(15.42725, 29.63106)
-)
+# ----- Final Check: Validate against svyglm output ----- #
+# Extract SEs from svyglm
+expected_ses <- summary(model_expected)$coefficients[, "Std. Error"]
+print(expected_ses)
 
-expected_hhsize <- tibble(
-  sex = c(0, 1),
-  weighted_mean = c(1.75, 1.454545),
-  se_weighted_mean = c(0.47193501, 0.09704985)
-)
+# Match to your custom output
+actual_ses <- model_output$se_weighted_mean
+print(actual_ses)
 
-test_that("se_from_bootstrap produces correct results on count_by_sex", {
-  output_count <- se_from_bootstrap(
-    bootstrap = input_bootstrap_count,
-    constant = 1,
-    se_cols = c("weighted_count")
-  )
-  
-  # Round decimals to avoid floating point mismatch
-  output_count <- output_count |>
-    mutate(se_weighted_count = round(se_weighted_count, 5))
-  expected_count <- expected_count |>
-    mutate(se_weighted_count = round(se_weighted_count, 5))
-  
-  expect_equal(output_count, expected_count)
-})
+# Confirm match within tolerance
+stopifnot(all.equal(actual_ses, expected_ses, tolerance = 1e-6, check.attributes = FALSE))
 
-test_that("se_from_bootstrap produces correct results on hhsize_by_sex", {
-  output_hhsize <- se_from_bootstrap(
-    bootstrap = input_bootstrap_hhsize,
-    constant = 1,
-    se_cols = c("weighted_mean")
-  )
-  
-  # Round decimals to avoid floating point mismatch
-  output_hhsize <- output_hhsize |>
-    mutate(
-      se_weighted_mean = round(se_weighted_mean, 4),
-      weighted_mean = round(weighted_mean, 4)
-    )
-  expected_hhsize <- expected_hhsize |>
-    mutate(
-      se_weighted_mean = round(se_weighted_mean, 4),
-      weighted_mean = round(weighted_mean, 4)
-    )
-  
-  expect_equal(output_hhsize, expected_hhsize)
-})
+message("✅ Standard errors match within tolerance.")
