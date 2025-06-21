@@ -78,17 +78,13 @@ all.equal( # must sort by `pers_id` before comparing, otherwise row order differ
 
 # ----- Step 2: Create survey designs for the tb ----- #
 tic("Create survey design object from tb sample")
-drv <- survey::DuckDB() # Define the driver object
-
-design_db <- svydesign(
-  ids    = ~CLUSTER,
-  strata = ~STRATA,
-  weights= ~PERWT,
-  data   = NULL,                    # must be NULL for a DB‐backed design
-  dbname =  "data/db/benchmark.duckdb",
-  dbtype =  drv,                    # pass the driver object
-  table  = "ipums_sample",       
-  nest   = TRUE
+design_2019_survey <- svrepdesign(
+  weights = ~PERWT,
+  repweights = "REPWTP[0-9]+",  # regex pattern to match columns
+  type = "Fay",
+  rho = 0.5,
+  mse = TRUE,
+  data = ipums_2019_sample_tb
 ) |>
   subset(GQ %in% c(0,1,2))
 toc()
