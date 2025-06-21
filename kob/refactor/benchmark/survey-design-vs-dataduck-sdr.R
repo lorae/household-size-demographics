@@ -91,7 +91,9 @@ toc()
 
 # Calculate results of a simple regression on survey design object
 tic("Calculate expected regression results")
+# Both of these produce the same result. Keeping them both here for reference.
 svyby(~NUMPREC, ~tenure, design = design_2019_expected, svymean)
+svyglm(NUMPREC ~ -1 + tenure, design = design_2019_expected)
 toc()
 
 
