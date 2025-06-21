@@ -11,12 +11,16 @@ library(duckdb)
 library(dplyr)
 library(duckdb)
 library(glue)
+library(dplyr)
+library(purrr)
 
+# Load the dataduck package
 devtools::load_all("../dataduck")
 
 # Initialize a subset of data to write to a database connection\
 # Database API connection
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
 # Pseudorandom seed
@@ -24,8 +28,8 @@ set.seed(123)
 
 # --- STEP 1: Select a sample of data and save as tb and db
 # This section creates two variables:
-# - `ipums_2000_sample_tb`: an in-memory tibble with a 1-million row sample of data
-# - `ipums_2000_sample_db`: a duckdb lazy table with the identical 1-million row sample
+# - `ipums_2019_sample_tb`: an in-memory tibble with a 1-million row sample of data
+# - `ipums_2019_sample_db`: a duckdb lazy table with the identical 1-million row sample
 #
 # TODO: migrate this entire process into process-ipums.R, so that the benchmark
 # dataset is made at the same time (and uploaded to a separate duckdb connection)
@@ -38,7 +42,7 @@ set.seed(123)
 
 # Select a sample including 5 strata from the underlying dataset
 strata_summary <- ipums_db |> 
-  filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |>
+  filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |>
   select(STRATA, CLUSTER) |>
   distinct() |> 
   collect()
@@ -51,8 +55,8 @@ sampled_strata <- strata_summary |>
   slice_sample(n = 5) # Predictable sample due to pseudorandom seed, set in config
 
 # Collect the sample into memory
-ipums_2000_sample_tb <- ipums_db |> 
-  filter(YEAR == 2000, STRATA %in% !!sampled_strata$STRATA) |>
+ipums_2019_sample_tb <- ipums_db |> 
+  filter(YEAR == 2019, STRATA %in% !!sampled_strata$STRATA) |>
   collect()
 
 # Write benchmark db to separate connection
@@ -60,20 +64,20 @@ ipums_2000_sample_tb <- ipums_db |>
 # should be refactored to directly querying from the db when I transfer this process
 # to process-ipums. Perhaps it's a different table or view in the same connection.
 # For now, however, this does the trick.
-copy_to(benchmark_con, ipums_2000_sample_tb, "ipums_sample", overwrite = TRUE)
-ipums_2000_sample_db <- tbl(benchmark_con, "ipums_sample")
+copy_to(benchmark_con, ipums_2019_sample_tb, "ipums_sample", overwrite = TRUE)
+ipums_2019_sample_db <- tbl(benchmark_con, "ipums_sample")
 
 # Sanity_check: `ipums_2000_sample_tb` contains same data as the `ipums_2000_sample_db`
 # TODO: remove this check (we know it works) or also add into process-ipums.R once
 # code is migrated
-ipums_2000_sample_db_check <- ipums_2000_sample_db |> collect()
+ipums_2019_sample_db_check <- ipums_2019_sample_db |> collect()
 all.equal( # must sort by `pers_id` before comparing, otherwise row order differs
-  ipums_2000_sample_tb |> arrange(pers_id),
-  ipums_2000_sample_db_check |> arrange(pers_id)
+  ipums_2019_sample_tb |> arrange(pers_id),
+  ipums_2019_sample_db_check |> arrange(pers_id)
 )
 
-# ----- Step 2: Create survey designs for the tb and db ----- #
-tic("Create survey design object from db sample")
+# ----- Step 2: Create survey designs for the tb ----- #
+tic("Create survey design object from tb sample")
 drv <- survey::DuckDB() # Define the driver object
 
 design_db <- svydesign(
@@ -125,17 +129,7 @@ toc()
 
 
 # --------------
-library("testthat")
-library("dplyr")
-library("purrr")
-library("rprojroot")
 
-# Set working directory to project root
-root <- find_root(is_rstudio_project)
-setwd(root)
-
-# Load the dataduck package
-devtools::load_all("../dataduck")
 
 # Input data
 input_data <- tibble(
