@@ -68,9 +68,6 @@ create_benchmark_sample <- function(
   # Continue
   message("⚙️  Generating benchmark files...")
   
-  # Ensure the output_dir_path already exists. If it doesn't, create it.
-  dir.create(output_dir_path, recursive = TRUE, showWarnings = FALSE)
-  
   # Connect to DB; assign alias to table
   con <- dbConnect(duckdb::duckdb(), db_path)
   ipums_db <- tbl(con, db_table_name)
@@ -97,6 +94,9 @@ create_benchmark_sample <- function(
     arrange(sql("RANDOM()")) |>
     head(n_strata) |>
     collect()
+  
+  # Create the output_dir_path, if it doesn't already exist.
+  dir.create(output_dir_path, recursive = TRUE, showWarnings = FALSE)
   
   # Create the sampled tb & write to `output_tb_path`
   ipums_sample_tb <- ipums_db |> 
