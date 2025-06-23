@@ -26,6 +26,7 @@ benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
 # Pseudorandom seed
+# TODO: this doesn't affect slice_sample. Why?
 set.seed(123)
 
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
@@ -41,11 +42,6 @@ set.seed(123)
 # TODO: rename the table in this benchmark db to _2000, and create a _2019 table
 # in the same db file so that code can be benchmarked on both surveys, which have
 # different design variables (and thus different methods for calculating SEs)
-
-# Connect to DuckDB
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
 
 # Sample 5 strata from 2019 data where GQ ∈ [0,1,2] and each stratum has ≥ 2 PSUs
 strata_summary <- ipums_db |> 

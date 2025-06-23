@@ -1,4 +1,4 @@
-#kob/refactor/coefs00_2019.R
+#kob/scripts/coefs00_2019.R
 # ----- STEP 0: Config ----- #
 
 library(survey)
