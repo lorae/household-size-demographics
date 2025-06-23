@@ -13,6 +13,7 @@ library(dplyr)
 #'
 #' Determines whether a step should run based on file existence.
 #' Returns TRUE if any file is missing, FALSE otherwise.
+#' TODO: this might be later replaced with `targets` package
 #'
 #' @param ... One or more file paths
 #' @return Logical scalar: TRUE if any file is missing, FALSE otherwise
@@ -50,9 +51,9 @@ create_benchmark_sample <- function(
     force = FALSE # TRUE will recalculate benchmark sample, even if it already exists in cache
 ) {
   # Path to the cache where the output will be stored
-  output_path = glue("kob/cache/benchmark_sample_{year}_{n_strata}")
-  output_tb <- glue("{output_path}/tb.rds")
-  output_db <- glue("{output_path}/db.duckdb")
+  output_path = glue("kob/cache/benchmark_sample_{year}_{n_strata}") |> as.character()
+  output_tb <- glue("{output_path}/tb.rds") |> as.character()
+  output_db <- glue("{output_path}/db.duckdb") |> as.character()
   
   outputs_missing <- should_run(output_db, output_tb)
   
@@ -65,11 +66,16 @@ create_benchmark_sample <- function(
   # Continue
   message("⚙️  Generating benchmark files...")
   
+  # Ensure the output_dir already exists. If it doesn't, create it.
+  # TODO: rename output_path to output_dir
+  dir.create(output_path, recursive = TRUE, showWarnings = FALSE)
+  
+  
   # Connect to DB; assign alias to table
   con <- dbConnect(duckdb::duckdb(), db_path)
   ipums_db <- tbl(con, db_table_name)
 
-  # Sample {`n_strata`} strata from {`year`} data where GQ ∈ [0,1,2]
+  # Sample {`n_strata`} strata from {`year`} data
   strata_sample <- ipums_db |> 
     filter(YEAR == year) |> 
     distinct(STRATA) |> 
@@ -77,11 +83,22 @@ create_benchmark_sample <- function(
     head(n_strata) |>
     collect()
   
-  print(strata_sample)
+  # Create the sampled tb & write to `output_tb`
+  ipums_sample_tb <- ipums_db |> 
+    filter(YEAR == year, STRATA %in% !!strata_sample$STRATA) |> 
+    collect()
+  # TODO: write to output!
+  # TODO: change output_tb and output_db to output_tb_path and output_db_path
+  #message(glue("Saved benchmark tb of {year} data with {n_strata} strata to {output_tb}."))
   
-  # Save them
-  
-  # unit test comparing them can be external.
+  # Write the sampled tb to `output_db`
+  output_db_con <- dbConnect(duckdb::duckdb(), output_db)
+  copy_to(output_db_con, ipums_sample_tb, "ipums_sample", overwrite = TRUE)
+  #message(glue("Saved benchmark db of {year} data with {n_strata} strata to {output_db}."))
+
+  # Sanity check: both output files should now exist
+  should_run(output_db, output_tb) # hopefully returns FALSE
+  # message(glue("Benchmark data extracts successfully saved to {output_path}."))
 }
 
 # Example usage (for dev only)
