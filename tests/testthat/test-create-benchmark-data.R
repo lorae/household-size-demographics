@@ -64,14 +64,21 @@ test_that("create_benchmark_sample writes expected data content to duckdb", {
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
 
-# Expect to execute due to force = TRUE
-create_benchmark_sample(
-  year = 2019,
-  n_strata = 3,
-  db_path = "data/db/ipums.duckdb",
-  db_table_name = "ipums_processed",
-  force = TRUE
-)
+test_that("create_benchmark_sample returns early when output exists and force = FALSE", {
+  # Assume the files already exist from a previous run (or set them up beforehand)
+  
+  expect_message(
+    create_benchmark_sample(
+      year = 2019,
+      n_strata = 3,
+      db_path = "data/db/ipums.duckdb",
+      db_table_name = "ipums_processed",
+      output_dir = "tests/testthat/test-create-benchmark-sample",
+      force = FALSE
+    ),
+    regexp = "Benchmark files already exists and user has opted force == FALSE"
+  )
+})
 
 # Expect following warning: 
 # Warning message:
