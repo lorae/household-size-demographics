@@ -9,7 +9,7 @@ library(glue)
 library(duckdb)
 library(dplyr)
 
-#' should_run
+#' all_exist
 #'
 #' Determines whether a step should run based on file existence.
 #' Returns TRUE if any file is missing, FALSE otherwise.
@@ -17,8 +17,8 @@ library(dplyr)
 #'
 #' @param ... One or more file paths
 #' @return Logical scalar: TRUE if any file is missing, FALSE otherwise
-should_run <- function(...) {
-  !all(file.exists(...))
+all_exist <- function(...) {
+  all(file.exists(...))
 }
 
 #
@@ -55,10 +55,10 @@ create_benchmark_sample <- function(
   output_tb <- glue("{output_path}/tb.rds") |> as.character()
   output_db <- glue("{output_path}/db.duckdb") |> as.character()
   
-  outputs_missing <- should_run(output_db, output_tb)
+  outputs_exist <- all_exist(output_db, output_tb)
   
   # Early break
-  if (!outputs_missing & !force) {
+  if (outputs_exist & !force) {
     message("✅ Benchmark files already exists and user has opted force == FALSE, so no files were generated")
     return(NULL)
   }
@@ -87,9 +87,12 @@ create_benchmark_sample <- function(
   ipums_sample_tb <- ipums_db |> 
     filter(YEAR == year, STRATA %in% !!strata_sample$STRATA) |> 
     collect()
-  # TODO: write to output!
-  # TODO: change output_tb and output_db to output_tb_path and output_db_path
-  #message(glue("Saved benchmark tb of {year} data with {n_strata} strata to {output_tb}."))
+  saveRDS(ipums_sample_tb, file = output_tb)
+  if(all_exist(output_tb)) {
+    message(glue("Saved benchmark tb of {year} data with {n_strata} strata to {output_tb}."))
+  } else {
+    warning("Benchmark tb save was unsuccessful.")
+  }
   
   # Write the sampled tb to `output_db`
   output_db_con <- dbConnect(duckdb::duckdb(), output_db)
