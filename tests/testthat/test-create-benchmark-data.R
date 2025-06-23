@@ -65,8 +65,7 @@ test_that("create_benchmark_sample writes expected data content to duckdb", {
 })
 
 test_that("create_benchmark_sample returns early when output exists and force = FALSE", {
-  # Assume the files already exist from a previous run (or set them up beforehand)
-  
+  # Assumes the files already exist from previous run; generated in tests above
   expect_message(
     create_benchmark_sample(
       year = 2019,
@@ -78,6 +77,28 @@ test_that("create_benchmark_sample returns early when output exists and force = 
     ),
     regexp = "Benchmark files already exists and user has opted force == FALSE"
   )
+})
+
+test_that("create_benchmark_sample regenerates outputs when force = TRUE", {
+  # Assumes the files already exist from previous run; generated in tests above
+  # Capture message output
+  messages <- capture_messages({
+    create_benchmark_sample(
+      year = 2019,
+      n_strata = 3,
+      db_path = "data/db/ipums.duckdb",
+      db_table_name = "ipums_processed",
+      output_dir = "tests/testthat/test-create-benchmark-sample",
+      force = TRUE
+    )
+  })
+  
+  # Confirm the "early return" message was NOT included
+  expect_false(any(grepl("Benchmark files already exists and user has opted force == FALSE", messages)))
+  
+  # Confirm the success messages *were* emitted
+  expect_true(any(grepl("Saved benchmark tb", messages)))
+  expect_true(any(grepl("Saved benchmark db", messages)))
 })
 
 # Expect following warning: 
