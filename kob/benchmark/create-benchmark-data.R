@@ -7,23 +7,33 @@
 
 library(glue)
 
+#' should_run
+#'
+#' Determines whether a step should run based on file existence.
+#' Returns TRUE if any file is missing, FALSE otherwise.
+#'
+#' @param ... One or more file paths
+#' @return Logical scalar: TRUE if any file is missing, FALSE otherwise
+should_run <- function(...) {
+  !all(file.exists(...))
+}
+
+#
 #
 # create_benchmark_sample
-# Lightweight version of a cache aware design pattern:
-# Early NULL return is triggered (via the "bouncer" or "early return" design pattern) 
-# if the target output files already exist and the user has indicated via the "force"
-# arg that they do not wish to override them.
-# That way, computation is only applied if needed.
-# TODO: essentially write a should_run function that tests for existence of all
-# file paths given to it. Can be used as a helper function across this codebase.
-# E.g.
-# should_run <- function(...) {
-#   !all(file.exists(...))
-# }
-# or just implement targets.
 #
-# input:
-# - args given below
+# Lightweight cache-aware execution:
+# Skips computation if output files exist and force == FALSE.
+# Saves benchmark data to `kob/cache/benchmark_sample_{year}_{n_strata}`,
+# with one .rds file for the tibble and one .duckdb file for the database.
+# Within the DB, the table name is always "ipums_sample".
+#
+# Inputs:
+# - year: numeric
+# - n_strata: number of strata to sample from
+# - db_path: path to source DuckDB database
+# - db_table_name: name of source table
+# - force: whether to overwrite cached results
 #
 # output:
 # - it will save the created benchmark to a directory called
@@ -42,12 +52,9 @@ create_benchmark_sample <- function(
   output_tb <- glue("{output_path}/tb.rds")
   output_db <- glue("{output_path}/db.duckdb")
   
-  # Define output_exists as a binary variable that is TRUE if both `output_tb` and 
-  # `output_db` files already exist. Note: only checks for file existence, not content.
-  output_exists <- (file.exists(output_tb) && file.exists(output_db))
-  print(output_exists)
+  outputs_missing <- should_run(output_db, output_tb)
   
-  if (output_exists & force == FALSE) {
+  if (!outputs_missing & !force) {
     message("✅ Benchmark files already exists and user has opted force == FALSE, so no files were generated")
     return(NULL)
   }
