@@ -6,6 +6,8 @@
 # ----- Step 0: Config
 
 library(glue)
+library(duckdb)
+library(dplyr)
 
 #' should_run
 #'
@@ -54,17 +56,28 @@ create_benchmark_sample <- function(
   
   outputs_missing <- should_run(output_db, output_tb)
   
+  # Early break
   if (!outputs_missing & !force) {
     message("✅ Benchmark files already exists and user has opted force == FALSE, so no files were generated")
     return(NULL)
   }
 
-  # continue
+  # Continue
   message("⚙️  Generating benchmark files...")
   
-  # Then:
+  # Connect to DB; assign alias to table
+  con <- dbConnect(duckdb::duckdb(), db_path)
+  ipums_db <- tbl(con, db_table_name)
+  ipums_db |> head(5) |> collect() |> print()
   
-  # Run logic to create the tibble and db
+  # Sample {`n_strata`} strata from {`year`} data where GQ ∈ [0,1,2] and collect list
+  strata_summary <- ipums_db |> 
+    filter(YEAR == year, GQ %in% c(0, 1, 2)) |> 
+    distinct(STRATA, CLUSTER) |> 
+    collect()
+  
+  print(strata_summary)
+  
   
   # Save them
   
