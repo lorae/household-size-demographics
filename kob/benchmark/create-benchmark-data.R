@@ -28,23 +28,22 @@ create_benchmark_sample <- function(
   output_tb <- glue("{output_path}/tb.rds")
   output_db <- glue("{output_path}/db.duckdb")
   
-  print(output_path)
-  print(output_tb)
-  print(output_db)
+  # Define output_exists as a binary variable that is TRUE if both `output_tb` and 
+  # `output_db` files already exist. Note: only checks for file existence, not content.
+  output_exists <- (file.exists(output_tb) && file.exists(output_db))
+  print(output_exists)
   
-  # Check if both the db and dbs with expected file names exist inthe directory. Use
-  # this info to assign output_dne = {t, f} where dne stands for does not exist.
-  # assign true if one or both files are missing. False if everything that should be 
-  # there is already there.
+  if (output_exists & force == FALSE) {
+    message("✅ Benchmark files already exists and user has opted force == FALSE, so no files were generated")
+    return(NULL)
+  }
+
+  # continue
+  message("⚙️  Generating benchmark files...")
+  
   # Then:
-  # if file DNE:
-  #   RUN CODE
-  # if force:
-  #   RUN CODE
-  # (the other case, where FILE DNE AND FORCE are both F, means the code shouldn't 
-  # run. This logic can simplify to if FILE DNE OR FORCE, run, else, don't run.)
   
-  # Then run logic to create the tibble and db
+  # Run logic to create the tibble and db
   
   # Save them
   
