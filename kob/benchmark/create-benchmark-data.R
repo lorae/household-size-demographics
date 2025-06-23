@@ -2,6 +2,14 @@
 #
 # The purpose of the script is to modularize the creation of a benchmark sample
 # for use in tests of jobs and other functions.
+#
+# create_benchmark_sample
+# input:
+# - args given below
+# output:
+# - it will save the created benchmark to a directory called
+# `kob/cache/benchmark_sample_{year}_{n_strata}`
+# - There will be one file in that folder with the db and
 create_benchmark_sample <- function(
     year = 2019,
     n_strata = 3,
