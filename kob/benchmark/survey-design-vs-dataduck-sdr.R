@@ -21,12 +21,6 @@ devtools::load_all("../dataduck")
 # Load the create-benchmark-data and helper functions
 source("kob/benchmark/create-benchmark-data.R")
 
-# Initialize a subset of data to write to a database connection\
-# Database API connection
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
-
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
 # This section creates two variables:
 # - `ipums_2019_sample_tb`: an in-memory tibble with a 1-million row sample of data
