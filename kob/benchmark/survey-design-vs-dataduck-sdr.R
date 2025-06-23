@@ -27,10 +27,6 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
-# Pseudorandom seed
-# TODO: this doesn't affect slice_sample. Why?
-set.seed(123)
-
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
 # This section creates two variables:
 # - `ipums_2019_sample_tb`: an in-memory tibble with a 1-million row sample of data
