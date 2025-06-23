@@ -13,7 +13,6 @@ library(duckdb)
 library(dplyr)
 library(duckdb)
 library(glue)
-library(dplyr)
 library(purrr)
 
 # Load the dataduck package
