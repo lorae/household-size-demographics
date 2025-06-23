@@ -9,8 +9,22 @@ library(glue)
 
 #
 # create_benchmark_sample
+# Lightweight version of a cache aware design pattern:
+# Early NULL return is triggered (via the "bouncer" or "early return" design pattern) 
+# if the target output files already exist and the user has indicated via the "force"
+# arg that they do not wish to override them.
+# That way, computation is only applied if needed.
+# TODO: essentially write a should_run function that tests for existence of all
+# file paths given to it. Can be used as a helper function across this codebase.
+# E.g.
+# should_run <- function(...) {
+#   !all(file.exists(...))
+# }
+# or just implement targets.
+#
 # input:
 # - args given below
+#
 # output:
 # - it will save the created benchmark to a directory called
 # `kob/cache/benchmark_sample_{year}_{n_strata}`
