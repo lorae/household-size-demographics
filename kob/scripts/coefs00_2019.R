@@ -7,10 +7,35 @@ library(duckdb)
 library(dplyr)
 library(furrr)
 
-# Read in the pre-subsetted survey
-tic("Read 2019 survey design as RDS")
-design_2019_survey <- readRDS("kob/throughput/design_2019_survey.rds")
-toc()
+# Load the dataduck package
+devtools::load_all("../dataduck")
+
+# Load the create-benchmark-data and helper functions
+source("kob/benchmark/create-benchmark-data.R")
+
+# ----- STEP 1: Read in data ----- #
+# For now we're going to use a subset of the 2019 data to test functionality
+# of the script before expanding to the entire survey dataset
+
+cache_path <- "kob/cache"
+n_strata <- 2
+
+create_benchmark_sample(
+  year = 2019,
+  n_strata = n_strata,
+  db_path = "data/db/ipums.duckdb",
+  db_table_name = "ipums_processed",
+  output_dir = cache_path,
+  force = TRUE
+)
+
+db_path <- glue("{cache_path}/benchmark_sample_2019_{n_strata}/db.duckdb")
+con <- dbConnect(duckdb::duckdb(), db_path)
+ipums_db <- tbl(con, "ipums_sample")
+
+ipums_db |> head() |> collect() |> View() # Looks good
+
+#################### all below this line is not yet refactored
 
 prop_vars <- c(
   "RACE_ETH_bucket", 
