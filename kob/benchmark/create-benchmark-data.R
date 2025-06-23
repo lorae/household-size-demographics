@@ -60,7 +60,7 @@ create_benchmark_sample <- function(
   # Early break
   if (outputs_exist & !force) {
     message("✅ Benchmark files already exists and user has opted force == FALSE, so no files were generated")
-    return(NULL)
+    return(invisible(NULL))
   }
 
   # Continue
@@ -89,19 +89,19 @@ create_benchmark_sample <- function(
     collect()
   saveRDS(ipums_sample_tb, file = output_tb)
   if(all_exist(output_tb)) {
-    message(glue("Saved benchmark tb of {year} data with {n_strata} strata to {output_tb}."))
+    message(glue("✅ Saved benchmark tb of {year} data with {n_strata} strata to {output_tb}."))
   } else {
-    warning("Benchmark tb save was unsuccessful.")
+    warning("❗ Benchmark tb save was unsuccessful.")
   }
   
   # Write the sampled tb to `output_db`
   output_db_con <- dbConnect(duckdb::duckdb(), output_db)
   copy_to(output_db_con, ipums_sample_tb, "ipums_sample", overwrite = TRUE)
-  #message(glue("Saved benchmark db of {year} data with {n_strata} strata to {output_db}."))
-
-  # Sanity check: both output files should now exist
-  should_run(output_db, output_tb) # hopefully returns FALSE
-  # message(glue("Benchmark data extracts successfully saved to {output_path}."))
+  if(all_exist(output_db)) {
+    message(glue("✅ Saved benchmark db of {year} data with {n_strata} strata to {output_db}."))
+  } else {
+    warning("❗ Benchmark db save was unsuccessful.")
+  }
 }
 
 # Example usage (for dev only)
