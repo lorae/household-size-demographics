@@ -58,7 +58,7 @@ create_benchmark_sample <- function(
   
   outputs_exist <- all_exist(output_db_path, output_tb_path)
   
-  # Early break
+  # Early break: Are results already cached?
   if (outputs_exist & !force) {
     message("✅ Benchmark files already exists and user has opted force == FALSE, so no files were generated")
     return(invisible(NULL))
@@ -75,12 +75,25 @@ create_benchmark_sample <- function(
   con <- dbConnect(duckdb::duckdb(), db_path)
   ipums_db <- tbl(con, db_table_name)
 
+  # Defensive check: does the year exist?
+  years_available <- ipums_db |> distinct(YEAR) |> collect() |> pull(YEAR)
+  if (!(year %in% years_available)) {
+    warning(glue("❗ The requested year {year} does not exist in the source data."))
+    return(invisible(NULL))
+  }
+  
+  # Defensive check: enough strata to sample?
+  strata_pool <- ipums_db |>
+    filter(YEAR == year) |>
+    distinct(STRATA) |>
+    collect()
+  if (nrow(strata_pool) < n_strata) {
+    warning(glue("❗ Only {nrow(strata_pool)} strata available in {year}, but n_strata = {n_strata}."))
+    return(invisible(NULL))
+  }
+  
   # Sample {`n_strata`} strata from {`year`} data
-  # TODO: defensive check: validate n_strata <= number of available strata in sample year
-  # TODO: defensive check: validate that {year} exists in data
-  strata_sample <- ipums_db |> 
-    filter(YEAR == year) |> 
-    distinct(STRATA) |> 
+  strata_sample <- strata_pool |>
     arrange(sql("RANDOM()")) |>
     head(n_strata) |>
     collect()
@@ -110,7 +123,8 @@ create_benchmark_sample <- function(
   dbDisconnect(output_db_con, shutdown = TRUE)
 }
 
-# Example usage (for dev only)
+# Example usages (for dev only) - move to unit tests
+# Expect to not execute; return early due to cached results
 create_benchmark_sample(
   year = 2019,
   n_strata = 3,
@@ -119,9 +133,33 @@ create_benchmark_sample(
   force = FALSE
 )
 
-# Example usage (for dev only)
+# Expect to execute due to force = TRUE arg
 create_benchmark_sample(
   year = 2019,
+  n_strata = 3,
+  db_path = "data/db/ipums.duckdb",
+  db_table_name = "ipums_processed",
+  force = TRUE
+)
+
+# Expect following warning: 
+# Warning message:
+#   In create_benchmark_sample(year = 2019, n_strata = 2352, db_path = "data/db/ipums.duckdb",  :
+#                                ❗ Only 2351 strata available in 2019, but n_strata = 2352.
+create_benchmark_sample(
+  year = 2019,
+  n_strata = 2352,
+  db_path = "data/db/ipums.duckdb",
+  db_table_name = "ipums_processed",
+  force = TRUE
+)
+
+# Expect following warning:
+# Warning message:     
+#   In create_benchmark_sample(year = 2018, n_strata = 3, db_path = "data/db/ipums.duckdb",  :
+#                                ❗ The requested year 2018 does not exist in the source data.
+create_benchmark_sample(
+  year = 2018,
   n_strata = 3,
   db_path = "data/db/ipums.duckdb",
   db_table_name = "ipums_processed",
