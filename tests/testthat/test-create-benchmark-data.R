@@ -33,7 +33,38 @@ test_that("create_benchmark_sample will create new dir if output_dir doesn't exi
   )
 })
 
-# Expect to execute due to force = TRUE arg
+test_that("create_benchmark_sample writes expected data content to rds", {
+  tb <- readRDS("tests/testthat/test-create-benchmark-sample/benchmark_sample_2019_3/tb.rds")
+  
+  expect_s3_class(tb, "tbl_df")
+  expect_true("STRATA" %in% names(tb))
+  expect_true(nrow(tb) > 0)
+})
+
+test_that("create_benchmark_sample writes expected data content to duckdb", {
+  # Connect to the generated DuckDB file
+  con <- DBI::dbConnect(
+    duckdb::duckdb(), 
+    dbdir = "tests/testthat/test-create-benchmark-sample/benchmark_sample_2019_3/db.duckdb"
+  )
+  
+  # List available tables (should contain "ipums_sample")
+  tables <- DBI::dbListTables(con)
+  expect_true("ipums_sample" %in% tables)
+  
+  # Read in the table
+  db_data <- DBI::dbReadTable(con, "ipums_sample")
+  
+  # Check that it has expected structure
+  expect_s3_class(db_data, "data.frame")
+  expect_true("STRATA" %in% names(db_data))
+  expect_gt(nrow(db_data), 0)
+  
+  # Disconnect cleanly
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
+# Expect to execute due to force = TRUE
 create_benchmark_sample(
   year = 2019,
   n_strata = 3,
@@ -65,5 +96,3 @@ create_benchmark_sample(
   db_table_name = "ipums_processed",
   force = TRUE
 )
-
-# Add unit test seeing if files can be loaded, looking at colnames and such
