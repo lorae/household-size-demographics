@@ -2,6 +2,8 @@
 # The purpose of this script is to test whether the output from my `bootstrap_replicates`
 # and `se_from_bootstrap` functions match the SEs from the widely accepted 
 # `survey` package
+# Update: they do!! 🎉
+# TODO: add this benchmark to dataduck itself
 #
 # ----- STEP 0: Setup and config ----- #
 
