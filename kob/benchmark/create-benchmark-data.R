@@ -71,7 +71,6 @@ create_benchmark_sample <- function(
   # Ensure the output_dir_path already exists. If it doesn't, create it.
   dir.create(output_dir_path, recursive = TRUE, showWarnings = FALSE)
   
-  
   # Connect to DB; assign alias to table
   con <- dbConnect(duckdb::duckdb(), db_path)
   ipums_db <- tbl(con, db_table_name)
@@ -112,7 +111,7 @@ create_benchmark_sample <- function(
   
   # Write the sampled tb to `output_db_path`
   output_db_con <- dbConnect(duckdb::duckdb(), output_db_path)
-  copy_to(output_db_con, ipums_sample_tb, "ipums_sample", overwrite = TRUE)
+  copy_to(output_db_con, ipums_sample_tb, "ipums_sample", overwrite = TRUE, temporary = FALSE)
   if(all_exist(output_db_path)) {
     message(glue("✅ Saved benchmark db of {year} data with {n_strata} strata to {output_db_path}."))
   } else {
