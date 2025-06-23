@@ -71,7 +71,7 @@ create_benchmark_sample <- function(
 
   # Sample {`n_strata`} strata from {`year`} data where GQ ∈ [0,1,2]
   strata_sample <- ipums_db |> 
-    filter(YEAR == year, GQ %in% c(0, 1, 2)) |> 
+    filter(YEAR == year) |> 
     distinct(STRATA) |> 
     arrange(sql("RANDOM()")) |>
     head(n_strata) |>
