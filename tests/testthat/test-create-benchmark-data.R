@@ -101,26 +101,29 @@ test_that("create_benchmark_sample regenerates outputs when force = TRUE", {
   expect_true(any(grepl("Saved benchmark db", messages)))
 })
 
-# Expect following warning: 
-# Warning message:
-#   In create_benchmark_sample(year = 2019, n_strata = 2352, db_path = "data/db/ipums.duckdb",  :
-#                                ❗ Only 2351 strata available in 2019, but n_strata = 2352.
-create_benchmark_sample(
-  year = 2019,
-  n_strata = 2352,
-  db_path = "data/db/ipums.duckdb",
-  db_table_name = "ipums_processed",
-  force = TRUE
-)
+test_that("create_benchmark_sample warns when n_strata exceeds available strata", {
+  expect_warning(
+    create_benchmark_sample(
+      year = 2019,
+      n_strata = 999999999999, # Obviously nonexistent
+      db_path = "data/db/ipums.duckdb",
+      db_table_name = "ipums_processed",
+      force = TRUE
+    ),
+    regexp = "strata available in 2019.*but n_strata"
+  )
+})
 
-# Expect following warning:
-# Warning message:     
-#   In create_benchmark_sample(year = 2018, n_strata = 3, db_path = "data/db/ipums.duckdb",  :
-#                                ❗ The requested year 2018 does not exist in the source data.
-create_benchmark_sample(
-  year = 2018,
-  n_strata = 3,
-  db_path = "data/db/ipums.duckdb",
-  db_table_name = "ipums_processed",
-  force = TRUE
-)
+test_that("create_benchmark_sample warns when year does not exist in data", {
+  expect_warning(
+    create_benchmark_sample(
+      year = 2100, # I hope to live to see this year of ACS data
+      n_strata = 3,
+      db_path = "data/db/ipums.duckdb",
+      db_table_name = "ipums_processed",
+      force = TRUE
+    ),
+    regexp = "requested year 2100 does not exist"
+  )
+})
+
