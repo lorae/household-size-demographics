@@ -49,12 +49,13 @@ create_benchmark_sample <- function(
     n_strata = 3,
     db_path = "data/db/ipums.duckdb", # The name of the DB with the source data
     db_table_name = "ipums_processed", # Name of the table within the DB of source data
+    output_dir = "kob/cache", # Optional parent dir where outputs are saved. Used for testing
     force = FALSE # TRUE will recalculate benchmark sample, even if it already exists in cache
 ) {
   # Path to the cache where the output will be stored
-  output_dir = glue("kob/cache/benchmark_sample_{year}_{n_strata}") |> as.character()
-  output_tb_path <- glue("{output_dir}/tb.rds") |> as.character()
-  output_db_path <- glue("{output_dir}/db.duckdb") |> as.character()
+  output_dir_path = glue("{output_dir}/benchmark_sample_{year}_{n_strata}") |> as.character()
+  output_tb_path <- glue("{output_dir_path}/tb.rds") |> as.character()
+  output_db_path <- glue("{output_dir_path}/db.duckdb") |> as.character()
   
   outputs_exist <- all_exist(output_db_path, output_tb_path)
   
@@ -67,8 +68,8 @@ create_benchmark_sample <- function(
   # Continue
   message("⚙️  Generating benchmark files...")
   
-  # Ensure the output_dir already exists. If it doesn't, create it.
-  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+  # Ensure the output_dir_path already exists. If it doesn't, create it.
+  dir.create(output_dir_path, recursive = TRUE, showWarnings = FALSE)
   
   
   # Connect to DB; assign alias to table
