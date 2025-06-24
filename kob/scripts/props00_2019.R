@@ -30,7 +30,7 @@ prop_vars <- c(
 formulas <- lapply(prop_vars, function(var) as.formula(paste0("~", var)))
 
 # Set up parallel plan (this will use available cores)
-options(future.globals.maxSize = 10 * 1024^3)
+options(future.globals.maxSize = 30 * 1024^3)
 plan(multicore)
 
 tic("Parallelized population proportions (forked)")
