@@ -7,6 +7,7 @@ library(duckdb)
 library(dplyr)
 library(furrr)
 library(tibble)
+library(purrr)
 
 # Load the dataduck package
 devtools::load_all("../dataduck")
@@ -19,7 +20,7 @@ source("kob/benchmark/create-benchmark-data.R")
 # of the script before expanding to the entire survey dataset
 
 cache_path <- "kob/cache"
-n_strata <- 2
+n_strata <- 10
 year <- 2019
 
 create_benchmark_sample(
@@ -28,7 +29,7 @@ create_benchmark_sample(
   db_path = "data/db/ipums.duckdb",
   db_table_name = "ipums_processed",
   output_dir = cache_path,
-  force = TRUE
+  force = FALSE
 )
 
 # TODO: have create_benchmark_sample always output paths, so I can call them
@@ -36,28 +37,37 @@ create_benchmark_sample(
 tb_path <- glue("{cache_path}/benchmark_sample_{year}_{n_strata}/tb.rds")
 ipums_tb <- readRDS(tb_path)
 
+# Initialize a formula. Keeping it simple for now.
+formula <- NUMPREC ~ -1 + tenure
+
 model <- lm(
   data = ipums_tb |> filter(YEAR == year & GQ %in% c(0,1,2)),
   weights = PERWT,
-  formula = NUMPREC ~ -1 + tenure # keep it simple for now; add complexity once it works
+  formula = formula
 )
 
 model$coefficients
 
 # Create wrapper function for running above regression model, so it can be bootstrapped
 # and replicated using se_from_bootstrap() from `dataduck`
-run_reg <- function(wt_col = "PERWT") {
-  
-  # Defensive: does wt_col exist in ipums_tb?
-  if (!wt_col %in% names(ipums_tb)) {
+run_reg <- function(
+    wt_col = "PERWT",
+    data = ipums_tb |> filter(GQ %in% c(0, 1, 2)),
+    formula
+) {
+  # Defensive: does `wt_col` exist in `data`?
+  if (!wt_col %in% names(data)) {
     stop(glue::glue("Column '{wt_col}' not found in the data."))
   }
   
+  # Add temporary weight column
+  data$.__wt__ <- data[[wt_col]]
+  
   # Run weighted linear regression
   model <- lm(
-    formula = NUMPREC ~ -1 + tenure,
-    data = ipums_tb,
-    weights = ipums_tb[[wt_col]]
+    formula = formula,
+    data = data,
+    weights = .__wt__
   )
   
   # Return tidy-ish dataframe of coefficients
@@ -70,36 +80,41 @@ run_reg <- function(wt_col = "PERWT") {
 }
 
 # Dev only: example implementation
-run_reg() # default wt_col which is PERWT
-run_reg(wt_col = "PERWT") # define explicitly
-run_reg(wt_col = "REPWTP1") # run using first repwt column
-
-#################### all below this line is not yet refactored
-
-prop_vars <- c(
-  "RACE_ETH_bucket", 
-  "AGE_bucket", 
-  "EDUC_bucket",
-  "INCTOT_cpiu_2010_bucket", 
-  "us_born", 
-  "tenure", 
-  "gender",
-  "cpuma"
+run_reg(
+  wt_col = "PERWT",
+  data = ipums_tb |> filter(GQ %in% c(0,1,2)),
+  formula = formula
 )
 
-tic("Run model 00")
-model00_2019 <- svyglm(NUMPREC ~ -1 + 
-                         RACE_ETH_bucket +
-                         AGE_bucket +
-                         EDUC_bucket +
-                         INCTOT_cpiu_2010_bucket +
-                         us_born +
-                         tenure +
-                         gender + 
-                         cpuma, design = design_2019_survey)
+run_reg(
+  wt_col = "REPWTP1", # First repwt column
+  data = ipums_tb |> filter(GQ %in% c(0,1,2)),
+  formula = formula
+)
+
+# I estimate that this will take about 9 minutes to run this on the full sample 
+# using this simple reg.
+tic("bootstrap 80 replicates")
+input_bootstrap <- bootstrap_replicates(
+  data = ipums_tb |> filter(GQ %in% c(0,1,2)),
+  f = run_reg,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", 1:80),
+  id_cols = "value",
+  formula = formula
+)
+toc()
+
+tic("use sdr replicates to calculate SEs")
+model_output <- se_from_bootstrap(
+  bootstrap = input_bootstrap,
+  constant = 4/80,
+  se_cols = c("coef")
+)
+model_output
 toc()
 
 # Save results in throughput
-tic("Save model00_2019 to kob/throughput")
-saveRDS(model00_2019, file = "kob/throughput/model00_2019.rds")
+tic("Save model to kob/throughput")
+saveRDS(model_output, file = "kob/throughput/model00_2019.rds")
 toc()
