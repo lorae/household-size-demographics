@@ -15,14 +15,15 @@ devtools::load_all("../dataduck")
 # Load the create-benchmark-data and helper functions
 source("kob/benchmark/create-benchmark-data.R")
 
-# ----- STEP 1: Read in data ----- #
-# For now we're going to use a subset of the 2019 data to test functionality
-# of the script before expanding to the entire survey dataset
-
+# ----- STEP 1: Initialize values ----- #
 cache_path <- "kob/cache"
 n_strata <- 10
 year <- 2019
+formula <- NUMPREC ~ -1 + tenure + gender # for regression
 
+# ----- STEP 2: Read in data ----- #
+# For now we're going to use a subset of the 2019 data to test functionality
+# of the script. This is temporary and will be replaced with the full ipums_tb
 create_benchmark_sample(
   year = year,
   n_strata = n_strata,
@@ -37,23 +38,13 @@ create_benchmark_sample(
 tb_path <- glue("{cache_path}/benchmark_sample_{year}_{n_strata}/tb.rds")
 ipums_tb <- readRDS(tb_path)
 
-# Initialize a formula. Keeping it simple for now.
-formula <- NUMPREC ~ -1 + tenure
-
-model <- lm(
-  data = ipums_tb |> filter(YEAR == year & GQ %in% c(0,1,2)),
-  weights = PERWT,
-  formula = formula
-)
-
-model$coefficients
-
-# Create wrapper function for running above regression model, so it can be bootstrapped
+# ----- Step 3: Define regression wrapper function ----- #
+# Create wrapper function for running regression model, so it can be bootstrapped
 # and replicated using se_from_bootstrap() from `dataduck`
 run_reg <- function(
     wt_col = "PERWT",
     data = ipums_tb |> filter(GQ %in% c(0, 1, 2)),
-    formula
+    formula = NUMPREC ~ -1 + tenure
 ) {
   # Defensive: does `wt_col` exist in `data`?
   if (!wt_col %in% names(data)) {
@@ -92,6 +83,7 @@ run_reg(
   formula = formula
 )
 
+# ----- Step 4: Apple Successive Differences Replication using `dataduck` -----
 # I estimate that this will take about 9 minutes to run this on the full sample 
 # using this simple reg.
 tic("bootstrap 80 replicates")
