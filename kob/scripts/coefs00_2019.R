@@ -18,9 +18,9 @@ source("kob/benchmark/create-benchmark-data.R")
 
 # ----- STEP 1: Initialize values ----- #
 cache_path <- "kob/cache"
-n_strata <- 3
+n_strata <- 100
 year <- 2019
-formula <- NUMPREC ~ -1 + tenure + gender + cpuma # for regression
+formula <- NUMPREC ~ -1 + tenure # for regression
 
 # ----- STEP 2: Read in data ----- #
 # For now we're going to use a subset of the 2019 data to test functionality
@@ -56,21 +56,13 @@ design_2019_survey <- svrepdesign(
   data = ipums_tb
 )
 design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
-toc()
+toc(log = TRUE)
 
 tic("Run model 00")
-model00_2019 <- svyglm(NUMPREC ~ -1 + 
-                         RACE_ETH_bucket +
-                         AGE_bucket +
-                         EDUC_bucket +
-                         INCTOT_cpiu_2010_bucket +
-                         us_born +
-                         tenure +
-                         gender + 
-                         cpuma, design = design_2019_survey)
-toc()
+model00_2019 <- svyglm(formula, design = design_2019_survey)
+toc(log = TRUE)
 
 # Save results in throughput
 tic("Save model00_2019 to kob/throughput")
-saveRDS(model00_2019, file = "kob/throughput/model00_2019.rds")
-toc()
+#saveRDS(model00_2019, file = "kob/throughput/model00_2019.rds")
+toc(log = TRUE)
