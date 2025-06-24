@@ -18,7 +18,7 @@ source("kob/benchmark/create-benchmark-data.R")
 
 # ----- STEP 1: Initialize values ----- #
 cache_path <- "kob/cache"
-n_strata <- 100
+n_strata <- 3
 year <- 2019
 formula <- NUMPREC ~ -1 + tenure + gender + cpuma # for regression
 
@@ -40,72 +40,37 @@ tb_path <- glue("{cache_path}/benchmark_sample_{year}_{n_strata}/tb.rds")
 ipums_tb <- readRDS(tb_path)
 
 # ----- Step 3: Define regression wrapper function ----- #
-# Create wrapper function for running regression model, so it can be bootstrapped
-# and replicated using se_from_bootstrap() from `dataduck`
-run_reg <- function(
-    wt_col = "PERWT",
-    data = ipums_tb |> filter(GQ %in% c(0, 1, 2)),
-    formula = NUMPREC ~ -1 + tenure
-) {
-  # Defensive: does `wt_col` exist in `data`?
-  if (!wt_col %in% names(data)) {
-    stop(glue::glue("Column '{wt_col}' not found in the data."))
-  }
-  
-  design <- svydesign(
-    ids = ~1,
-    weights = as.formula(paste0("~", wt_col)),
-    data = data
-  )
-  
-  model <- svyglm(formula, design = design)
-  
-  # Return tidy-ish dataframe of coefficients
-  coefs <- broom::tidy(model) |> 
-    dplyr::select(term, estimate) |> 
-    dplyr::rename(value = term, coef = estimate)
-  
-  print("Regression complete.")
-  return(coefs)
-}
+# Read in the pre-subsetted survey
+# tic("Read 2019 survey design as RDS")
+# design_2019_survey <- readRDS("kob/throughput/design_2019_survey.rds")
+# toc()
 
-# Dev only: example implementation
-run_reg(
-  wt_col = "PERWT",
-  data = ipums_tb |> filter(GQ %in% c(0,1,2)),
-  formula = formula
+# Since we're running on a benchmark subset, we'll DIY the survey design
+tic("Design the 2019 survey")
+design_2019_survey <- svrepdesign(
+  weights = ~PERWT,
+  repweights = "REPWTP[0-9]+",  # regex pattern to match columns
+  type = "Fay",
+  rho = 0.5,
+  mse = TRUE,
+  data = ipums_tb
 )
-
-run_reg(
-  wt_col = "REPWTP1", # First repwt column
-  data = ipums_tb |> filter(GQ %in% c(0,1,2)),
-  formula = formula
-)
-
-# ----- Step 4: Apple Successive Differences Replication using `dataduck` -----
-# I estimate that this will take about 9 minutes to run this on the full sample 
-# using this simple reg.
-tic("bootstrap 80 replicates")
-input_bootstrap <- bootstrap_replicates(
-  data = ipums_tb |> filter(GQ %in% c(0,1,2)),
-  f = run_reg,
-  wt_col = "PERWT",
-  repwt_cols = paste0("REPWTP", 1:80),
-  id_cols = "value",
-  formula = formula
-)
+design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
 toc()
 
-tic("use sdr replicates to calculate SEs")
-model_output <- se_from_bootstrap(
-  bootstrap = input_bootstrap,
-  constant = 4/80,
-  se_cols = c("coef")
-)
-model_output
+tic("Run model 00")
+model00_2019 <- svyglm(NUMPREC ~ -1 + 
+                         RACE_ETH_bucket +
+                         AGE_bucket +
+                         EDUC_bucket +
+                         INCTOT_cpiu_2010_bucket +
+                         us_born +
+                         tenure +
+                         gender + 
+                         cpuma, design = design_2019_survey)
 toc()
 
 # Save results in throughput
-tic("Save model to kob/throughput")
-saveRDS(model_output, file = "kob/throughput/model00_2019.rds")
+tic("Save model00_2019 to kob/throughput")
+saveRDS(model00_2019, file = "kob/throughput/model00_2019.rds")
 toc()
