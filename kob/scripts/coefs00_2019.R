@@ -6,6 +6,7 @@ library(tictoc)
 library(duckdb)
 library(dplyr)
 library(furrr)
+library(tibble)
 
 # Load the dataduck package
 devtools::load_all("../dataduck")
@@ -19,9 +20,10 @@ source("kob/benchmark/create-benchmark-data.R")
 
 cache_path <- "kob/cache"
 n_strata <- 2
+year <- 2019
 
 create_benchmark_sample(
-  year = 2019,
+  year = year,
   n_strata = n_strata,
   db_path = "data/db/ipums.duckdb",
   db_table_name = "ipums_processed",
@@ -29,11 +31,48 @@ create_benchmark_sample(
   force = TRUE
 )
 
-db_path <- glue("{cache_path}/benchmark_sample_2019_{n_strata}/db.duckdb")
-con <- dbConnect(duckdb::duckdb(), db_path)
-ipums_db <- tbl(con, "ipums_sample")
+# TODO: have create_benchmark_sample always output paths, so I can call them
+# from a list rather than re-construct them here.
+tb_path <- glue("{cache_path}/benchmark_sample_{year}_{n_strata}/tb.rds")
+ipums_tb <- readRDS(tb_path)
 
-ipums_db |> head() |> collect() |> View() # Looks good
+model <- lm(
+  data = ipums_tb |> filter(YEAR == year & GQ %in% c(0,1,2)),
+  weights = PERWT,
+  formula = NUMPREC ~ -1 + tenure # keep it simple for now; add complexity once it works
+)
+
+model$coefficients
+
+# Create wrapper function for running above regression model, so it can be bootstrapped
+# and replicated using se_from_bootstrap() from `dataduck`
+run_reg <- function(wt_col = "PERWT") {
+  
+  # Defensive: does wt_col exist in ipums_tb?
+  if (!wt_col %in% names(ipums_tb)) {
+    stop(glue::glue("Column '{wt_col}' not found in the data."))
+  }
+  
+  # Run weighted linear regression
+  model <- lm(
+    formula = NUMPREC ~ -1 + tenure,
+    data = ipums_tb,
+    weights = ipums_tb[[wt_col]]
+  )
+  
+  # Return tidy-ish dataframe of coefficients
+  coefs <- coef(model) |>
+    as.data.frame() |>
+    tibble::rownames_to_column(var = "value") |>
+    dplyr::rename(coef = 2)
+  
+  return(coefs)
+}
+
+# Dev only: example implementation
+run_reg() # default wt_col which is PERWT
+run_reg(wt_col = "PERWT") # define explicitly
+run_reg(wt_col = "REPWTP1") # run using first repwt column
 
 #################### all below this line is not yet refactored
 
