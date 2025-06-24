@@ -43,5 +43,5 @@ toc()
 
 # Save results in throughput
 tic("Save model to kob/throughput")
-saveRDS(model_summary, file = glue("kob/throughput/model00_{year}_bedrooms_summary.rds"))
+saveRDS(model_summary, file = glue("kob/throughput/model00_{year}_bedrooms_summary-v2.rds"))
 toc(log = TRUE)
