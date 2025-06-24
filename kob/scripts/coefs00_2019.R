@@ -8,6 +8,7 @@ library(dplyr)
 library(furrr)
 library(tibble)
 library(purrr)
+library(broom)
 
 # Load the dataduck package
 devtools::load_all("../dataduck")
@@ -17,9 +18,9 @@ source("kob/benchmark/create-benchmark-data.R")
 
 # ----- STEP 1: Initialize values ----- #
 cache_path <- "kob/cache"
-n_strata <- 10
+n_strata <- 100
 year <- 2019
-formula <- NUMPREC ~ -1 + tenure + gender # for regression
+formula <- NUMPREC ~ -1 + tenure + gender + cpuma # for regression
 
 # ----- STEP 2: Read in data ----- #
 # For now we're going to use a subset of the 2019 data to test functionality
@@ -51,22 +52,20 @@ run_reg <- function(
     stop(glue::glue("Column '{wt_col}' not found in the data."))
   }
   
-  # Add temporary weight column
-  data$.__wt__ <- data[[wt_col]]
-  
-  # Run weighted linear regression
-  model <- lm(
-    formula = formula,
-    data = data,
-    weights = .__wt__
+  design <- svydesign(
+    ids = ~1,
+    weights = as.formula(paste0("~", wt_col)),
+    data = data
   )
   
-  # Return tidy-ish dataframe of coefficients
-  coefs <- coef(model) |>
-    as.data.frame() |>
-    tibble::rownames_to_column(var = "value") |>
-    dplyr::rename(coef = 2)
+  model <- svyglm(formula, design = design)
   
+  # Return tidy-ish dataframe of coefficients
+  coefs <- broom::tidy(model) |> 
+    dplyr::select(term, estimate) |> 
+    dplyr::rename(value = term, coef = estimate)
+  
+  print("Regression complete.")
   return(coefs)
 }
 
