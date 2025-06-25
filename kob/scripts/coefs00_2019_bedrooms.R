@@ -39,5 +39,5 @@ toc()
 
 # Save results in throughput
 tic("Save model to kob/throughput")
-saveRDS(model_summary, file = "kob/throughput/model00_2019_bedrooms_summary-v2.rds")
+saveRDS(model_summary, file = "kob/throughput/model00_2019_bedrooms_summary-v3.rds")
 toc(log = TRUE)
