@@ -134,9 +134,17 @@ coef_df <- bind_rows(intercept_row, non_intercepts)
 # and coef code.
 # TODO: once I match the KOB results, tie in the actual resutls from these scripts
 # in a pipeline
-weighted_2000 <- c_only |> filter(year == 2000) |>
-  group_by(EDUC_bucket, HHINCOME_bucket) %>%
-  summarise(weighted_count_2000 = sum(PERWT), .groups = "drop")
+weighted_2000_EDUC_bucket <- c_only |> filter(year == 2000) |>
+  group_by(EDUC_bucket) |>
+  summarise(weighted_count_2000 = sum(PERWT), .groups = "drop") |>
+  mutate(varname = "EDUC_bucket") |>
+  rename(value = EDUC_bucket) |>
+  select(varname, value, weighted_count_2000)
+# ^^ the above is just the part with educ_bucket. It doesn't even yet have
+# percentages in it; only weighted counts. 
+# TODO: I need to do the HHINCOME_bucket 
+# version too. Since it's a solid numer of lines, I'll refactor next using the dataduck
+# function crosstab_percent, which was build for this purpose
 
 weighted_2019 <- c_only |> filter(year == 2019) %>%
   group_by(EDUC_bucket, HHINCOME_bucket) %>%
