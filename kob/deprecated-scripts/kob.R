@@ -134,46 +134,43 @@ coef_df <- bind_rows(intercept_row, non_intercepts)
 # on the output of that, insted of make a "fake" output? I want to test this as
 # a proof-of-concept. Once I show it works, I'll incorporate in the actual props 
 # and coef code.
-weighted_2000 <- bind_rows(
-  # Data frame with the HHINCOME_bucket
-  crosstab_percent(
-    data = c_only |> filter(year == 2000),
-    wt_col = "PERWT",
-    group_by = c("HHINCOME_bucket"),
-    percent_group_by = c(),
-    every_combo = TRUE
-  ) |>
+get_prop_table <- function(year) {
+  hhinc_tbl <- 
+    crosstab_percent(
+      data = c_only |> filter(year == year),
+      wt_col = "PERWT",
+      group_by = c("HHINCOME_bucket"),
+      percent_group_by = c(),
+      every_combo = TRUE
+    ) |>
     rename(value = HHINCOME_bucket) |>
-    mutate(varname = "HHINCOME_bucket"),
-  crosstab_percent(
-    data = c_only |> filter(year == 2000),
-    wt_col = "PERWT",
-    group_by = c("EDUC_bucket"),
-    percent_group_by = c(),
-    every_combo = TRUE
-  ) |>
-    rename(value = EDUC_bucket) |>
-    mutate(varname = "EDUC_bucket"),
-)
+    mutate(varname = "HHINCOME_bucket")
 
-weighted_2019 <- bind_rows(
-  # Data frame with the HHINCOME_bucket
-  crosstab_percent(
-    data = c_only |> filter(year == 2019),
-    wt_col = "PERWT",
-    group_by = c("HHINCOME_bucket"),
-    percent_group_by = c(),
-    every_combo = TRUE
-  ) |>
-    rename(value = HHINCOME_bucket) |>
-    mutate(varname = "HHINCOME_bucket"),
-  crosstab_percent(
-    data = c_only |> filter(year == 2019),
-    wt_col = "PERWT",
-    group_by = c("EDUC_bucket"),
-    percent_group_by = c(),
-    every_combo = TRUE
-  ) |>
-    rename(value = EDUC_bucket) |>
-    mutate(varname = "EDUC_bucket"),
-)
+  educ_tbl <- 
+    crosstab_percent(
+      data = c_only |> filter(year == year),
+      wt_col = "PERWT",
+      group_by = c("EDUC_bucket"),
+      percent_group_by = c(),
+      every_combo = TRUE
+    ) |>
+      rename(value = EDUC_bucket) |>
+      mutate(varname = "EDUC_bucket")
+  
+  output <- bind_rows(hhinc_tbl, educ_tbl) |>
+    mutate(prop = percent/100) |>
+    select(-percent, -weighted_count, -count) |>
+    rename(!!paste0("prop_", year) := prop)
+  
+  return(output)
+}
+
+prop_2000 <- get_prop_table(2000)
+prop_2019 <- get_prop_table(2019)
+
+### Now we combine the prop tables with the coef table to get a combined, ready for
+# KOB, table
+
+ready_for_kob <-
+  left_join(coef_df, prop_2000, by = c("varname", "value")) %>%
+  left_join(., prop_2019, by = c("varname", "value"))
