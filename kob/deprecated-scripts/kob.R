@@ -19,6 +19,7 @@ c_only <- readRDS(paste0(load_path, "/c-only.rds"))
 e_only <- readRDS(paste0(load_path, "/e-only.rds"))
 u_only <- readRDS(paste0(load_path, "/u-only.rds"))
 
+# TODO: if needed, move this function elsewhere to declutter the script
 # Function for one hot encoding `varlist`categorical variables in `data`
 one_hot_encode <- function(data, varlist, prefixes) {
   stopifnot(length(varlist) == length(prefixes))  # sanity check
@@ -127,6 +128,12 @@ non_intercepts <- coef_df |>
 coef_df <- bind_rows(intercept_row, non_intercepts)
 
 # Compute weighted counts for 2000 and 2019
+# simulate what I'll get from propsXX_YYYY.R. Why not actually run this script
+# on the output of that, insted of make a "fake" output? I want to test this as
+# a proof-of-concept. Once I show it works, I'll incorporate in the actual props 
+# and coef code.
+# TODO: once I match the KOB results, tie in the actual resutls from these scripts
+# in a pipeline
 weighted_2000 <- c_only |> filter(year == 2000) |>
   group_by(EDUC_bucket, HHINCOME_bucket) %>%
   summarise(weighted_count_2000 = sum(PERWT), .groups = "drop")
