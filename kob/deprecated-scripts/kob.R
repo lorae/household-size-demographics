@@ -1,3 +1,9 @@
+# The purpose of this script is to manually produce a kob analysis that exactly
+# matches the results of the oaxaca function. Over time this script will be gradually
+# refactored and functionalized until it is a fully validated working function that
+# can be applied to the outputs of the coefXX_YYYY_*.R and propsXX_YYYY.R scripts.
+# Everything aside from SEs will be validated.
+
 # ----- STEP 0: Configuration ----- #
 
 library(tibble)
@@ -68,11 +74,11 @@ c_only <- c_only |>
 # Compute linear regression results for 2000 and 2019
 model_2000 <- lm(data = c_only |> filter(year == 2000),
                  weights = PERWT,
-                 formula = NUMPREC ~ -1 + EDUC_bucket + -1 + HHINCOME_bucket)
+                 formula = NUMPREC ~ EDUC_bucket + HHINCOME_bucket)
 
 model_2019 <- lm(data = c_only |> filter(year == 2019),
                  weights = PERWT,
-                 formula = NUMPREC ~ -1 + EDUC_bucket + -1 + HHINCOME_bucket)
+                 formula = NUMPREC ~ EDUC_bucket + HHINCOME_bucket)
 
 coef_df <- full_join(
   enframe(model_2000$coefficients, name = "name", value = "mean_2000"),
