@@ -182,7 +182,7 @@ kob <- kob |>
       name == "(Intercept)" ~ mean_2019 - mean_2000,
       TRUE ~ NA_real_
     ),
-    c = mean_2019 - mean_2000*prop_2000,
+    c = prop_2000*(mean_2019 - mean_2000),
     e = mean_2019*(prop_2019 - prop_2000)
   )
 
@@ -190,6 +190,9 @@ u = sum(kob$u, na.rm = TRUE)
 c = sum(kob$c, na.rm = TRUE)
 e = sum(kob$e, na.rm = TRUE)
 u + c + e
+
+# Does it match the chagne in hh size?
+c_only_oaxaca$y
 
 c_only_oaxaca$threefold$overall
 
