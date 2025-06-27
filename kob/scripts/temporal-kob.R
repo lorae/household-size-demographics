@@ -18,11 +18,39 @@ devtools::load_all("../dataduck")
 source("kob/utils/counterfactual-tools.R") # Includes function for counterfactual calculation
 
 # ----- Step 2: Import and wrangle data ----- #
+# In this refactor, I replace the entire data set with smaller benchmark datasets,
+# so that the code runs more quickly locally.
 
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
+# Load the script for creating benchmark samples
+source("kob/benchmark/create-benchmark-data.R")
 
-ipums_db <- ipums_db |>
+# Ensure the benchmarks exist
+create_benchmark_sample(
+  year = 2000,
+  n_strata = 3,
+  db_path = "data/db/ipums.duckdb",
+  db_table_name = "ipums_processed",
+  force = FALSE
+)
+
+create_benchmark_sample(
+  year = 2019,
+  n_strata = 3,
+  db_path = "data/db/ipums.duckdb",
+  db_table_name = "ipums_processed",
+  force = FALSE
+)
+
+# Read in the benchmarks
+# TODO: make this step happen when create_benchmark_smaple is run. Perhaps rename
+# to load_benchmark_sample. Also, add in a message that says where the path is
+# to the file that was just loaded.
+ipums_2000 <- readRDS("kob/cache/benchmark_sample_2000_3/tb.rds")
+ipums_2019 <- readRDS("kob/cache/benchmark_sample_2019_3/tb.rds")
+
+ipums_tb <- bind_rows(ipums_2000, ipums_2019)
+
+ipums_tb <- ipums_tb |>
   mutate(
     tenure = ifelse(OWNERSHP == 1, "homeowner", "renter"),
     sex = ifelse(SEX == 1, "male", "female")
@@ -43,12 +71,12 @@ ipums_db <- ipums_db |>
 
 # These two models take about a two minutes to compute. No CPUMAs since they are difficult
 # to handle. 8 Gb, whoa!
-model_2000 <- lm(data = ipums_db |> filter(YEAR == 2000 & GQ %in% c(0,1,2)),
+model_2000 <- lm(data = ipums_tb |> filter(YEAR == 2000 & GQ %in% c(0,1,2)),
                  weights = PERWT,
                  formula = NUMPREC ~ tenure
 )
 
-model_2019 <- lm(data = ipums_db |> filter(YEAR == 2019 & GQ %in% c(0,1,2)),
+model_2019 <- lm(data = ipums_tb |> filter(YEAR == 2019 & GQ %in% c(0,1,2)),
                  weights = PERWT,
                  formula = NUMPREC ~ tenure
 )
@@ -109,37 +137,37 @@ get_weighted_count <- function(varname, value, year, name = NULL) {
   # Manual exceptions for RACE_ETH_bucket:us_bornTRUE interaction terms
   if (!is.null(name)) {
     if (name == "RACE_ETH_bucketAIAN:us_bornTRUE") {
-      return(ipums_db |>
+      return(ipums_tb |>
                filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "AIAN", us_born == TRUE) |>
                summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
                collect() |>
                pull(weighted_count))
     } else if (name == "RACE_ETH_bucketBlack:us_bornTRUE") {
-      return(ipums_db |>
+      return(ipums_tb |>
                filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Black", us_born == TRUE) |>
                summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
                collect() |>
                pull(weighted_count))
     } else if (name == "RACE_ETH_bucketHispanic:us_bornTRUE") {
-      return(ipums_db |>
+      return(ipums_tb |>
                filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Hispanic", us_born == TRUE) |>
                summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
                collect() |>
                pull(weighted_count))
     } else if (name == "RACE_ETH_bucketMultiracial:us_bornTRUE") {
-      return(ipums_db |>
+      return(ipums_tb |>
                filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Multiracial", us_born == TRUE) |>
                summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
                collect() |>
                pull(weighted_count))
     } else if (name == "RACE_ETH_bucketOther:us_bornTRUE") {
-      return(ipums_db |>
+      return(ipums_tb |>
                filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Other", us_born == TRUE) |>
                summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
                collect() |>
                pull(weighted_count))
     } else if (name == "RACE_ETH_bucketWhite:us_bornTRUE") {
-      return(ipums_db |>
+      return(ipums_tb |>
                filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "White", us_born == TRUE) |>
                summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
                collect() |>
@@ -157,7 +185,7 @@ get_weighted_count <- function(varname, value, year, name = NULL) {
   }
   
   # Default case
-  ipums_db |>
+  ipums_tb |>
     filter(YEAR == !!year, GQ %in% c(0, 1, 2)) |>
     filter(!!sym(varname) == !!value) |>
     summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
@@ -179,12 +207,12 @@ coef <- coef_df |>
   )
 
 
-pop_2000 <- ipums_db |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |> 
+pop_2000 <- ipums_tb |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |> 
   summarize(weighted_count = sum(PERWT), na.rm = TRUE) |>
   collect() |>
   pull(weighted_count)
   
-pop_2019 <- ipums_db |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |> 
+pop_2019 <- ipums_tb |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |> 
   summarize(weighted_count = sum(PERWT), na.rm = TRUE) |>
   collect() |>
   pull(weighted_count)
@@ -214,10 +242,10 @@ c
 
 sum(u,e,c)
 
-lm(data = ipums_db |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)), 
+lm(data = ipums_tb |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)), 
    formula = NUMPREC ~ 1,
    weights = PERWT)$coefficients -> mean_hhsize_2000
-lm(data = ipums_db |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)), 
+lm(data = ipums_tb |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)), 
    formula = NUMPREC ~ 1,
    weights = PERWT)$coefficients -> mean_hhsize_2019
 
