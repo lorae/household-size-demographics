@@ -182,17 +182,38 @@ kob <- kob |>
       name == "(Intercept)" ~ mean_2019 - mean_2000,
       TRUE ~ NA_real_
     ),
-    c = prop_2000*(mean_2019 - mean_2000),
-    e = mean_2019*(prop_2019 - prop_2000)
+    i = (prop_2019 - prop_2000) * (mean_2019 - mean_2000),
+    e = mean_2019*(prop_2019 - prop_2000),
+    c = prop_2000*(mean_2019 - mean_2000)
   )
 
 u = sum(kob$u, na.rm = TRUE)
 c = sum(kob$c, na.rm = TRUE)
 e = sum(kob$e, na.rm = TRUE)
+i = sum(kob$i, na.rm = TRUE)
 u + c + e
+i + c + e
 
 # Does it match the chagne in hh size?
 c_only_oaxaca$y
 
-c_only_oaxaca$threefold$overall
+c_only_2000 <- c_only |> filter(year == 2000)
+c_only_2019 <- c_only |> filter(year == 2019)
+y_2000 <- weighted.mean(c_only_2000$NUMPREC, c_only_2000$PERWT)
+y_2019 <- weighted.mean(c_only_2019$NUMPREC, c_only_2019$PERWT)
+y_2000 - y_2019 -> diff
 
+sprintf("%.10f", diff)
+c_only_oaxaca$y$y.diff %>% sprintf("%.10f", .)
+
+# Puzzle: why doesn't e + c + u = diff?
+# I've validated above that diff is definitely correct.
+
+# Try  this instead. following page 439 of Blinder (1969)
+y2019_int <- kob |> filter(name == "(Intercept)") |> pull(mean_2000)
+y2019_coef <- kob |>
+  mutate(x = mean_2019 * prop_2019) |>
+  summarize(output = sum(x, na.rm = TRUE))
+y2019_int
+y2019_coef
+y2019_int + y2019_coef
