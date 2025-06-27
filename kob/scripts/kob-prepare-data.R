@@ -1,6 +1,8 @@
 # kob/scripts/kob-prepare-data
 # The purpose of this script is to use outputs of regression to prepare data for input into 
 # the kob pipeline in kob-function.R
+# TODO: This needs a serious refactor to be compatible with the currently computing,
+# soon to arrive results from scripts such as coefs00_*.R and props00_*.R
 
 # ----- Step 1: Source helper functions ----- #
 
