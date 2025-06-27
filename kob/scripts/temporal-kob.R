@@ -45,14 +45,12 @@ ipums_db <- ipums_db |>
 # to handle. 8 Gb, whoa!
 model_2000 <- lm(data = ipums_db |> filter(YEAR == 2000 & GQ %in% c(0,1,2)),
                  weights = PERWT,
-                 formula = NUMPREC ~ RACE_ETH_bucket*us_born + AGE_bucket + sex  +
-                   EDUC_bucket + INCTOT_cpiu_2010_bucket + tenure
+                 formula = NUMPREC ~ tenure
 )
 
 model_2019 <- lm(data = ipums_db |> filter(YEAR == 2019 & GQ %in% c(0,1,2)),
                  weights = PERWT,
-                 formula = NUMPREC ~ RACE_ETH_bucket*us_born + AGE_bucket + sex  +
-                  EDUC_bucket + INCTOT_cpiu_2010_bucket + tenure
+                 formula = NUMPREC ~ tenure
 )
 
 coef_df <- full_join(
@@ -207,14 +205,14 @@ coef <- coef |>
     c_component = (mean_2019 - mean_2000)*prop_2000
   )
 
-#u <- intercept_2019 - intercept_2000
+u <- intercept_2019 - intercept_2000
 e <- sum(coef$e_component, na.rm = TRUE)
 c <- sum(coef$c_component, na.rm = TRUE)
-#u
+u
 e
 c
 
-sum(e,c) #sum(u,e,c)
+sum(u,e,c)
 
 lm(data = ipums_db |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)), 
    formula = NUMPREC ~ 1,
