@@ -15,7 +15,7 @@ library("tibble")
 # ----- Step 1: Source helper functions ----- #
 
 devtools::load_all("../dataduck")
-source("src/utils/counterfactual-tools.R") # Includes function for counterfactual calculation
+source("kob/utils/counterfactual-tools.R") # Includes function for counterfactual calculation
 
 # ----- Step 2: Import and wrangle data ----- #
 
