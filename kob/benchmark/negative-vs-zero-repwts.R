@@ -24,16 +24,19 @@ devtools::load_all("../dataduck")
 source("kob/benchmark/create-benchmark-data.R")
 
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
+n_strata <- 200
+
 create_benchmark_sample(
   year = 2019,
-  n_strata = 3,
+  n_strata = n_strata,
   db_path = "data/db/ipums.duckdb",
   db_table_name = "ipums_processed",
   force = FALSE
 )
 
 # Load the tibble. There's also a db available, but we ignore that for now.
-ipums_2019_sample_tb <- readRDS("kob/cache/benchmark_sample_2019_3/tb.rds")
+ipums_2019_sample_tb <- readRDS(glue::glue("kob/cache/benchmark_sample_2019_{n_strata}/tb.rds"))
+print(nrow(ipums_2019_sample_tb))
 
 # ----- Step 2: Create Survey Design and Benchmark Output ----- #
 # Build a survey design object using replicate weights
@@ -55,20 +58,23 @@ toc()
 
 # ----- STEP 3: Verify that the selected sample has negative repwts ----- #
 
-any(
+has_negative_repwt <- any(
   purrr::map_lgl(
     dplyr::select(ipums_2019_sample_tb, dplyr::starts_with("REPWT")),
     ~ any(.x < 0, na.rm = TRUE)
   )
 )
 
-# If false, re-run the above code with more strata until true.
+if (!has_negative_repwt) {
+  stop("❌ No negative REPWTP values found in this sample. Please re-run the benchmark with more strata until this error is not encountered.")
+}
 
-sum(
+print("Number of negative REPWTP observations in this sample:")
+num_neg_wts <- sum(
   dplyr::select(ipums_2019_sample_tb, dplyr::starts_with("REPWT")) < 0,
   na.rm = TRUE
 )
-
+print(num_neg_wts)
 
 # ----- STEP 4: Run Custom Point Estimate Pipeline ----- #
 # Filter for matching GQ criteria
