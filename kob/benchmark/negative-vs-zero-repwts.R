@@ -43,7 +43,7 @@ formula <- BEDROOMS ~ -1 +
   cpuma
 
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
-n_strata <- 3
+n_strata <- 50
 
 create_benchmark_sample(
   year = 2019,
@@ -115,36 +115,32 @@ my_reg_function <- function(data, wt_col, formula) {
 
 # Alternative custom regression function using glmnet and sparse matrix
 my_reg_function_v2 <- function(data, wt_col, formula) {
-  # Build sparse model matrix
+  # Build sparse design matrix
   X <- model.matrix(formula, data) |> as("dgCMatrix")
   
   # Extract outcome and weights
   y <- data[[as.character(formula[[2]])]]
   wts <- data[[wt_col]]
   
-  # Fit model using glmnet with no regularization
-  fit <- glmnet(
-    x = X,
-    y = y,
-    weights = wts,
-    intercept = FALSE,
-    alpha = 0,
-    lambda = 0,
-    standardize = FALSE
-  )
+  # Construct diagonal weight matrix (sqrt weights for WLS)
+  W <- Diagonal(x = sqrt(wts))
   
-  # Extract coefficient vector
-  coef_vec <- coef(fit)
+  # Apply weights
+  Xw <- W %*% X
+  yw <- W %*% y
   
-  # Convert to tibble, remove intercept row
+  # Solve (X'WX)^(-1) X'Wy
+  coef_vec <- solve(crossprod(Xw), crossprod(Xw, yw))
+  
+  # Package results
   coef_df <- tibble::tibble(
     term = rownames(coef_vec),
     estimate = as.numeric(coef_vec)
-  ) |>
-    dplyr::filter(term != "(Intercept)")
+  )
   
   return(coef_df)
 }
+
 
 # Run custom estimate
 actual_v1 <- my_reg_function(
