@@ -21,6 +21,8 @@ library(purrr)
 library(rlang)
 library(parsnip)
 library(workflows)
+library(Matrix)
+library(glmnet)
 
 # Load the dataduck package
 devtools::load_all("../dataduck")
@@ -111,6 +113,39 @@ my_reg_function <- function(data, wt_col, formula) {
   broom::tidy(fit_obj) |> select(term, estimate)
 }
 
+# Alternative custom regression function using glmnet and sparse matrix
+my_reg_function_v2 <- function(data, wt_col, formula) {
+  # Build sparse model matrix
+  X <- model.matrix(formula, data) |> as("dgCMatrix")
+  
+  # Extract outcome and weights
+  y <- data[[as.character(formula[[2]])]]
+  wts <- data[[wt_col]]
+  
+  # Fit model using glmnet with no regularization
+  fit <- glmnet(
+    x = X,
+    y = y,
+    weights = wts,
+    intercept = FALSE,
+    alpha = 0,
+    lambda = 0,
+    standardize = FALSE
+  )
+  
+  # Extract coefficient vector
+  coef_vec <- coef(fit)
+  
+  # Convert to tibble, remove intercept row
+  coef_df <- tibble::tibble(
+    term = rownames(coef_vec),
+    estimate = as.numeric(coef_vec)
+  ) |>
+    dplyr::filter(term != "(Intercept)")
+  
+  return(coef_df)
+}
+
 # Run custom estimate
 actual_v1 <- my_reg_function(
   data = filtered_tb,
@@ -118,10 +153,23 @@ actual_v1 <- my_reg_function(
   formula = formula
 )
 
+actual_v2 <- my_reg_function_v2(
+  data = filtered_tb,
+  wt_col = "PERWT",
+  formula = formula
+)
+
 # Confirm that estimates match
+expected_df <- tibble::tibble(
+  term = names(model_expected$coefficients),
+  estimate = as.numeric(model_expected$coefficients)
+) |> arrange(term)
+
+actual_df <- actual_v2 |> arrange(term)
+
 stopifnot(all.equal(
-  actual_v1$estimate,
-  unname(model_expected$coefficients),
+  expected_df,
+  actual_df,
   tolerance = 1e-6
 ))
 
