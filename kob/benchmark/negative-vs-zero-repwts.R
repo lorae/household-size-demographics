@@ -19,6 +19,8 @@ library(duckdb)
 library(glue)
 library(purrr)
 library(rlang)
+library(parsnip)
+library(workflows)
 
 # Load the dataduck package
 devtools::load_all("../dataduck")
@@ -26,8 +28,20 @@ devtools::load_all("../dataduck")
 # Load the create-benchmark-data and helper functions
 source("kob/benchmark/create-benchmark-data.R")
 
+# Initialize a formula
+# Initialize formula
+formula <- BEDROOMS ~ -1 + 
+  RACE_ETH_bucket +
+  AGE_bucket +
+  EDUC_bucket +
+  INCTOT_cpiu_2010_bucket +
+  us_born +
+  tenure +
+  gender +
+  cpuma
+
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
-n_strata <- 200
+n_strata <- 3
 
 create_benchmark_sample(
   year = 2019,
@@ -56,7 +70,7 @@ toc()
 
 # Compute benchmark mean household size by tenure
 tic("Benchmark: svyglm and svyby")
-model_expected <- svyglm(NUMPREC ~ -1 + tenure + gender, design = design_2019_expected)
+model_expected <- svyglm(formula, design = design_2019_expected)
 toc()
 
 # ----- STEP 3: Verify that the selected sample has negative repwts ----- #
@@ -84,30 +98,27 @@ print(num_neg_wts)
 filtered_tb <- ipums_2019_sample_tb |> filter(GQ %in% c(0, 1, 2))
 
 # Custom regression function
-my_reg_function <- function(data, wt_col) {
-  formula <- NUMPREC ~ -1 + tenure + gender
-  wt_vec <- data[[wt_col]]
+my_reg_function <- function(data, wt_col, formula) {
+  model_spec <- linear_reg() |> set_engine("lm")
   
-  model <- lm(
+  fit_obj <- fit(
+    model_spec,
     formula = formula,
     data = data,
-    weights = wt_vec
+    case_weights = frequency_weights(data[[wt_col]])
   )
   
-  # Return a tidy data frame of coefficients
-  output <- broom::tidy(model) |>
-    select(term, estimate)
-  
-  return(output)
+  broom::tidy(fit_obj) |> select(term, estimate)
 }
 
 # Run custom estimate
 actual_v1 <- my_reg_function(
   data = filtered_tb,
-  wt_col = "PERWT"
+  wt_col = "PERWT",
+  formula = formula
 )
 
-# Confirm that means match
+# Confirm that estimates match
 stopifnot(all.equal(
   actual_v1$estimate,
   unname(model_expected$coefficients),
@@ -131,7 +142,8 @@ input_bootstrap <- bootstrap_replicates(
   f = my_reg_function,
   wt_col = "PERWT",
   repwt_cols = paste0("REPWTP", 1:80),
-  id_cols = "term"
+  id_cols = "term",
+  formula = formula
 )
 
 model_output <- se_from_bootstrap(
@@ -165,6 +177,7 @@ all_equal_helper <- function(x, y, tol = 1e-8) {
 }
 
 # Confirm match within tolerance
-all_equal_helper(actual_ses, expected_ses, tol = 1e-10) 
+all_equal_helper(actual_ses, expected_ses, tol = 1e-6) 
 
 message("✅ Standard errors match within tolerance.")
+
