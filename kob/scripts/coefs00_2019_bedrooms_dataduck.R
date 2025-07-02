@@ -12,14 +12,14 @@ out_path <- "kob/throughput/model00_2019_bedrooms_summary-beta.rds"
 
 # Define regression formula
 formula <- BEDROOMS ~ -1 + 
-  # RACE_ETH_bucket +
-  # AGE_bucket +
-  # EDUC_bucket +
-  # INCTOT_cpiu_2010_bucket +
-  # us_born +
-  tenure #+
-  # gender +
-  # cpuma
+  RACE_ETH_bucket +
+  AGE_bucket +
+  EDUC_bucket +
+  INCTOT_cpiu_2010_bucket +
+  us_born +
+  tenure +
+  gender +
+  cpuma
 
 # ----- Step 1: Config ----- #
 
@@ -48,6 +48,26 @@ toc()
 
 tic("Filter out group quarters residents")
 filtered_tb <- ipums_2019_tb |> filter(GQ %in% c(0, 1, 2))
+toc()
+
+# Count and zero out negative replicate weights
+tic("Zero out negative replicate weights")
+num_neg_wts <- sum(
+  select(ipums_2019_tb, starts_with("REPWTP")) < 0,
+  na.rm = TRUE
+)
+num_total_wts <- sum(
+  !is.na(select(ipums_2019_tb, starts_with("REPWTP"))),
+  na.rm = TRUE
+)
+
+message(glue("{num_neg_wts} negative replicate weights detected of {num_total_wts} total weights. 
+             These will be set to zero."))
+
+filtered_tb <- ipums_2019_tb |> mutate(across(
+  starts_with("REPWTP"),
+  ~ if_else(.x < 0, 0, .x)
+))
 toc()
 
 # ----- Step 3: Estimate model using dataduck matrix backend ----- #
