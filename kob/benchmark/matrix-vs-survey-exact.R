@@ -97,7 +97,8 @@ input_bootstrap <- bootstrap_replicates(
   wt_col = "PERWT",
   repwt_cols = paste0("REPWTP", 1:80),
   id_cols = "term",
-  formula = formula
+  formula = formula,
+  verbose = TRUE
 )
 
 model_output <- se_from_bootstrap(
