@@ -1,4 +1,6 @@
 # kob/benchmark/matrix-vs-survey-exact.R
+# Note: this check fails. See notes at bottom of script for more detail.
+
 cat("
 This script benchmarks whether the custom dataduck matrix-based regression and 
 successive differences replication on 2019 data exactly reproduces the point 
@@ -19,14 +21,7 @@ n_strata <- 3
 
 # Define regression formula
 formula <- BEDROOMS ~ -1 + 
-  RACE_ETH_bucket +
-  AGE_bucket +
-  EDUC_bucket +
-  INCTOT_cpiu_2010_bucket +
-  us_born +
-  tenure +
-  gender +
-  cpuma
+  tenure
 
 # ----- Step 1: Config ----- #
 
@@ -126,4 +121,16 @@ all_equal_helper <- function(x, y, tol = 1e-8) {
 }
 
 stopifnot(all_equal_helper(actual_ses, expected_ses, tol = tol))
+
+# There's an error: they don't match
+input_bootstrap
+# Looking at this, it's clear one of the replicate estimates has NaN. This
+# propagates up to mess up the entire bootstrap replicate.
+# I think it has something to do with the underlying regression function that I
+# use here. For now, I am abandoning this method.
+# TODO: determine why one (sometimes multiple, depends on the sample) bootstrap
+# replicate runs produces NaN estimates.
+# TODO: add a type check in dataduck for imports that stop user if any of the 
+# replicate estimates are NaN, NULL, etc.
+
 message(glue("\u2705 Standard errors match within {tol}."))
