@@ -1,15 +1,15 @@
-# kob/throughput/model00_bedrooms_2019.R
+# kob/throughput/model00_numprec_2019_dataduck_matrix.R
 # TODO: Parallelize bootstrap_replicates and this code
 cat("
 This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
 using the dataduck matrix-based regression backend and successive differences replication (SDR).
-This is the main production pipeline and does not benchmark against the survey package.
+This is the main production pipeline.
 ")
 
 # ----- Step 0: User settings ----- #
 
 # Define output path for model summary
-out_path <- "kob/throughput/model00_2019_bedrooms_summary-beta.rds"
+out_path <- "kob/throughput/model00_2019_numprec_summary-beta.rds"
 
 # Define regression formula
 formula <- BEDROOMS ~ -1 + 
@@ -75,7 +75,7 @@ toc()
 tic("Estimate coefficients and SEs")
 model_output <- estimate_with_bootstrap_se(
   data = filtered_tb,
-  f = dataduck_reg_lm,
+  f = dataduck_reg_matrix,
   wt_col = "PERWT",
   repwt_cols = paste0("REPWTP", 1:80),
   constant = 4 / 80,
