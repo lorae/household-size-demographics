@@ -13,68 +13,40 @@ library(duckdb)
 library(dplyr)
 library(duckdb)
 library(glue)
-library(dplyr)
 library(purrr)
 
 # Load the dataduck package
 devtools::load_all("../dataduck")
 
-# Initialize a subset of data to write to a database connection\
-# Database API connection
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
-
-# Pseudorandom seed
-set.seed(123)
+# Load the create-benchmark-data and helper functions
+source("kob/benchmark/create-benchmark-data.R")
 
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
 # This section creates two variables:
 # - `ipums_2019_sample_tb`: an in-memory tibble with a 1-million row sample of data
 # - `ipums_2019_sample_db`: a duckdb lazy table with the identical 1-million row sample
+# It uses the create-benchmark-data function which is cache-aware: loads data from
+# cache if available; if not, it regenerates.
 #
-# TODO: migrate this entire process into process-ipums.R, so that the benchmark
-# dataset is made at the same time (and uploaded to a separate duckdb connection)
-# at the same time as the main db.
-# TODO: Then refactor all the benchmark tests to read from this db (and convert into
-# a tibble as needed, within the test).
+# TODO: Refactor all the benchmark tests to use the create-benchmark-data function.
+# This one is a good start.
 # TODO: rename the table in this benchmark db to _2000, and create a _2019 table
 # in the same db file so that code can be benchmarked on both surveys, which have
 # different design variables (and thus different methods for calculating SEs)
 
-# Connect to DuckDB
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-benchmark_con <- dbConnect(duckdb::duckdb(), "data/db/benchmark.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
+# Custom function which is cache-aware: loads data from cache if available; if not, 
+# it regenerates. File path to cache ("output_dir" arg) is the function default - 
+# see source code for exact path.
+create_benchmark_sample(
+  year = 2019,
+  n_strata = 3,
+  db_path = "data/db/ipums.duckdb",
+  db_table_name = "ipums_processed",
+  force = FALSE
+)
 
-# Sample 5 strata from 2019 data where GQ ∈ [0,1,2] and each stratum has ≥ 2 PSUs
-strata_summary <- ipums_db |> 
-  filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |> 
-  distinct(STRATA, CLUSTER) |> 
-  collect()
-
-sampled_strata <- strata_summary |> 
-  group_by(STRATA) |> 
-  filter(n() >= 2) |> 
-  ungroup() |> 
-  distinct(STRATA) |> 
-  slice_sample(n = 5)
-
-# Collect the sampled data
-ipums_2019_sample_tb <- ipums_db |> 
-  filter(YEAR == 2019, STRATA %in% !!sampled_strata$STRATA) |> 
-  collect()
-
-# Write the benchmark data to a secondary DuckDB connection
-copy_to(benchmark_con, ipums_2019_sample_tb, "ipums_sample", overwrite = TRUE)
-ipums_2019_sample_db <- tbl(benchmark_con, "ipums_sample")
-
-# Optional sanity check
-ipums_2019_sample_db_check <- ipums_2019_sample_db |> collect()
-stopifnot(all.equal(
-  ipums_2019_sample_tb |> arrange(pers_id),
-  ipums_2019_sample_db_check |> arrange(pers_id)
-))
+# Load the tibble. There's also a db available, but we ignore that for now.
+ipums_2019_sample_tb <- readRDS("kob/cache/benchmark_sample_2019_3/tb.rds")
 
 # ----- Step 2: Create Survey Design and Benchmark Output ----- #
 # Build a survey design object using replicate weights

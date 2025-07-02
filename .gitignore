@@ -1,3 +1,7 @@
+# Directory used for unit testing of create-benchmark-sample function
+tests/testthat/test-create-benchmark-sample/*
+!tests/testthat/test-create-benchmark-sample/.gitkeep
+
 # KOB cache and throughput directories (very large regression results)
 kob/cache/*
 kob/throughput/*
