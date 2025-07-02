@@ -109,8 +109,19 @@ model_output <- se_from_bootstrap(
 
 actual_ses <- model_output$se_estimate
 
-all_equal_helper <- function(x, y, tol) {
-  if (length(x) != length(y)) return(FALSE)
+all_equal_helper <- function(x, y, tol = 1e-8) {
+  if (length(x) != length(y)) {
+    message("Length mismatch.")
+    return(FALSE)
+  }
+  if (any(is.na(x) | is.na(y))) {
+    message("NA values found.")
+    return(FALSE)
+  }
+  if (any(is.nan(x) | is.nan(y))) {
+    message("NaN values found.")
+    return(FALSE)
+  }
   all(abs(sort(x) - sort(y)) < tol)
 }
 
