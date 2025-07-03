@@ -1,5 +1,9 @@
 # kob/refactor/design-surveys.R
 # 
+# Update: This script also saves 2019 data in a tibble so that
+# multiple scripts can read data and perform analysis simultaneously, which is
+# not possible in a duckDB.
+#
 # The purpose of this script is to design the surveys and save that output so
 # it doesn't have to be re-run each time a new regression is run.
 # By my latest estimate, designing a survye takes about 3 minutes in 2000 and 
@@ -13,13 +17,15 @@
 # Output
 # TODO
 
+# Note: This script takes about 1.5 hours to run. Each survey design takes about
+# 3 minutes; each save takes about 10 minutes.
+
 # ----- STEP 0: Config ----- #
 
 library(survey)
 library(tictoc)
 library(duckdb)
 library(dplyr)
-library(furrr)
 
 # Database API connection
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
@@ -71,8 +77,14 @@ design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
 toc()
 
 # Save the 2019 survey
+# Note: this took 47 minutes last time
 tic("Save 2019 survey design as RDS")
 saveRDS(design_2019_survey, file = "kob/throughput/design_2019_survey.rds")
 toc()
 
+# Save the 2019 raw tibble
+# Note: This took 25 minutes last time
+tic("Save the 2019 raw tibble, unfiltered")
+saveRDS(ipums_2019_tb, file = "kob/throughput/ipums_2019_tb.rds")
+toc()
 
