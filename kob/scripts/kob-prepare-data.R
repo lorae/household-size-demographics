@@ -4,4 +4,54 @@
 # It standardizes regression results and population proportinos into a coef data
 # frame
 
-# ----- Step 1: Source helper functions ----- #
+# ----- Step 0: Config & source helper functions ----- #
+library(purrr)
+library(dplyr)
+
+devtools::load_all("../dataduck")
+
+# ----- Step 1: Define throughput file paths and read data ----- #
+props_2000_path <- "kob/throughput/props00_2000.rds"
+props_2019_path <- "kob/throughput/props00_2019.rds"
+coefs_2000_numprec_path <- "kob/throughput/model00_2000_numprec_summary-v2.rds"
+coefs_2019_numprec_path <- "kob/throughput/model00_2019_numprec_summary-beta.rds"
+
+# ----- Step 2: Read in proportion data ----- #
+# Read proportions in as a svystat object
+props_2000_svystat <- readRDS(props_2000_path)
+props_2019_svystat <- readRDS(props_2019_path)
+
+extract_prop <- function(svystat_obj, year) {
+  # Calculate population proportions, SE on those estimates, and extract the variable
+  # "value" (varname concatenated with value of variable, like "AGE_bucket0-4")
+  prop <- as.numeric(svystat_obj)
+  se <- sqrt(diag(attr(svystat_obj, "var")))
+  term <- names(svystat_obj)
+  
+  # turn output into tibble and name cols using the year
+  tibble::tibble(
+    term = term,
+    !!paste0("prop_", year) := prop,
+    !!paste0("prop_", year, "_se") := se
+  )
+}
+
+prop_2000 <- purrr::map_dfr(props_2000_svystat, extract_prop, year = 2000)
+prop_2019 <-purrr::map_dfr(props_2019_svystat, extract_prop, year = 2019)
+
+# ----- Step 3: Read in NUMPREC coefficients ----- #
+# The two objects get read in slightly differently, because the estimation strategy
+# differed.
+coefs_2000_numprec <- readRDS(coefs_2000_numprec_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_numprec <- readRDS(coefs_2019_numprec_path) |>
+  rename(
+    coef_2019 = estimate,
+    coef_2019_se = se_estimate
+  )
+
