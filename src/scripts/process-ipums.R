@@ -203,13 +203,34 @@ ipums_processed_final <- ipums_db |>
       INCTOT_cpiu_2010 >= 200000 ~ "200kplus",
       TRUE ~ NA_character_
     ),
-    us_born = BPL <= 120,
-    persons_per_bedroom = NUMPREC / BEDROOMS
+    us_born = BPL <= 120
   ) |>
   mutate(
     tenure = ifelse(OWNERSHP == 1, "homeowner", "renter"),
     gender = ifelse(SEX == 1, "male", "female"),
-    cpuma = as.character(CPUMA0010)
+    cpuma = as.character(CPUMA0010),
+    room = case_when(
+      # An answer of 0 means NA
+      ROOMS == 0 ~ NA_real_,
+      # Rooms are topcoded at 9+ in 2000 and 20+ in 2019. Opt for more restrictive topcode
+      ROOMS >= 9 ~ 9,
+      # Otherwise, use the value provided
+      TRUE ~ ROOMS
+    ),
+    bedroom = case_when(
+      # An answer of 0 means NA
+      BEDROOMS == 0 ~ NA_real_,
+      # An answer of 1 means 0 bedrooms (e.g. studio apartment). We count these as
+      # one-bedroom
+      BEDROOMS == 1 ~ 1,
+      # Bedrooms are topcoded at 5+ in 2000 and 8+ in 2019. Opt for more restrictive topcode
+      BEDROOMS >= 6 ~ 5,
+      # Otherwise, the number of bedrooms is encoded as the BEDROOMS - 1. (See documentation
+      # for more details)
+      BEDROOMS > 1 ~ BEDROOMS - 1
+    ),
+    persons_per_room = NUMPREC / room,
+    persons_per_bedroom = NUMPREC / bedroom
   )
 
 # Write to a temporary new table name
@@ -234,6 +255,21 @@ validate_row_counts(
   expected_count = obs_count,
   step_description = "final columns (income, US-born, persons/bedroom) were added"
 )
+
+# TODO: standardize this step with checks on # of NAs by column,
+# checking whether values in a col exceed the expected topcode or differ in 
+# format (string, e.g.) from expected (integer, e.g.).
+# Like for example, how we don't expect to have any persons per room or persons
+# per bedroom that are Inf.
+# ipums_db |> filter(YEAR == 2000) |> pull(room) |> summary()
+# ipums_db |> filter(YEAR == 2019) |> pull(room) |> summary()
+# ipums_db |> filter(YEAR == 2000) |> pull(bedroom) |> summary()
+# ipums_db |> filter(YEAR == 2019) |> pull(bedroom) |> summary()
+# 
+# ipums_db |> filter(YEAR == 2000) |> pull(room) |> hist()
+# ipums_db |> filter(YEAR == 2019) |> pull(room) |> hist()
+# ipums_db |> filter(YEAR == 2000) |> pull(bedroom) |> hist()
+# ipums_db |> filter(YEAR == 2019) |> pull(bedroom) |> hist()
 
 # ----- Step 6: Clean up ----- #
 

@@ -6,7 +6,7 @@
 # For more on IPUMS and ipumsr: https://www.youtube.com/watch?v=OT6upQ1dBgU
 
 # Input:
-# -  data/ipums-microdata/usa_0020.xml and data/ipums-microdata/usa_0020.dat.gz
+# -  data/ipums-microdata/usa_0021.xml and data/ipums-microdata/usa_0021.dat.gz
 #    These files are not included in the GitHub repository due to their large file
 #    size. For instructions on downloading them, please refer to the README.md file 
 #    in the repository root.
@@ -31,7 +31,7 @@ setwd("/scratch/gpfs/ls4540/household-size-demographics")
 
 # ----- Step 1: Load and process IPUMS data ----- #
 
-ddi <- read_ipums_ddi("data/ipums-microdata/usa_00020.xml")
+ddi <- read_ipums_ddi("data/ipums-microdata/usa_00021.xml")
 ipums_tb <- read_ipums_micro(ddi, var_attrs = c()) 
 
 # ----- Step 2: Save to DuckDB ----- #
