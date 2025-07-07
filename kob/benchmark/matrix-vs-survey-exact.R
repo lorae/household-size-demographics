@@ -102,7 +102,7 @@ expected_ses <- summary(model_expected)$coefficients[, "Std. Error"] |> unname()
 
 # ----- step 3: Run matrix regression and compare results ----- #
 
-model_actual <- dataduck_reg_matrix(
+model_actual <- dataduck_reg_matrix_2(
   data = filtered_tb,
   wt_col = "PERWT",
   formula = formula
@@ -115,7 +115,7 @@ message(glue("\u2705 Coefficients match within {tol}."))
 
 input_bootstrap <- bootstrap_replicates(
   data = filtered_tb,
-  f = dataduck_reg_matrix,
+  f = dataduck_reg_matrix_2,
   wt_col = "PERWT",
   repwt_cols = paste0("REPWTP", 1:80),
   id_cols = "term",
