@@ -15,6 +15,14 @@ props_2000_path <- "kob/throughput/props00_2000.rds"
 props_2019_path <- "kob/throughput/props00_2019.rds"
 coefs_2000_numprec_path <- "kob/throughput/model00_2000_numprec_summary-v2.rds"
 coefs_2019_numprec_path <- "kob/throughput/model00_2019_numprec_summary-beta.rds"
+coefs_2000_ppr_path <- "kob/throughput/model00_2000_persons_per_room_summary.rds"
+coefs_2019_ppr_path <- "kob/throughput/model00_2019_persons_per_room_summary.rds"
+coefs_2000_ppbr_path <- "kob/throughput/model00_2000_persons_per_bedroom_summary.rds"
+coefs_2019_ppbr_path <- "kob/throughput/model00_2019_persons_per_bedroom_summary.rds"
+coefs_2000_room_path <- "kob/throughput/model00_2000_room_summary.rds"
+coefs_2019_room_path <- "kob/throughput/model00_2019_room_summary.rds"
+coefs_2000_bedroom_path <- "kob/throughput/model00_2000_bedroom_summary.rds"
+coefs_2019_bedroom_path <- "kob/throughput/model00_2019_bedroom_summary.rds"
 
 # ----- Step 2: Read in proportion data ----- #
 # Read proportions in as a svystat object
@@ -55,3 +63,51 @@ coefs_2019_numprec <- readRDS(coefs_2019_numprec_path) |>
     coef_2019_se = se_estimate
   )
 
+# ----- Step 4: Read in room coefficients ----- #
+coefs_2000_room <- readRDS(coefs_2000_room_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_room <- readRDS(coefs_2019_room_path) |>
+  rename(
+    coef_2019 = estimate,
+    coef_2019_se = se_estimate
+  )
+
+# ----- Step 5: Read in bedroom coefficients ----- #
+coefs_2000_bedroom <- readRDS(coefs_2000_bedroom_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_bedroom <- readRDS(coefs_2019_bedroom_path) # TODO: compare with v2 when it comes in to confirm identical
+
+
+# ----- Step 6: REad in persons per room coefficients ----- #
+coefs_2000_ppr <- readRDS(coefs_2000_ppr_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_ppr <- readRDS(coefs_2019_ppr_path) |>
+  rename(
+    coef_2019 = estimate,
+    coef_2019_se = se_estimate
+  )
+
+# ----- Step 7: Read in persons per bedroom coefficients ----- #
+coefs_2000_ppbr <- readRDS(coefs_2000_ppbr_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_ppbr <- readRDS(coefs_2019_ppbr_path)
