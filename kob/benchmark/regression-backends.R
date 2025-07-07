@@ -33,6 +33,24 @@ dataduck_reg_matrix <- function(data, wt_col, formula) {
   tibble(term = rownames(coef_vec), estimate = as.numeric(coef_vec)) |> arrange(term)
 }
 
+dataduck_matrix_lm_fallback <- function(data, wt_col, formula) {
+  tryCatch({
+    result <- dataduck_reg_matrix(data, wt_col, formula)
+    if (any(is.nan(result$estimate)) || any(is.infinite(result$estimate))) {
+      warning("Matrix regression failed due to NaN or Inf. Falling back to lm().")
+      # Replace negative weights with 0 before fallback
+      data[[wt_col]] <- pmax(data[[wt_col]], 0)
+      return(dataduck_reg_lm(data, wt_col, formula))
+    }
+    return(result)
+  }, error = function(e) {
+    warning("Matrix regression threw an error. Falling back to lm().")
+    # Replace negative weights with 0 before fallback
+    data[[wt_col]] <- pmax(data[[wt_col]], 0)
+    return(dataduck_reg_lm(data, wt_col, formula))
+  })
+}
+
 # Registry of available regression backends
 reg_backends <- list(
   lm = dataduck_reg_lm,
@@ -41,3 +59,4 @@ reg_backends <- list(
 
 # Default regression function to use (can be overridden in scripts)
 my_reg_function <- reg_backends$matrix_alg
+
