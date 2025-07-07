@@ -34,20 +34,20 @@ bind_and_check_terms <- function(data1, data2) {
 
 # ----- Step 1: Define throughput file paths and read data ----- #
 # 2000
-props_2000_path <- "kob/throughput/props00_2000.rds"
-coefs_2000_numprec_path <- "kob/throughput/model00_2000_numprec_summary-v2.rds"
-coefs_2000_ppr_path <- "kob/throughput/model00_2000_persons_per_room_summary.rds"
-coefs_2000_ppbr_path <- "kob/throughput/model00_2000_persons_per_bedroom_summary.rds"
-coefs_2000_room_path <- "kob/throughput/model00_2000_room_summary.rds"
-coefs_2000_bedroom_path <- "kob/throughput/model00_2000_bedroom_summary.rds"
+props_2000_path <- "throughput/props00_2000.rds"
+coefs_2000_numprec_path <- "throughput/model00_2000_numprec_summary-v2.rds"
+coefs_2000_ppr_path <- "throughput/model00_2000_persons_per_room_summary.rds"
+coefs_2000_ppbr_path <- "throughput/model00_2000_persons_per_bedroom_summary.rds"
+coefs_2000_room_path <- "throughput/model00_2000_room_summary.rds"
+coefs_2000_bedroom_path <- "throughput/model00_2000_bedroom_summary.rds"
 
 # 2019
-props_2019_path <- "kob/throughput/props00_2019.rds"
-coefs_2019_numprec_path <- "kob/throughput/model00_2019_numprec_summary-beta.rds"
-coefs_2019_ppr_path <- "kob/throughput/model00_2019_persons_per_room_summary-v5.rds"
-coefs_2019_ppbr_path <- "kob/throughput/model00_2019_persons_per_bedroom_summary-v5.rds"
-coefs_2019_room_path <- "kob/throughput/model00_2019_room_summary-v5.rds"
-coefs_2019_bedroom_path <- "kob/throughput/model00_2019_bedroom_summary-v5.rds"
+props_2019_path <- "throughput/props00_2019.rds"
+coefs_2019_numprec_path <- "throughput/model00_2019_numprec_summary-beta.rds"
+coefs_2019_ppr_path <- "throughput/model00_2019_persons_per_room_summary-v5.rds"
+coefs_2019_ppbr_path <- "throughput/model00_2019_persons_per_bedroom_summary-v5.rds"
+coefs_2019_room_path <- "throughput/model00_2019_room_summary-v5.rds"
+coefs_2019_bedroom_path <- "throughput/model00_2019_bedroom_summary-v5.rds"
 
 # ----- Step 2: Read in proportion data ----- #
 # Read proportions in as a svystat object

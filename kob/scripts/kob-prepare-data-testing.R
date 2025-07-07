@@ -1,3 +1,4 @@
+# # NOTE: this script was deprecated on 7/7/2025
 # kob/scripts/kob-prepare-data-testing
 # The purpose of this script is to use outputs of regression to prepare data for input into 
 # the kob pipeline in kob-function.R
