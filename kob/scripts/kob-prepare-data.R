@@ -10,19 +10,44 @@ library(dplyr)
 
 devtools::load_all("../dataduck")
 
+bind_and_check_terms <- function(data1, data2) {
+  # Check that 'term' exists
+  if (!("term" %in% names(data1)) || !("term" %in% names(data2))) {
+    stop("Both data frames must contain a 'term' column.")
+  }
+  
+  # Check that terms match exactly (including duplicates)
+  if (!setequal(data1$term, data2$term)) {
+    stop("Terms do not match exactly between the two data frames.")
+  }
+  
+  # Optional: ensure no duplicates
+  if (any(duplicated(data1$term)) || any(duplicated(data2$term))) {
+    stop("Duplicate terms found. Cannot safely join.")
+  }
+  
+  # Safe left join
+  joined <- dplyr::left_join(data1, data2, by = "term")
+  
+  return(joined)
+}
+
 # ----- Step 1: Define throughput file paths and read data ----- #
+# 2000
 props_2000_path <- "kob/throughput/props00_2000.rds"
-props_2019_path <- "kob/throughput/props00_2019.rds"
 coefs_2000_numprec_path <- "kob/throughput/model00_2000_numprec_summary-v2.rds"
-coefs_2019_numprec_path <- "kob/throughput/model00_2019_numprec_summary-beta.rds"
 coefs_2000_ppr_path <- "kob/throughput/model00_2000_persons_per_room_summary.rds"
-coefs_2019_ppr_path <- "kob/throughput/model00_2019_persons_per_room_summary.rds"
 coefs_2000_ppbr_path <- "kob/throughput/model00_2000_persons_per_bedroom_summary.rds"
-coefs_2019_ppbr_path <- "kob/throughput/model00_2019_persons_per_bedroom_summary.rds"
 coefs_2000_room_path <- "kob/throughput/model00_2000_room_summary.rds"
-coefs_2019_room_path <- "kob/throughput/model00_2019_room_summary.rds"
 coefs_2000_bedroom_path <- "kob/throughput/model00_2000_bedroom_summary.rds"
-coefs_2019_bedroom_path <- "kob/throughput/model00_2019_bedroom_summary.rds"
+
+# 2019
+props_2019_path <- "kob/throughput/props00_2019.rds"
+coefs_2019_numprec_path <- "kob/throughput/model00_2019_numprec_summary-beta.rds"
+coefs_2019_ppr_path <- "kob/throughput/model00_2019_persons_per_room_summary-v5.rds"
+coefs_2019_ppbr_path <- "kob/throughput/model00_2019_persons_per_bedroom_summary-v5.rds"
+coefs_2019_room_path <- "kob/throughput/model00_2019_room_summary-v5.rds"
+coefs_2019_bedroom_path <- "kob/throughput/model00_2019_bedroom_summary-v5.rds"
 
 # ----- Step 2: Read in proportion data ----- #
 # Read proportions in as a svystat object
@@ -47,9 +72,11 @@ extract_prop <- function(svystat_obj, year) {
 prop_2000 <- purrr::map_dfr(props_2000_svystat, extract_prop, year = 2000)
 prop_2019 <-purrr::map_dfr(props_2019_svystat, extract_prop, year = 2019)
 
-# ----- Step 3: Read in NUMPREC coefficients ----- #
-# The two objects get read in slightly differently, because the estimation strategy
-# differed.
+# Combined props from both years
+props <- bind_and_check_terms(prop_2000, prop_2019)
+
+# ----- Step 3: Read in coefficients ----- #
+# NUMPREC
 coefs_2000_numprec <- readRDS(coefs_2000_numprec_path) |>
   select(term, estimate, std.error) |>
   rename(
@@ -63,7 +90,9 @@ coefs_2019_numprec <- readRDS(coefs_2019_numprec_path) |>
     coef_2019_se = se_estimate
   )
 
-# ----- Step 4: Read in room coefficients ----- #
+coefs_numprec <- bind_and_check_terms(coefs_2000_numprec, coefs_2019_numprec)
+
+# room
 coefs_2000_room <- readRDS(coefs_2000_room_path) |>
   select(term, estimate, std.error) |>
   rename(
@@ -77,7 +106,9 @@ coefs_2019_room <- readRDS(coefs_2019_room_path) |>
     coef_2019_se = se_estimate
   )
 
-# ----- Step 5: Read in bedroom coefficients ----- #
+coefs_room <- bind_and_check_terms(coefs_2000_room, coefs_2019_room)
+
+# bedroom
 coefs_2000_bedroom <- readRDS(coefs_2000_bedroom_path) |>
   select(term, estimate, std.error) |>
   rename(
@@ -87,8 +118,9 @@ coefs_2000_bedroom <- readRDS(coefs_2000_bedroom_path) |>
 
 coefs_2019_bedroom <- readRDS(coefs_2019_bedroom_path) # TODO: compare with v2 when it comes in to confirm identical
 
+coefs_bedroom <- bind_and_check_terms(coefs_2000_bedroom, coefs_2019_bedroom)
 
-# ----- Step 6: REad in persons per room coefficients ----- #
+# persons per room
 coefs_2000_ppr <- readRDS(coefs_2000_ppr_path) |>
   select(term, estimate, std.error) |>
   rename(
@@ -102,7 +134,9 @@ coefs_2019_ppr <- readRDS(coefs_2019_ppr_path) |>
     coef_2019_se = se_estimate
   )
 
-# ----- Step 7: Read in persons per bedroom coefficients ----- #
+coefs_ppr <- bind_and_check_terms(coefs_2000_ppr, coefs_2019_ppr)
+
+# persons per bedroom
 coefs_2000_ppbr <- readRDS(coefs_2000_ppbr_path) |>
   select(term, estimate, std.error) |>
   rename(
@@ -111,3 +145,12 @@ coefs_2000_ppbr <- readRDS(coefs_2000_ppbr_path) |>
   )
 
 coefs_2019_ppbr <- readRDS(coefs_2019_ppbr_path)
+
+coefs_ppbr <- bind_and_check_terms(coefs_2000_ppbr, coefs_2019_ppbr)
+
+# ----- Step 4: Combine into kob-input style data frames ----- #
+
+kob_input_numprec <- bind_and_check_terms(props, coefs_numprec)
+
+
+  
