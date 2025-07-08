@@ -110,12 +110,14 @@ kob_output_validate <- function(
   difference <- abs(actual - expected)
   
   if (difference <= tol) {
-    message("✅ Decomposition matches expected total within tolerance.")
+    message(glue::glue("✅ Decomposition matches expected total within {tol} tolerance."))
     return(TRUE)
   } else {
     stop(glue::glue(
-      "❌ Decomposition mismatch:\n  actual   = {round(actual, 6)}\n  expected = {round(expected, 6)}\n  diff     = {round(difference, 6)}"
-    ))
+      "❌ Decomposition mismatch:\
+      actual   = {round(actual, 6)}
+      expected = {round(expected, 6)}
+      diff     = {round(difference, 6)}"))
   }
 }
 
