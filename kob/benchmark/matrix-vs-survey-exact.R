@@ -1,5 +1,32 @@
 # kob/benchmark/matrix-vs-survey-exact.R
-# Note: this check fails. See notes at bottom of script for more detail.
+#
+# ❌ Note: This check currently fails — and that's instructive.
+# ✅ See matrix-lm-fallback-vs-survey-ses.R for the fixed version.
+#
+# Last updated: 2025-07-07
+#
+# Summary:
+# This script attempts to verify that our custom matrix-based regression,
+# combined with bootstrap SEs from replicate weights, exactly reproduces the
+# results from `svyglm` on 2019 IPUMS data.
+#
+# Why it fails:
+# In ~1% of cases, the matrix backend fails due to singularity or non-positive-definite
+# weight matrices (e.g., when all weights for a factor level are 0). This produces NaNs
+# in the output and propagates through to the standard error calculation.
+#
+# Guidance:
+# - If you rerun this script, you may *not* reproduce the failure. It depends on the sample.
+# - To find a failing example, set `force = TRUE` in Step 1 until the error appears.
+# - Once a failing sample is cached, set `force = FALSE` to keep it stable.
+#
+# Fix:
+# The `dataduck_matrix_lm_fallback()` function in regression-backends.R handles this issue
+# by defaulting to fast matrix algebra, but falling back to `lm()` if NaNs or errors are detected.
+#
+# For a corrected pipeline that uses this fallback, see:
+# → kob/benchmark/matrix-lm-fallback-vs-survey-ses.R
+
 
 cat("
 This script benchmarks whether the custom dataduck matrix-based regression and 
@@ -75,7 +102,7 @@ expected_ses <- summary(model_expected)$coefficients[, "Std. Error"] |> unname()
 
 # ----- step 3: Run matrix regression and compare results ----- #
 
-model_actual <- dataduck_reg_matrix(
+model_actual <- dataduck_reg_matrix_2(
   data = filtered_tb,
   wt_col = "PERWT",
   formula = formula
@@ -88,7 +115,7 @@ message(glue("\u2705 Coefficients match within {tol}."))
 
 input_bootstrap <- bootstrap_replicates(
   data = filtered_tb,
-  f = dataduck_reg_matrix,
+  f = dataduck_reg_matrix_2,
   wt_col = "PERWT",
   repwt_cols = paste0("REPWTP", 1:80),
   id_cols = "term",

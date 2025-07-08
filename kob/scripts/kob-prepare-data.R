@@ -1,218 +1,156 @@
-# kob/scripts/kob-prepare-data
+# kob/scripts/kob-prepare-data.R
 # The purpose of this script is to use outputs of regression to prepare data for input into 
 # the kob pipeline in kob-function.R
-# TODO: This needs a serious refactor to be compatible with the currently computing,
-# soon to arrive results from scripts such as coefs00_*.R and props00_*.R
+# It standardizes regression results and population proportinos into a coef data
+# frame
 
-# ----- Step 1: Source helper functions ----- #
+# ----- Step 0: Config & source helper functions ----- #
+library(purrr)
+library(dplyr)
 
 devtools::load_all("../dataduck")
-source("kob/utils/counterfactual-tools.R") # Includes function for counterfactual calculation
 
-# ----- Step 2: Import and wrangle data ----- #
-# In this refactor, I replace the entire data set with smaller benchmark datasets,
-# so that the code runs more quickly locally.
-
-# Load the script for creating benchmark samples
-source("kob/benchmark/create-benchmark-data.R")
-
-# Ensure the benchmarks exist
-create_benchmark_sample(
-  year = 2000,
-  n_strata = 3,
-  db_path = "data/db/ipums.duckdb",
-  db_table_name = "ipums_processed",
-  force = FALSE
-)
-
-create_benchmark_sample(
-  year = 2019,
-  n_strata = 3,
-  db_path = "data/db/ipums.duckdb",
-  db_table_name = "ipums_processed",
-  force = FALSE
-)
-
-# Read in the benchmarks
-# TODO: make this step happen when create_benchmark_smaple is run. Perhaps rename
-# to load_benchmark_sample. Also, add in a message that says where the path is
-# to the file that was just loaded.
-ipums_2000 <- readRDS("kob/cache/benchmark_sample_2000_3/tb.rds")
-ipums_2019 <- readRDS("kob/cache/benchmark_sample_2019_3/tb.rds")
-
-ipums_tb <- bind_rows(ipums_2000, ipums_2019)
-
-ipums_tb <- ipums_tb |>
-  mutate(
-    tenure = ifelse(OWNERSHP == 1, "homeowner", "renter"),
-    sex = ifelse(SEX == 1, "male", "female")
-  )
-
-# ipums_db <- ipums_db |>
-#   mutate(
-#     tenure = ifelse(OWNERSHP == 1, as.character("homeowner"), as.character("renter")),
-#     sex = ifelse(SEX == 1, as.character("male"), as.character("female"))
-#   )
-# ipums_db <- ipums_db |>
-#   mutate(
-#     tenure = sql("CASE WHEN OWNERSHP = 1 THEN 'homeowner' ELSE 'renter' END"),
-#     sex = sql("CASE WHEN SEX = 1 THEN 'male' ELSE 'female' END")
-#   )
-
-
-
-# These two models take about a two minutes to compute. No CPUMAs since they are difficult
-# to handle. 8 Gb, whoa!
-model_2000 <- lm(data = ipums_tb |> filter(YEAR == 2000 & GQ %in% c(0,1,2)),
-                 weights = PERWT,
-                 formula = NUMPREC ~ RACE_ETH_bucket*us_born + AGE_bucket + sex  +
-                   EDUC_bucket + INCTOT_cpiu_2010_bucket + tenure
-)
-
-model_2019 <- lm(data = ipums_tb |> filter(YEAR == 2019 & GQ %in% c(0,1,2)),
-                 weights = PERWT,
-                 formula = NUMPREC ~ RACE_ETH_bucket*us_born + AGE_bucket + sex  +
-                   EDUC_bucket + INCTOT_cpiu_2010_bucket + tenure
-)
-
-coef_df <- full_join(
-  enframe(model_2000$coefficients, name = "name", value = "mean_2000"),
-  enframe(model_2019$coefficients, name = "name", value = "mean_2019"),
-  by = "name"
-)
-
-# Known varnames (exact strings)
-known_varnames <- c(
-  "RACE_ETH_bucket", "AGE_bucket", "sex", "us_born",
-  "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "tenure"
-)
-
-intercept_row <- coef_df |>
-  filter(name %in% c(
-    "(Intercept)",
-    "RACE_ETH_bucketAIAN:us_bornTRUE",
-    "RACE_ETH_bucketBlack:us_bornTRUE",
-    "RACE_ETH_bucketHispanic:us_bornTRUE",
-    "RACE_ETH_bucketMultiracial:us_bornTRUE",
-    "RACE_ETH_bucketOther:us_bornTRUE",
-    "RACE_ETH_bucketWhite:us_bornTRUE"
-  )) |>
-  mutate(varname = NA_character_, value = NA_character_)
-
-non_intercepts <- coef_df |>
-  filter(!name %in% c(
-    "(Intercept)",
-    "RACE_ETH_bucketAIAN:us_bornTRUE",
-    "RACE_ETH_bucketBlack:us_bornTRUE",
-    "RACE_ETH_bucketHispanic:us_bornTRUE",
-    "RACE_ETH_bucketMultiracial:us_bornTRUE",
-    "RACE_ETH_bucketOther:us_bornTRUE",
-    "RACE_ETH_bucketWhite:us_bornTRUE"
-  )) |>
-  mutate(
-    varname = map_chr(name, function(nm) {
-      matched <- keep(known_varnames, function(vn) str_starts(nm, vn))
-      if (length(matched) != 1) stop(paste("Could not uniquely match varname for:", nm))
-      matched
-    }),
-    value = str_remove(name, varname)
-  )
-
-coef_df <- bind_rows(intercept_row, non_intercepts)
-
-
-
-get_weighted_count <- function(varname, value, year, name = NULL) {
-  # Return NA for intercept or missing input
-  if (!is.null(name) && name == "(Intercept)") {
-    return(NA_real_)
+bind_and_check_terms <- function(data1, data2) {
+  # Check that 'term' exists
+  if (!("term" %in% names(data1)) || !("term" %in% names(data2))) {
+    stop("Both data frames must contain a 'term' column.")
   }
   
-  # Manual exceptions for RACE_ETH_bucket:us_bornTRUE interaction terms
-  if (!is.null(name)) {
-    if (name == "RACE_ETH_bucketAIAN:us_bornTRUE") {
-      return(ipums_tb |>
-               filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "AIAN", us_born == TRUE) |>
-               summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-               collect() |>
-               pull(weighted_count))
-    } else if (name == "RACE_ETH_bucketBlack:us_bornTRUE") {
-      return(ipums_tb |>
-               filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Black", us_born == TRUE) |>
-               summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-               collect() |>
-               pull(weighted_count))
-    } else if (name == "RACE_ETH_bucketHispanic:us_bornTRUE") {
-      return(ipums_tb |>
-               filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Hispanic", us_born == TRUE) |>
-               summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-               collect() |>
-               pull(weighted_count))
-    } else if (name == "RACE_ETH_bucketMultiracial:us_bornTRUE") {
-      return(ipums_tb |>
-               filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Multiracial", us_born == TRUE) |>
-               summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-               collect() |>
-               pull(weighted_count))
-    } else if (name == "RACE_ETH_bucketOther:us_bornTRUE") {
-      return(ipums_tb |>
-               filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "Other", us_born == TRUE) |>
-               summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-               collect() |>
-               pull(weighted_count))
-    } else if (name == "RACE_ETH_bucketWhite:us_bornTRUE") {
-      return(ipums_tb |>
-               filter(YEAR == !!year, GQ %in% c(0, 1, 2), RACE_ETH_bucket == "White", us_born == TRUE) |>
-               summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-               collect() |>
-               pull(weighted_count))
-    }
+  # Check that terms match exactly (including duplicates)
+  if (!setequal(data1$term, data2$term)) {
+    stop("Terms do not match exactly between the two data frames.")
   }
   
-  # Coerce specific label strings to their underlying codes
-  if (value == "male" && varname == "sex") {
-    value <- 1
-    varname <- "SEX"
-  } else if (value == "homeowner" && varname == "tenure") {
-    value <- 1
-    varname <- "OWNERSHP"
+  # Optional: ensure no duplicates
+  if (any(duplicated(data1$term)) || any(duplicated(data2$term))) {
+    stop("Duplicate terms found. Cannot safely join.")
   }
   
-  # Default case
-  ipums_tb |>
-    filter(YEAR == !!year, GQ %in% c(0, 1, 2)) |>
-    filter(!!sym(varname) == !!value) |>
-    summarise(weighted_count = sum(PERWT), na.rm = TRUE) |>
-    collect() |>
-    pull(weighted_count)
+  # Safe left join
+  joined <- dplyr::left_join(data1, data2, by = "term")
+  
+  return(joined)
 }
 
+# ----- Step 1: Define throughput file paths and read data ----- #
+# 2000
+props_2000_path <- "throughput/props00_2000.rds"
+coefs_2000_numprec_path <- "throughput/model00_2000_numprec_summary-v2.rds"
+coefs_2000_ppr_path <- "throughput/model00_2000_persons_per_room_summary.rds"
+coefs_2000_ppbr_path <- "throughput/model00_2000_persons_per_bedroom_summary.rds"
+coefs_2000_room_path <- "throughput/model00_2000_room_summary.rds"
+coefs_2000_bedroom_path <- "throughput/model00_2000_bedroom_summary.rds"
 
-coef <- coef_df |>
-  mutate(
-    weighted_count_2000 = pmap_dbl(
-      list(varname = varname, value = value, name = name),
-      ~ get_weighted_count(..1, ..2, 2000, ..3)
-    ),
-    weighted_count_2019 = pmap_dbl(
-      list(varname = varname, value = value, name = name),
-      ~ get_weighted_count(..1, ..2, 2019, ..3)
-    )
+# 2019
+props_2019_path <- "throughput/props00_2019.rds"
+coefs_2019_numprec_path <- "throughput/model00_2019_numprec_summary-beta.rds"
+coefs_2019_ppr_path <- "throughput/model00_2019_persons_per_room_summary-v5.rds"
+coefs_2019_ppbr_path <- "throughput/model00_2019_persons_per_bedroom_summary-v5.rds"
+coefs_2019_room_path <- "throughput/model00_2019_room_summary-v5.rds"
+coefs_2019_bedroom_path <- "throughput/model00_2019_bedroom_summary-v5.rds"
+
+# ----- Step 2: Read in proportion data ----- #
+# Read proportions in as a svystat object
+props_2000_svystat <- readRDS(props_2000_path)
+props_2019_svystat <- readRDS(props_2019_path)
+
+extract_prop <- function(svystat_obj, year) {
+  # Calculate population proportions, SE on those estimates, and extract the variable
+  # "value" (varname concatenated with value of variable, like "AGE_bucket0-4")
+  prop <- as.numeric(svystat_obj)
+  se <- sqrt(diag(attr(svystat_obj, "var")))
+  term <- names(svystat_obj)
+  
+  # turn output into tibble and name cols using the year
+  tibble::tibble(
+    term = term,
+    !!paste0("prop_", year) := prop,
+    !!paste0("prop_", year, "_se") := se
+  )
+}
+
+prop_2000 <- purrr::map_dfr(props_2000_svystat, extract_prop, year = 2000)
+prop_2019 <-purrr::map_dfr(props_2019_svystat, extract_prop, year = 2019)
+
+# Combined props from both years
+props <- bind_and_check_terms(prop_2000, prop_2019)
+
+# ----- Step 3: Read in coefficients ----- #
+# NUMPREC
+coefs_2000_numprec <- readRDS(coefs_2000_numprec_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
   )
 
-
-pop_2000 <- ipums_tb |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |> 
-  summarize(weighted_count = sum(PERWT), na.rm = TRUE) |>
-  collect() |>
-  pull(weighted_count)
-
-pop_2019 <- ipums_tb |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |> 
-  summarize(weighted_count = sum(PERWT), na.rm = TRUE) |>
-  collect() |>
-  pull(weighted_count)
-
-coef <- coef |>
-  mutate(
-    prop_2000 = weighted_count_2000 / pop_2000,
-    prop_2019 = weighted_count_2019 / pop_2019
+coefs_2019_numprec <- readRDS(coefs_2019_numprec_path) |>
+  rename(
+    coef_2019 = estimate,
+    coef_2019_se = se_estimate
   )
+
+coefs_numprec <- bind_and_check_terms(coefs_2000_numprec, coefs_2019_numprec)
+
+# room
+coefs_2000_room <- readRDS(coefs_2000_room_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_room <- readRDS(coefs_2019_room_path) |>
+  rename(
+    coef_2019 = estimate,
+    coef_2019_se = se_estimate
+  )
+
+coefs_room <- bind_and_check_terms(coefs_2000_room, coefs_2019_room)
+
+# bedroom
+coefs_2000_bedroom <- readRDS(coefs_2000_bedroom_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_bedroom <- readRDS(coefs_2019_bedroom_path) # TODO: compare with v2 when it comes in to confirm identical
+
+coefs_bedroom <- bind_and_check_terms(coefs_2000_bedroom, coefs_2019_bedroom)
+
+# persons per room
+coefs_2000_ppr <- readRDS(coefs_2000_ppr_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_ppr <- readRDS(coefs_2019_ppr_path) |>
+  rename(
+    coef_2019 = estimate,
+    coef_2019_se = se_estimate
+  )
+
+coefs_ppr <- bind_and_check_terms(coefs_2000_ppr, coefs_2019_ppr)
+
+# persons per bedroom
+coefs_2000_ppbr <- readRDS(coefs_2000_ppbr_path) |>
+  select(term, estimate, std.error) |>
+  rename(
+    coef_2000 = estimate,
+    coef_2000_se = std.error
+  )
+
+coefs_2019_ppbr <- readRDS(coefs_2019_ppbr_path)
+
+coefs_ppbr <- bind_and_check_terms(coefs_2000_ppbr, coefs_2019_ppbr)
+
+# ----- Step 4: Combine into kob-input style data frames ----- #
+
+kob_input_numprec <- bind_and_check_terms(props, coefs_numprec)
+
+
+  
