@@ -46,3 +46,6 @@ aggregates <- tibble(
 
 # Save the results tibble
 saveRDS(aggregates, "throughput/aggregates.rds")
+
+# Good database hygiene
+dbDisconnect(con, shutdown = TRUE)
