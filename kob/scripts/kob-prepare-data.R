@@ -1,12 +1,9 @@
 # kob/scripts/kob-prepare-data.R
 # The purpose of this script is to use outputs of regression to prepare data for input into 
 # the kob pipeline in kob-function.R
-# It standardizes regression results and population proportinos into a coef data
-# frame
-# TODO: this whole script could use a DRY refactor
-# TODO: based on the regression #, build a list of expected terms and compare 
-# after each step against those terms to validate rows haven't been added/dropped.
-# Also, ensure no NAs/NaNs
+# It standardizes regression results and population proportinos into kob_input 
+# list of data frames, with each named entry (e.g. $numprec, $bedroom) having
+# all the necessary columns to compute the kob function.
 
 # ----- Step 0: Config & source helper functions ----- #
 library(purrr)
@@ -14,22 +11,43 @@ library(dplyr)
 
 devtools::load_all("../dataduck")
 
-# ----- Step 1: Define throughput file paths and read data ----- #
-# 2000
-props_2000_path <- "throughput/props00_2000.rds"
-numprec_2000_path <- "throughput/model00_2000_numprec_summary-v2.rds"
-ppr_2000_path <- "throughput/model00_2000_persons_per_room_summary.rds"
-ppbr_2000_path <- "throughput/model00_2000_persons_per_bedroom_summary.rds"
-room_2000_path <- "throughput/model00_2000_room_summary.rds"
-bedroom_2000_path <- "throughput/model00_2000_bedroom_summary.rds"
+# ----- Step 1: Define throughput file paths  ----- #
+input_paths <- tibble::tribble(
+  ~term,     ~year, ~path,
+  "props",   2000,  "throughput/props00_2000.rds",
+  "props",   2019,  "throughput/props00_2019.rds",
+  "numprec", 2000,  "throughput/model00_2000_numprec_summary-v2.rds",
+  "numprec", 2019,  "throughput/model00_2019_numprec_summary-beta.rds",
+  "ppr",     2000,  "throughput/model00_2000_persons_per_room_summary.rds",
+  "ppr",     2019,  "throughput/model00_2019_persons_per_room_summary-v5.rds",
+  "ppbr",    2000,  "throughput/model00_2000_persons_per_bedroom_summary.rds",
+  "ppbr",    2019,  "throughput/model00_2019_persons_per_bedroom_summary-v5.rds",
+  "room",    2000,  "throughput/model00_2000_room_summary.rds",
+  "room",    2019,  "throughput/model00_2019_room_summary-v5.rds",
+  "bedroom", 2000,  "throughput/model00_2000_bedroom_summary.rds",
+  "bedroom", 2019,  "throughput/model00_2019_bedroom_summary-v5.rds"
+)
 
-# 2019
-props_2019_path <- "throughput/props00_2019.rds"
-numprec_2019_path <- "throughput/model00_2019_numprec_summary-beta.rds"
-ppr_2019_path <- "throughput/model00_2019_persons_per_room_summary-v5.rds"
-ppbr_2019_path <- "throughput/model00_2019_persons_per_bedroom_summary-v5.rds"
-room_2019_path <- "throughput/model00_2019_room_summary-v5.rds"
-bedroom_2019_path <- "throughput/model00_2019_bedroom_summary-v5.rds"
+get_path <- function(term, year) {
+  input_paths |> 
+    filter(term == !!term, year == !!year) |> 
+    pull(path)
+}
+
+# Sanity check: Do all above defined files exist?
+missing_paths <- input_paths |> filter(!file.exists(path))
+
+if (nrow(missing_paths) > 0) {
+  stop("❌ Missing file(s):\n", paste(missing_paths$path, collapse = "\n"))
+}
+
+# Quality check: Do any of above defined files have NA values?
+na_summary <- map(kob_input, ~ anyNA(.x))
+
+if (any(unlist(na_summary))) {
+  failed <- names(na_summary[na_summary == TRUE])
+  stop("❌ NA values detected in the following `kob_input` entries: ", paste(failed, collapse = ", "))
+}
 
 # ----- Step 2: Read in proportion data ----- #
 # Helper function to combine two dataframes with identical terms (used for joining
@@ -57,8 +75,8 @@ join_data_by_term <- function(data1, data2) {
 }
 
 # Read proportions in as a svystat object
-props_2000_svystat <- readRDS(props_2000_path)
-props_2019_svystat <- readRDS(props_2019_path)
+props_2000_svystat <- readRDS(get_path("props", 2000))
+props_2019_svystat <- readRDS(get_path("props", 2019))
 
 extract_prop <- function(svystat_obj, year) {
   # Calculate population proportions, SE on those estimates, and extract the variable
@@ -81,7 +99,7 @@ prop_2019 <-purrr::map_dfr(props_2019_svystat, extract_prop, year = 2019)
 # Combined props from both years
 props <- join_data_by_term(prop_2000, prop_2019)
 
-# ----- Step 3: Read in coefficients ----- #
+# ----- Step 3: Read in coefficients, combine with props in output list ----- #
 # Define list of coefficients to cycle through
 coef_names <- c("numprec", "ppr", "ppbr", "room", "bedroom")
 
@@ -107,38 +125,20 @@ read_coefs_2019 <- function(path) {
   return(output)
 }
 
-coefs_numprec <- join_data_by_term(
-  read_coefs_2000(numprec_2000_path), 
-  read_coefs_2019(numprec_2019_path)
-  )
-
-coefs_room <- join_data_by_term(
-  read_coefs_2000(room_2000_path), 
-  read_coefs_2019(room_2019_path)
-)
-
-coefs_bedroom <- join_data_by_term(
-  read_coefs_2000(bedroom_2000_path), 
-  read_coefs_2019(bedroom_2019_path)
-)
-
-coefs_ppr <- join_data_by_term(
-  read_coefs_2000(ppr_2000_path), 
-  read_coefs_2019(ppr_2019_path)
-)
-
-coefs_ppbr <- join_data_by_term(
-  read_coefs_2000(ppbr_2000_path), 
-  read_coefs_2019(ppbr_2019_path)
-)
-
-# ----- Step 4: Combine into list of data frames for kob input----- #
-
+# Define function to pull coefficient data from both years and combine with props
+# data
 join_coefs_props <- function(coef_name) {
-  coefs <- get(paste0("coefs_", coef_name)) # e.g. coefs_ppbr, coefs_bedroom
-  left_join(coefs, props, by = "term") # Left join: props has some variables that are omitted in regression
+  coefs <- join_data_by_term(
+    read_coefs_2000(get_path(coef_name, 2000)), 
+    read_coefs_2019(get_path(coef_name, 2019))
+  )
+    
+  left_join(coefs, props, by = "term") # Left join: keep only terms found in regression results; OK if some props are unused
 }
 
+# Apply this function and save outcomes in a named list
 kob_input <- map(coef_names, join_coefs_props) |>  set_names(coef_names)
 
+# Save kob_input to throughput/
+saveRDS(kob_input, "throughput/kob_input.rds")
   
