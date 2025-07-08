@@ -22,28 +22,28 @@ library("ggplot2")
 library("oaxaca")
 library("tibble")
 
-# ----- Step 1: Load in data from kob-prepare-data.R ----- #
-source("kob/scripts/kob-prepare-data.R") # coef is the key output here
+# ----- Step 1: Load in data ----- #
+source("kob/scripts/kob-prepare-data.R") # only needs to run if kob_input.rds doesn't already exist
+kob_input <- readRDS("throughput/kob_input.rds")
 
-# ----- Step 2: Run the kob analysis ----- #
-source("kob/scripts/kob-function.R") # defines the `kob` function
-
-# This is for validation. The difference in mean hhsize from 2000 to 2019 should
-# exactly equal the sum of the u, c, and e components.
+# This is for validation.
 aggregates <- readRDS("throughput/aggregates.rds")
 
-# Apply the kob function
-kob_output <- kob(coef)
-kob_output
+# ----- Step 2: Run the kob analysis ----- #
+source("kob/scripts/kob-function.R") # defines the `kob` function and `kob-output-validate()`
 
-# Validate whether the sum of the outputs matches the validation diff
-output_diff <- kob_output$components |>
-  unlist() |>
-  sum()
+# kob_input <- readRDS("throughput/kob_input.rds")
+# 
+# kob_output <- kob(kob_input$bedroom)
+# 
+# # Time to validate
+# aggregates <- readRDS("throughput/aggregates.rds")
 
-# No output means the test passed (i.e. kob worked!)
-testthat::expect_equal(output_diff, as.numeric(validation_diff), tolerance = 1e-8)
-
+# kob_output_validate(
+#   kob_output = kob_output,
+#   mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
+#   mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
+# )
 
 # ----- Step 3: Save and graph ----- #
 # For now, I'm not running this script since I don't want to save these results

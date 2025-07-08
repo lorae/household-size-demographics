@@ -107,13 +107,6 @@ kob <- function(
 }
 
 
-# kob_input <- readRDS("throughput/kob_input.rds")
-# 
-# kob_output <- kob(kob_input$bedroom)
-# 
-# # Time to validate
-# aggregates <- readRDS("throughput/aggregates.rds")
-
 # Takes in an object of type kob_output, plus the outcome mean in 2000 and 2019
 # to determine whether the kob matches the expected tolerance.
 kob_output_validate <- function(
@@ -144,8 +137,3 @@ kob_output_validate <- function(
   }
 }
 
-# kob_output_validate(
-#   kob_output = kob_output,
-#   mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
-#   mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
-# )
