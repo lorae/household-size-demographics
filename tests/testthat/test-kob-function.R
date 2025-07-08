@@ -84,3 +84,61 @@ test_that("kob() output matches expected values with intercept", {
   expect_equal(result$c, kob_expected_intercept$c, tolerance = 1e-6)
   expect_equal(result$c_se, kob_expected_intercept$c_se, tolerance = 1e-6)
 })
+
+test_that("kob() stops when required columns are missing", {
+  input_missing_col <- kob_input |> select(-coef_2000)  # Remove one required column
+  
+  expect_error(
+    kob(input_missing_col),
+    regexp = "Missing required columns: coef_2000"
+  )
+})
+
+test_that("kob() stops when multiple intercepts are present", {
+  input_multiple_intercepts <- kob_input_intercept |>
+    add_row(term = "(Intercept)", 
+            coef_2000 = 3, coef_2000_se = 0.1,
+            coef_2019 = 3.5, coef_2019_se = 0.1,
+            prop_2000 = NA, prop_2000_se = NA,
+            prop_2019 = NA, prop_2019_se = NA)
+  
+  expect_error(
+    kob(input_multiple_intercepts),
+    regexp = "Multiple '\\(Intercept\\)' rows detected"
+  )
+})
+
+test_that("kob() handles zero standard errors correctly", {
+  input_zero_se <- kob_input |>
+    mutate(across(ends_with("_se"), ~0))
+  
+  result <- kob(input_zero_se)
+  
+  expect_true(all(result$e_se == 0))
+  expect_true(all(result$c_se == 0))
+})
+
+test_that("kob() returns zero e and c terms for identical 2000 and 2019 inputs", {
+  input_identical <- kob_input |>
+    mutate(
+      coef_2019 = coef_2000,
+      coef_2019_se = coef_2000_se,
+      prop_2019 = prop_2000,
+      prop_2019_se = prop_2000_se
+    )
+  
+  result <- kob(input_identical)
+  
+  expect_equal(result$e, rep(0, nrow(result)))
+  expect_equal(result$c, rep(0, nrow(result)))
+})
+
+test_that("kob() skips e/c calculation for intercept row", {
+  result <- kob(kob_input_intercept)
+  intercept_row <- result |> filter(term == "(Intercept)")
+  
+  expect_true(is.na(intercept_row$e))
+  expect_true(is.na(intercept_row$c))
+  expect_true(is.na(intercept_row$e_se))
+  expect_true(is.na(intercept_row$c_se))
+})
