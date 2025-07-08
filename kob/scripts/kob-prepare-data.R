@@ -132,8 +132,11 @@ join_coefs_props <- function(coef_name) {
     read_coefs_2000(get_path(coef_name, 2000)), 
     read_coefs_2019(get_path(coef_name, 2019))
   )
-    
-  left_join(coefs, props, by = "term") # Left join: keep only terms found in regression results; OK if some props are unused
+  
+  # Left join: keep only terms found in regression results; OK if some props are unused
+  # Also, if regression results include an (Intercept) term, that will produce an NA
+  # in the props columns, which is expected behavior
+  left_join(coefs, props, by = "term") 
 }
 
 # Apply this function and save outcomes in a named list
