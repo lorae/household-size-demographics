@@ -55,7 +55,7 @@ toc()
 
 # Save the 2000 survey
 tic("Save 2000 survey design as RDS")
-saveRDS(design_2000_survey, file = "kob/throughput/design_2000_survey.rds")
+saveRDS(design_2000_survey, file = "throughput/design_2000_survey.rds")
 toc()
 
 # Collect 2019 data into memory
@@ -79,12 +79,12 @@ toc()
 # Save the 2019 survey
 # Note: this took 47 minutes last time
 tic("Save 2019 survey design as RDS")
-saveRDS(design_2019_survey, file = "kob/throughput/design_2019_survey.rds")
+saveRDS(design_2019_survey, file = "throughput/design_2019_survey.rds")
 toc()
 
 # Save the 2019 raw tibble
 # Note: This took 25 minutes last time
 tic("Save the 2019 raw tibble, unfiltered")
-saveRDS(ipums_2019_tb, file = "kob/throughput/ipums_2019_tb.rds")
+saveRDS(ipums_2019_tb, file = "throughput/ipums_2019_tb.rds")
 toc()
 
