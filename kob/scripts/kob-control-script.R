@@ -59,15 +59,19 @@ kob_output_validate(
 )
 
 # Consolidate for graphing
-kob_bedroom_clean <- kob_bedroom |>
 # First pass at aggregating up estimates
-kob_bedroom_cpuma_summary <- kob_bedroom |>
-  filter(variable == "cpuma") |>
-  summarize(
-    across(starts_with("coef_"), ~ NA_real_),
-    across(c("prop_2000", "prop_2019", "u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
-    across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE)))
-  )
+kob_collapse_variable <- function(kob_output, variable) {
+  kob_output |>
+    filter(.data$variable == !!variable) |>
+    summarise(
+      across(starts_with("coef_"), ~ NA_real_),
+      across(c("prop_2000", "prop_2019", "u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
+      across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE)))
+    )
+}
+
+# Creates a single row which summarizes across cpumas
+kob_bedroom_cpuma_summary <- kob_bedroom_cpuma_summary <- kob_collapse_variable(kob_bedroom, "cpuma")
 # ----- Step 3: Save and graph ----- #
 # For now, I'm not running this script since I don't want to save these results
 # anywhere while I test and refactor on benchmark data
