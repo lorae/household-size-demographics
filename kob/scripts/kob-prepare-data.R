@@ -3,6 +3,10 @@
 # the kob pipeline in kob-function.R
 # It standardizes regression results and population proportinos into a coef data
 # frame
+# TODO: this whole script could use a DRY refactor
+# TODO: based on the regression #, build a list of expected terms and compare 
+# after each step against those terms to validate rows haven't been added/dropped.
+# Also, ensure no NAs/NaNs
 
 # ----- Step 0: Config & source helper functions ----- #
 library(purrr)
@@ -149,8 +153,15 @@ coefs_2019_ppbr <- readRDS(coefs_2019_ppbr_path)
 coefs_ppbr <- bind_and_check_terms(coefs_2000_ppbr, coefs_2019_ppbr)
 
 # ----- Step 4: Combine into kob-input style data frames ----- #
+coef_names <- c("numprec", "ppr", "ppbr", "room", "bedroom")
 
-kob_input_numprec <- bind_and_check_terms(props, coefs_numprec)
+# Left join is used: props contains more rows than coefs_xx data frames,
+# because there are no coefs estimated for the omitted categories
+join_coefs_props <- function(coef_name) {
+  coefs <- get(paste0("coefs_", coef_name)) # e.g. coefs_ppbr, coefs_bedroom
+  left_join(coefs, props, by = "term") # Left join: props has some variables that are omitted in regression
+}
 
+kob_input <- map(coef_names, join_coefs_props) |>  set_names(coef_names)
 
   
