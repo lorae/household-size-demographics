@@ -9,8 +9,23 @@
 kob <- function(
     kob_input # A data frame of the style outputted by running src/kob/kob-prepare-data.R above
 ) {
-  # Initialize the output. It is comprised of the input plus six additional added
-  # columns: u, u_se, e, e_se, c, c_se
+  #--- 0: Input checks
+  # Check for presence of required columns
+  required_cols <- c("term", "coef_2000", "coef_2019", "prop_2000", "prop_2019")
+  missing_cols <- setdiff(required_cols, names(kob_input))
+  if (length(missing_cols) > 0) {
+    stop("❌ Missing required columns: ", paste(missing_cols, collapse = ", "))
+  }
+  
+  # Check for multiple intercepts
+  intercept_count <- sum(kob_input$term == "(Intercept)")
+  if (intercept_count > 1) {
+    stop("❌ Multiple '(Intercept)' rows detected. Only one is allowed.")
+  }
+  
+  # --- 1: Initialize output
+  # Output is the kob_input data frame, plus six additional columns: 
+  # u, u_se, e, e_se, c, c_se
   kob_output <- kob_input |>
     mutate(
       u = NA_real_,
@@ -20,6 +35,14 @@ kob <- function(
       c = NA_real_,
       c_se = NA_real_
     )
+  
+  # --- 2a: Calculate u
+  # Message user about intercept presence
+  if (intercept_count == 1) {
+    message("✅ Intercept detected. u term will be calculated in output.")
+  } else {
+    message("ℹ️ Intercept not detected. u term will not be calculated in output.")
+  }
   
   # Calculate u if (Intercept) row exists
   if ("(Intercept)" %in% kob_input$term) {
@@ -41,32 +64,63 @@ kob <- function(
           TRUE ~ u_se)
       )
   }
+
+  # --- 2b: Calculate e
+  kob_output <- kob_output |>
+    mutate(
+      e = coef_2019 * (prop_2019 - prop_2000),
+      e_se = 2 # placeholder
+    )
   
+  # --- 2c: Calculate c
+  kob_output <- kob_output |>
+    mutate(
+      c = (coef_2019 - coef_2000) * prop_2000,
+      c_se = 2 # placeholder
+    )
+  
+  # --- 3: Return
   return(kob_output)
-  
-  # Calculate e
-  
-  
-  # # Calculate e and c components
-  # coef <- coef |>
-  #   mutate(
-  #     e_component = mean_2019*(prop_2019 - prop_2000),
-  #     c_component = (mean_2019 - mean_2000)*prop_2000
-  #   )
-  # 
-  # # Calculate aggregate u, e, and c components
-  # u <- intercept_2019 - intercept_2000
-  # e <- sum(coef$e_component, na.rm = TRUE)
-  # c <- sum(coef$c_component, na.rm = TRUE)
-  # 
-  # # Construct output list
-  # output <- list(
-  #   components = list(u = u, e = e, c = c),
-  #   coef = coef
-  #   )
 }
 
 
 kob_input <- readRDS("throughput/kob_input.rds")
 
-kob(kob_input$bedroom)
+kob_output <- kob(kob_input$bedroom)
+
+# Time to validate
+aggregates <- readRDS("throughput/aggregates.rds")
+
+# Takes in an object of type kob_output, plus the outcome mean in 2000 and 2019
+# to determine whether the kob matches the expected tolerance.
+kob_output_validate <- function(
+    kob_output,
+    mean_2000,
+    mean_2019,
+    tol = 1e-10
+    ) {
+  actual <- kob_output |>
+    # Sum up u, e, and c in each row
+    mutate(x = rowSums(across(c(u, e, c)), na.rm = TRUE)) |>
+    # Sum the resultant column
+    summarize(actual = sum(x)) |>
+    pull(actual)
+  
+  expected <- mean_2019 - mean_2000
+  difference <- abs(actual - expected)
+  
+  if (difference <= tol) {
+    message("✅ Decomposition matches expected total within tolerance.")
+    return(TRUE)
+  } else {
+    stop(glue::glue(
+      "❌ Decomposition mismatch:\n  actual   = {round(actual, 6)}\n  expected = {round(expected, 6)}\n  diff     = {round(difference, 6)}"
+    ))
+  }
+}
+
+kob_output_validate(
+  kob_output = kob_output,
+  mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
+)
