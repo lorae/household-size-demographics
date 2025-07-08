@@ -97,7 +97,7 @@ kob <- function(
       se_x = sqrt(coef_2019_se^2 + coef_2000_se^2),
       se_y = prop_2000_se,
       # Formula: SE(x * y) = sqrt[x^2 * se(y)^2 + y^2 * se(x)^2]
-      e_se = sqrt(x^2 * se_y^2 + y^2 * se_x^2)
+      c_se = sqrt(x^2 * se_y^2 + y^2 * se_x^2)
     ) |>
     # Drop the helper variables, which were only used for illustration
     select(-x, -y, -se_x, -se_y)
