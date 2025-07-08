@@ -9,6 +9,9 @@
 # Formulas drawn from the following:
 # https://www2.census.gov/programs-surveys/acs/tech_docs/accuracy/2019_ACS_Accuracy_Document_Worked_Examples.pdf
 # TODO: We need unit tests, particularly for the standard errors
+library(purrr)
+library(stringr)
+
 
 kob <- function(
     kob_input # A data frame of the style outputted by running src/kob/kob-prepare-data.R above
@@ -135,5 +138,45 @@ kob_output_validate <- function(
       expected = {round(expected, 6)}
       diff     = {round(difference, 6)}"))
   }
+}
+
+
+# Varnames fed into kob_tidy_output() function, below
+varnames_dict <- c(
+  "RACE_ETH_bucket",
+  "AGE_bucket",
+  "EDUC_bucket",
+  "INCTOT_cpiu_2010_bucket",
+  "us_born",
+  "gender",
+  "tenure",
+  "cpuma"
+)
+
+# The `term` column of the kob output takes the format variablevalue, e.g.
+# RACE_ETH_bucketAAPI. This function uses the above varnames_dict to split up
+# this string into variable (e.g. RACE_ETH_bucket) and value (AAPI), and appends
+# to the kob_output data frame.
+kob_tidy_output <- function(kob_output, varnames = varnames_dict) {
+  # Define a helper function within the function
+  extract_variable <- function(term, varnames) {
+    matched <- varnames[str_detect(term, fixed(varnames))]
+    if (length(matched) > 0) return(matched[1])
+    return(NA_character_)
+  }
+  
+  kob_output <- kob_output |> 
+    mutate(
+      variable = map_chr(term, ~ extract_variable(.x, varnames)),
+      value = if_else(!is.na(variable), str_remove(term, fixed(variable)), term)
+    ) |>
+    select(term, variable, value, everything())
+  
+  unmatched <- kob_output |> filter(is.na(variable)) |> pull(term)
+  if (length(unmatched) > 0) {
+    warning("Some terms could not be matched to a variable prefix: ", paste(unique(unmatched), collapse = ", "))
+  }
+  
+  return(kob_output)
 }
 

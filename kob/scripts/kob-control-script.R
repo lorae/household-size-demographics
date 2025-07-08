@@ -32,18 +32,13 @@ aggregates <- readRDS("throughput/aggregates.rds")
 # ----- Step 2: Run the kob analysis ----- #
 source("kob/scripts/kob-function.R") # defines the `kob` function and `kob-output-validate()`
 
-# kob_input <- readRDS("throughput/kob_input.rds")
-# 
-# kob_output <- kob(kob_input$bedroom)
-# 
-# # Time to validate
-# aggregates <- readRDS("throughput/aggregates.rds")
-
-# kob_output_validate(
-#   kob_output = kob_output,
-#   mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
-#   mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
-# )
+# bedroom
+kob_bedroom <- kob(kob_input$bedroom)
+kob_output_validate(
+  kob_bedroom,
+  mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
+)
 
 # ----- Step 3: Save and graph ----- #
 # For now, I'm not running this script since I don't want to save these results
