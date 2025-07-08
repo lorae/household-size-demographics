@@ -4,6 +4,7 @@
 # on a set of controlled inputs.
 
 # ----- Step 0: Config -----
+library(testthat)
 library(tibble)
 library(dplyr)
 library(rprojroot)
@@ -44,7 +45,7 @@ kob_expected <- kob_input |>
   mutate(
     u = c(NA_real_, NA_real_, NA_real_),
     u_se = c(NA_real_, NA_real_, NA_real_),
-    e = c(0.075, 0.125, -0.027),
+    e = c(0.075, 0.125, -0.27),
     e_se = c(0.02806243, 0.081009259, 0.103450471),
     c = c(0.1, 0.15, -0.15),
     c_se = c(0.036400549, 0.09656604, 0.230664258)
@@ -54,8 +55,32 @@ kob_expected_intercept <- kob_input_intercept |>
   mutate(
     u = c(0.5, NA_real_, NA_real_, NA_real_),
     u_se = c(0.6403124, NA_real_, NA_real_, NA_real_),
-    e = c(NA_real_, 0.075, 0.125, -0.027),
+    e = c(NA_real_, 0.075, 0.125, -0.27),
     e_se = c(NA_real_, 0.02806243, 0.081009259, 0.103450471),
     c = c(NA_real_, 0.1, 0.15, -0.15),
     c_se = c(NA_real_, 0.036400549, 0.09656604, 0.230664258)
   )
+
+# ----- Step 2: Tests -----
+
+test_that("kob() output matches expected values without intercept", {
+  result <- kob(kob_input)
+  
+  expect_equal(result$u, kob_expected$u, tolerance = 1e-6)
+  expect_equal(result$u_se, kob_expected$u_se, tolerance = 1e-6)
+  expect_equal(result$e, kob_expected$e, tolerance = 1e-6)
+  expect_equal(result$e_se, kob_expected$e_se, tolerance = 1e-6)
+  expect_equal(result$c, kob_expected$c, tolerance = 1e-6)
+  expect_equal(result$c_se, kob_expected$c_se, tolerance = 1e-6)
+})
+
+test_that("kob() output matches expected values with intercept", {
+  result <- kob(kob_input_intercept)
+  
+  expect_equal(result$u, kob_expected_intercept$u, tolerance = 1e-6)
+  expect_equal(result$u_se, kob_expected_intercept$u_se, tolerance = 1e-6)
+  expect_equal(result$e, kob_expected_intercept$e, tolerance = 1e-6)
+  expect_equal(result$e_se, kob_expected_intercept$e_se, tolerance = 1e-6)
+  expect_equal(result$c, kob_expected_intercept$c, tolerance = 1e-6)
+  expect_equal(result$c_se, kob_expected_intercept$c_se, tolerance = 1e-6)
+})
