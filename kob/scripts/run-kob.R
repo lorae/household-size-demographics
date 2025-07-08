@@ -9,24 +9,44 @@
 kob <- function(
     kob_input # A data frame of the style outputted by running src/kob/kob-prepare-data.R above
 ) {
-
-  # Calculate u (if applicable)
+  # Initialize the output. It is comprised of the input plus six additional added
+  # columns: u, u_se, e, e_se, c, c_se
+  kob_output <- kob_input |>
+    mutate(
+      u = NA_real_,
+      u_se = NA_real_,
+      e = NA_real_,
+      e_se = NA_real_,
+      c = NA_real_,
+      c_se = NA_real_
+    )
+  
+  # Calculate u if (Intercept) row exists
   if ("(Intercept)" %in% kob_input$term) {
     intercept_2000 <- kob_input |> filter(term == "(Intercept)") |> pull(coef_2000)
     intercept_2019 <- kob_input |> filter(term == "(Intercept)") |> pull(coef_2019)
-    
-    u <- intercept_2019 - intercept_2000
-    # TODO: fill in with actual SE formula
-    se_u <- 2
-    
-  } else {
-    
-    u <- NULL
-    se_u <- NULL
-    
+
+    u_val <- intercept_2019 - intercept_2000
+    u_se_val <- 2  # placeholder
+
+    kob_output <- kob_output |>
+      mutate(
+        # Update the u col so only the term in the "(Intercept)" row has a numeric
+        u = case_when(
+          term == "(Intercept)" ~ u_val, 
+          TRUE ~ u),
+        # Update the u_se col accordingly
+        u_se = case_when(
+          term == "(Intercept)" ~ u_se_val, 
+          TRUE ~ u_se)
+      )
   }
   
-  return(list(u, se_u))
+  return(kob_output)
+  
+  # Calculate e
+  
+  
   # # Calculate e and c components
   # coef <- coef |>
   #   mutate(
@@ -44,9 +64,8 @@ kob <- function(
   #   components = list(u = u, e = e, c = c),
   #   coef = coef
   #   )
-  # 
-  # return(output)
 }
+
 
 kob_input <- readRDS("throughput/kob_input.rds")
 
