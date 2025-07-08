@@ -80,83 +80,58 @@ prop_2019 <-purrr::map_dfr(props_2019_svystat, extract_prop, year = 2019)
 props <- bind_and_check_terms(prop_2000, prop_2019)
 
 # ----- Step 3: Read in coefficients ----- #
-# NUMPREC
-coefs_2000_numprec <- readRDS(coefs_2000_numprec_path) |>
-  select(term, estimate, std.error) |>
-  rename(
-    coef_2000 = estimate,
-    coef_2000_se = std.error
-  )
-
-coefs_2019_numprec <- readRDS(coefs_2019_numprec_path) |>
-  rename(
-    coef_2019 = estimate,
-    coef_2019_se = se_estimate
-  )
-
-coefs_numprec <- bind_and_check_terms(coefs_2000_numprec, coefs_2019_numprec)
-
-# room
-coefs_2000_room <- readRDS(coefs_2000_room_path) |>
-  select(term, estimate, std.error) |>
-  rename(
-    coef_2000 = estimate,
-    coef_2000_se = std.error
-  )
-
-coefs_2019_room <- readRDS(coefs_2019_room_path) |>
-  rename(
-    coef_2019 = estimate,
-    coef_2019_se = se_estimate
-  )
-
-coefs_room <- bind_and_check_terms(coefs_2000_room, coefs_2019_room)
-
-# bedroom
-coefs_2000_bedroom <- readRDS(coefs_2000_bedroom_path) |>
-  select(term, estimate, std.error) |>
-  rename(
-    coef_2000 = estimate,
-    coef_2000_se = std.error
-  )
-
-coefs_2019_bedroom <- readRDS(coefs_2019_bedroom_path) # TODO: compare with v2 when it comes in to confirm identical
-
-coefs_bedroom <- bind_and_check_terms(coefs_2000_bedroom, coefs_2019_bedroom)
-
-# persons per room
-coefs_2000_ppr <- readRDS(coefs_2000_ppr_path) |>
-  select(term, estimate, std.error) |>
-  rename(
-    coef_2000 = estimate,
-    coef_2000_se = std.error
-  )
-
-coefs_2019_ppr <- readRDS(coefs_2019_ppr_path) |>
-  rename(
-    coef_2019 = estimate,
-    coef_2019_se = se_estimate
-  )
-
-coefs_ppr <- bind_and_check_terms(coefs_2000_ppr, coefs_2019_ppr)
-
-# persons per bedroom
-coefs_2000_ppbr <- readRDS(coefs_2000_ppbr_path) |>
-  select(term, estimate, std.error) |>
-  rename(
-    coef_2000 = estimate,
-    coef_2000_se = std.error
-  )
-
-coefs_2019_ppbr <- readRDS(coefs_2019_ppbr_path)
-
-coefs_ppbr <- bind_and_check_terms(coefs_2000_ppbr, coefs_2019_ppbr)
-
-# ----- Step 4: Combine into kob-input style data frames ----- #
+# Define list of coefficients to cycle through
 coef_names <- c("numprec", "ppr", "ppbr", "room", "bedroom")
 
-# Left join is used: props contains more rows than coefs_xx data frames,
-# because there are no coefs estimated for the omitted categories
+# Define helper functions for reading in data from 2000, 2019
+read_coefs_2000 <- function(path) {
+  output <- readRDS(path) |>
+    select(term, estimate, std.error) |>
+    rename(
+      coef_2000 = estimate,
+      coef_2000_se = std.error
+    )
+  
+  return(output)
+}
+
+read_coefs_2019 <- function(path) {
+  output <- readRDS(path) |>
+    rename(
+      coef_2019 = estimate,
+      coef_2019_se = se_estimate
+    )
+  
+  return(output)
+}
+
+coefs_numprec <- bind_and_check_terms(
+  read_coefs_2000(coefs_2000_numprec_path), 
+  read_coefs_2019(coefs_2019_numprec_path)
+  )
+
+coefs_room <- bind_and_check_terms(
+  read_coefs_2000(coefs_2000_room_path), 
+  read_coefs_2019(coefs_2019_room_path)
+)
+
+coefs_bedroom <- bind_and_check_terms(
+  read_coefs_2000(coefs_2000_bedroom_path), 
+  read_coefs_2019(coefs_2019_bedroom_path)
+)
+
+coefs_ppr <- bind_and_check_terms(
+  read_coefs_2000(coefs_2000_ppr_path), 
+  read_coefs_2019(coefs_2019_ppr_path)
+)
+
+coefs_ppbr <- bind_and_check_terms(
+  read_coefs_2000(coefs_2000_ppr_path), 
+  read_coefs_2019(coefs_2019_ppr_path)
+)
+
+# ----- Step 4: Combine into list of data frames for kob input----- #
+
 join_coefs_props <- function(coef_name) {
   coefs <- get(paste0("coefs_", coef_name)) # e.g. coefs_ppbr, coefs_bedroom
   left_join(coefs, props, by = "term") # Left join: props has some variables that are omitted in regression
