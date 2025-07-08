@@ -30,14 +30,7 @@ source("kob/scripts/kob-function.R") # defines the `kob` function
 
 # This is for validation. The difference in mean hhsize from 2000 to 2019 should
 # exactly equal the sum of the u, c, and e components.
-lm(data = ipums_tb |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)), 
-   formula = NUMPREC ~ 1,
-   weights = PERWT)$coefficients -> mean_hhsize_2000
-lm(data = ipums_tb |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)), 
-   formula = NUMPREC ~ 1,
-   weights = PERWT)$coefficients -> mean_hhsize_2019
-
-validation_diff <- mean_hhsize_2019 - mean_hhsize_2000
+aggregates <- readRDS("throughput/aggregates.rds")
 
 # Apply the kob function
 kob_output <- kob(coef)
