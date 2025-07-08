@@ -21,6 +21,9 @@ library("glue")
 library("ggplot2")
 library("oaxaca")
 library("tibble")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 # ----- Step 1: Load in data ----- #
 source("kob/scripts/kob-prepare-data.R") # only needs to run if kob_input.rds doesn't already exist
@@ -71,7 +74,50 @@ kob_collapse_variable <- function(kob_output, variable) {
 }
 
 # Creates a single row which summarizes across cpumas
-kob_bedroom_cpuma_summary <- kob_bedroom_cpuma_summary <- kob_collapse_variable(kob_bedroom, "cpuma")
+kob_bedroom_cpuma_summary <- kob_collapse_variable(kob_bedroom, "cpuma")
+
+# Run the function on all vars in varnames_dict and bind rows together
+kob_collapsed_all <- map_dfr(varnames_dict, function(var) {
+  kob_collapse_variable(kob_bedroom, var) |>
+    mutate(variable = var, .before = 1)
+}) |>
+  select(variable, u, e, c, u_se, e_se, c_se)
+
+# Validate against aggregates (again)
+kob_output_validate(
+  kob_collapsed_all,
+  mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
+)
+
+# Prepare long-format data with bars
+plot_data <- kob_collapsed_all |>
+  select(variable, e, e_se, c, c_se) |>
+  pivot_longer(cols = c(e, c), names_to = "component", values_to = "estimate") |>
+  mutate(
+    se = if_else(component == "e", e_se, c_se),
+    component = recode(component, e = "Endowments", c = "Coefficients")
+  ) |>
+  select(-e_se, -c_se)
+
+# To use bars, we need an explicit "width" for error bars
+ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
+  geom_col(width = 0.6, position = "identity") +
+  geom_errorbarh(
+    aes(xmin = estimate - se, xmax = estimate + se),
+    height = 0.2
+  ) +
+  facet_wrap(~component, scales = "free_x") +
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  labs(
+    x = "Contribution to Outcome Gap",
+    y = NULL,
+    title = "KOB Decomposition: # Bedrooms"
+  ) +
+  scale_fill_manual(values = c("Endowments" = "#56B4E9", "Coefficients" = "#E69F00")) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+
 # ----- Step 3: Save and graph ----- #
 # For now, I'm not running this script since I don't want to save these results
 # anywhere while I test and refactor on benchmark data
