@@ -1,10 +1,14 @@
 # kob-function.R
-# TODO: this function will need to have standard errors built in as a functionality.
-# It should also include basic checks on the validity of the coef input.
-# also, user should be able to specify through arguments which cols indicate the 
+# TODO: user should be able to specify through arguments which cols indicate the 
 # beta coefficients (to user Blinder's terminiology) and X coefficients.
 # This should be detailed clearly in the documetnation ,with latex-formatted 
 # terminology.
+#
+# For calculating standard errors, we assume that the two samples are independent.
+# That is, we do not include a covatiance term between the 2000 and 2019 estimates.
+# Formulas drawn from the following:
+# https://www2.census.gov/programs-surveys/acs/tech_docs/accuracy/2019_ACS_Accuracy_Document_Worked_Examples.pdf
+# TODO: We need unit tests, particularly for the standard errors
 
 kob <- function(
     kob_input # A data frame of the style outputted by running src/kob/kob-prepare-data.R above
@@ -48,9 +52,12 @@ kob <- function(
   if ("(Intercept)" %in% kob_input$term) {
     intercept_2000 <- kob_input |> filter(term == "(Intercept)") |> pull(coef_2000)
     intercept_2019 <- kob_input |> filter(term == "(Intercept)") |> pull(coef_2019)
+    
+    intercept_2000_se <- kob_input |> filter(term == "(Intercept)") |> pull(coef_2000_se)
+    intercept_2019_se <- kob_input |> filter(term == "(Intercept)") |> pull(coef_2019_se)
 
     u_val <- intercept_2019 - intercept_2000
-    u_se_val <- 2  # placeholder
+    u_se_val <- sqrt(intercept_2000_se^2 + intercept_2019_se^2)
 
     kob_output <- kob_output |>
       mutate(
@@ -69,15 +76,31 @@ kob <- function(
   kob_output <- kob_output |>
     mutate(
       e = coef_2019 * (prop_2019 - prop_2000),
-      e_se = 2 # placeholder
-    )
+      # Add helper columns to illustrate SE calculation clearly
+      x = coef_2019,
+      y = (prop_2019 - prop_2000),
+      se_x = coef_2019_se,
+      se_y = sqrt(prop_2019_se^2 + prop_2000_se^2),
+      # Formula: SE(x * y) = sqrt[x^2 * se(y)^2 + y^2 * se(x)^2]
+      e_se = sqrt(x^2 * se_y^2 + y^2 * se_x^2)
+    ) |>
+    # Drop the helper variables, which were only used for illustration
+    select(-x, -y, -se_x, -se_y)
   
   # --- 2c: Calculate c
   kob_output <- kob_output |>
     mutate(
       c = (coef_2019 - coef_2000) * prop_2000,
-      c_se = 2 # placeholder
-    )
+      # Add helper columns to illustrate SE calculation clearly
+      x = (coef_2019 - coef_2000),
+      y = prop_2000,
+      se_x = sqrt(coef_2019_se^2 + coef_2000_se^2),
+      se_y = prop_2000_se,
+      # Formula: SE(x * y) = sqrt[x^2 * se(y)^2 + y^2 * se(x)^2]
+      e_se = sqrt(x^2 * se_y^2 + y^2 * se_x^2)
+    ) |>
+    # Drop the helper variables, which were only used for illustration
+    select(-x, -y, -se_x, -se_y)
   
   # --- 3: Return
   return(kob_output)
