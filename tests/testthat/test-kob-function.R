@@ -40,24 +40,22 @@ kob_input_intercept <- tibble(
   prop_2019_se = c(NA, 0.015, 0.025, 0.02)
 )
 
-# TODO: fill in with actual values
 kob_expected <- kob_input |>
   mutate(
     u = c(NA_real_, NA_real_, NA_real_),
     u_se = c(NA_real_, NA_real_, NA_real_),
-    e = c(1, 2, 3),
-    e_se = c(1, 2, 3),
-    c = c(1, 2, 3),
-    c_se = c(1, 2, 3)
+    e = c(0.075, 0.125, -0.027),
+    e_se = c(0.02806243, 0.081009259, 0.103450471),
+    c = c(0.1, 0.15, -0.15),
+    c_se = c(0.036400549, 0.09656604, 0.230664258)
   )
 
-# TODO: fill in with actual values
 kob_expected_intercept <- kob_input_intercept |>
   mutate(
     u = c(0.5, NA_real_, NA_real_, NA_real_),
-    u_se = c(100, NA_real_, NA_real_, NA_real_),
-    e = c(NA_real_, 1, 2, 3),
-    e_se = c(NA_real_, 1, 2, 3),
-    c = c(NA_real_, 1, 2, 3),
-    c_se = c(NA_real_, 1, 2, 3)
+    u_se = c(0.6403124, NA_real_, NA_real_, NA_real_),
+    e = c(NA_real_, 0.075, 0.125, -0.027),
+    e_se = c(NA_real_, 0.02806243, 0.081009259, 0.103450471),
+    c = c(NA_real_, 0.1, 0.15, -0.15),
+    c_se = c(NA_real_, 0.036400549, 0.09656604, 0.230664258)
   )
