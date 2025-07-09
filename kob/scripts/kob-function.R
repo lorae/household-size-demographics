@@ -158,8 +158,9 @@ varnames_dict <- c(
 # this string into variable (e.g. RACE_ETH_bucket) and value (AAPI), and appends
 # to the kob_output data frame.
 kob_tidy_output <- function(kob_output, varnames = varnames_dict) {
-  # Define a helper function within the function
+  # Define a helper function to extract the variable prefix
   extract_variable <- function(term, varnames) {
+    if (term == "(Intercept)") return("(Intercept)")  # explicitly handle intercept
     matched <- varnames[str_detect(term, fixed(varnames))]
     if (length(matched) > 0) return(matched[1])
     return(NA_character_)
@@ -168,7 +169,11 @@ kob_tidy_output <- function(kob_output, varnames = varnames_dict) {
   kob_output <- kob_output |> 
     mutate(
       variable = map_chr(term, ~ extract_variable(.x, varnames)),
-      value = if_else(!is.na(variable), str_remove(term, fixed(variable)), term)
+      value = case_when(
+        term == "(Intercept)" ~ "(Intercept)",
+        !is.na(variable) ~ str_remove(term, fixed(variable)),
+        TRUE ~ term
+      )
     ) |>
     select(term, variable, value, everything())
   

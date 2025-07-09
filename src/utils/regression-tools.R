@@ -4,82 +4,10 @@
 # regression results
 #
 #
-
-# ----- Step 0: Config ----- #
-
 library(devtools)
+source("kob/scripts/kob-function.R") # The kob funciton is used within add-intercept()
 
-# Define number of strata to use
-n_strata <- 3
 
-# Define regression formulas
-formula_int <- BEDROOMS ~ RACE_ETH_bucket + tenure
-formula_no_int <- BEDROOMS ~ -1 + RACE_ETH_bucket + tenure
-
-# Load internal packages and helpers
-load_all("../dataduck")
-source("kob/benchmark/create-benchmark-data.R")
-source("kob/benchmark/regression-backends.R")
-source("kob/scripts/kob-function.R")
-
-# ----- Step 1: Load and prepare sample ----- #
-create_benchmark_sample(
-  year = 2019,
-  n_strata = n_strata,
-  db_path = "data/db/ipums.duckdb",
-  db_table_name = "ipums_processed",
-  force = FALSE
-)
-
-ipums_2019_sample_tb <- readRDS(glue("kob/cache/benchmark_sample_2019_{n_strata}/tb.rds"))
-filtered_tb <- ipums_2019_sample_tb |> filter(GQ %in% c(0, 1, 2))
-
-# ----- Step 2: Prepare regressions with and without intercepts ----- #
-reg_int <- dataduck_reg_lm(
-  data = filtered_tb,
-  wt_col = "PERWT", 
-  formula = formula_int) |>
-  kob_tidy_output() |>
-  rename(coef_2000 = estimate) |>
-  mutate(
-    coef_2000_se = 0,
-    coef_2019 = 0,
-    coef_2019_se = 0,
-    prop_2000 = 0,
-    prop_2000_se = 0,
-    prop_2019 = 0,
-    prop_2019_se = 0,
-    u = 0,
-    u_se = 0,
-    e = 0,
-    e_se = 0,
-    c = 0, 
-    c_se = 0
-  )
-
-reg_no_int <- dataduck_reg_lm(
-  data = filtered_tb,
-  wt_col = "PERWT", 
-  formula = formula_no_int) |>
-  kob_tidy_output() |>
-  rename(coef_2000 = estimate) |>
-  mutate(
-    coef_2000_se = 0,
-    coef_2019 = 0,
-    coef_2019_se = 0,
-    prop_2000 = 0,
-    prop_2000_se = 0,
-    prop_2019 = 0,
-    prop_2019_se = 0,
-    u = 0,
-    u_se = 0,
-    e = 0,
-    e_se = 0,
-    c = 0, 
-    c_se = 0
-  )
-
-# ----- Step 3: Define add_intercept function and remove_intercept function ----- #
 # ADD INTERCEPT
 add_intercept <- function(
     reg_data,
@@ -104,7 +32,7 @@ add_intercept <- function(
     stop(
       paste0(
         "Expected exactly one row with variable = '", variable,
-        "' and value = '", reference_value, "', but found ", nrow(matching_rows), "."
+        "' and value = '", reference_value, "', but found ", nrow(reference_row), "."
       )
     )
   }
@@ -139,6 +67,7 @@ add_intercept <- function(
     mutate(
       term = "(Intercept)",
       value = "(Intercept)",
+      variable = "(Intercept)",
       coef_2000    = coef_2000,
       coef_2019    = coef_2019,
       coef_2000_se = coef_2000_se,
@@ -159,13 +88,6 @@ add_intercept <- function(
     bind_rows(new_rows)
   
 }
-
-# example usage
-add_intercept(reg_no_int, variable = "RACE_ETH_bucket", reference_value = "AAPI")
-# example where it should stop vc variable not found
-add_intercept(reg_no_int, variable = "Peaches", reference_value = "White")
-# example where it should stop bc value not found
-add_intercept(reg_no_int, variable = "RACE_ETH_bucket", reference_value = "Peaches")
 
 # REMOVE INTERCEPT
 remove_intercept <- function(
