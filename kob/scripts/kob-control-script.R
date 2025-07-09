@@ -65,59 +65,81 @@ kob_output_validate(
   mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
 )
 
-# Stack Coefficients and Endowments vertically with shared x-axis
-plot_data_updated <- kob_bedroom |>
-  filter(variable %in% varnames_dict) |> 
-  group_by(variable) |>
-  summarise(
-    across(starts_with("coef_"), ~ NA_real_),
-    across(c("prop_2000", "prop_2019", "u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
-    across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE)))
-  ) |>
-  select(variable, e, e_se, c, c_se) |>
-  pivot_longer(cols = c(e, c), names_to = "component", values_to = "estimate") |>
-  mutate(
-    se = if_else(component == "e", e_se, c_se),
-    component = recode(component, e = "Endowments", c = "Coefficients"),
-    component = factor(component, levels = c("Coefficients", "Endowments"))
-  ) |>
-  select(-e_se, -c_se) |>
-  add_row(
-    variable = "Intercept",
-    component = "Intercept",
-    estimate = kob_bedroom_updated |> filter(term == "(Intercept)") |> pull(u),
-    se = kob_bedroom_updated |> filter(term == "(Intercept)") |> pull(u_se)
-  )
+# ----- Step 3: Graph ----- #
+# Define a function to plot the decomp
+plot_kob_decomposition <- function(kob_output, varnames,
+                                   title = "KOB Decomposition: Bedrooms with Intercept") {
+  # Collapse into one row per variable
+  collapsed <- kob_output |>
+    filter(variable %in% varnames) |> 
+    group_by(variable) |>
+    summarise(
+      across(starts_with("coef_"), ~ NA_real_),
+      across(c("prop_2000", "prop_2019", "u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
+      across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE))),
+      .groups = "drop"
+    ) |>
+    select(variable, e, e_se, c, c_se) |>
+    pivot_longer(cols = c(e, c), names_to = "component", values_to = "estimate") |>
+    mutate(
+      se = if_else(component == "e", e_se, c_se),
+      component = recode(component, e = "Endowments", c = "Coefficients"),
+      component = factor(component, levels = c("Coefficients", "Endowments"))
+    ) |>
+    select(-e_se, -c_se)
+  
+  # Add intercept row if present
+  if ("(Intercept)" %in% kob_output$term) {
+    intercept_row <- kob_output |>
+      filter(term == "(Intercept)") |>
+      summarise(
+        variable = "Intercept",
+        component = "Intercept",
+        estimate = sum(u, na.rm = TRUE),
+        se = sqrt(sum(u_se^2, na.rm = TRUE)),
+        .groups = "drop"
+      )
+    
+    collapsed <- bind_rows(collapsed, intercept_row)
+  }
+  
+  # Rescale intercept
+  intercept_scale <- 0.2 / max(abs(collapsed$estimate), na.rm = TRUE)
+  plot_data <- collapsed |>
+    mutate(
+      estimate_rescaled = ifelse(component == "Intercept", estimate * intercept_scale, estimate),
+      se_rescaled = ifelse(component == "Intercept", se * intercept_scale, se),
+      variable = factor(variable, levels = rev(unique(variable)))
+    )
+  
+  # Final plot
+  ggplot(plot_data, aes(x = estimate_rescaled, y = variable, fill = component)) +
+    geom_col(position = position_stack(reverse = TRUE)) +
+    geom_errorbarh(
+      aes(xmin = estimate_rescaled - se_rescaled,
+          xmax = estimate_rescaled + se_rescaled),
+      height = 0.25, color = "black"
+    ) +
+    facet_grid(rows = vars(component), scales = "free_y", space = "free_y", switch = "y") +
+    scale_fill_manual(values = c(
+      "Endowments" = "#56B4E9",
+      "Coefficients" = "#E69F00",
+      "Intercept" = "gray50"
+    )) +
+    theme_minimal(base_size = 13) +
+    labs(
+      title = title,
+      x = "Contribution to Outcome Gap",
+      y = NULL
+    ) +
+    theme(
+      strip.placement = "outside",
+      strip.text.y.left = element_text(angle = 0),
+      panel.spacing.y = unit(1, "lines"),
+      legend.position = "none"
+    )
+}
 
-intercept_scale <- 0.2 / max(abs(plot_data_updated$estimate))
-plot_data_updated <- plot_data_updated %>%
-  mutate(
-    estimate_rescaled = ifelse(component == "Intercept", estimate * intercept_scale, estimate),
-    se_rescaled = ifelse(component == "Intercept", se * intercept_scale, se),
-    variable = factor(variable, levels = rev(unique(variable)))
-  )
 
-# Plot
-ggplot(plot_data_updated, aes(x = estimate_rescaled, y = variable, fill = component)) +
-  geom_col(position = position_stack(reverse = TRUE)) +
-  geom_errorbarh(aes(xmin = estimate_rescaled - se_rescaled,
-                     xmax = estimate_rescaled + se_rescaled),
-                 height = 0.25, color = "black") +
-  facet_grid(rows = vars(component), scales = "free_y", space = "free_y", switch = "y") +
-  scale_fill_manual(values = c("Endowments" = "#56B4E9", "Coefficients" = "#E69F00", "Intercept" = "gray50")) +
-  theme_minimal(base_size = 13) +
-  labs(
-    title = "KOB Decomposition: Bedrooms with Intercept",
-    x = "Contribution to Outcome Gap", y = NULL
-  ) +
-  theme(
-    strip.placement = "outside",
-    strip.text.y.left = element_text(angle = 0),
-    panel.spacing.y = unit(1, "lines"),
-    legend.position = "none"
-  )
-# ----- Step 3: Save and graph ----- #
-# For now, I'm not running this script since I don't want to save these results
-# anywhere while I test and refactor on benchmark data
+plot_kob_decomposition(kob_bedroom_updated, varnames = varnames_dict)
 
-# source("kob/scripts/kob-graphs-tables.R")
