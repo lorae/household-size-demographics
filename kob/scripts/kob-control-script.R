@@ -66,17 +66,27 @@ kob_output_validate(
 )
 
 # ----- Step 3: Graph ----- #
-# Define a function to plot the decomp
-plot_kob_decomposition <- function(kob_output, varnames,
-                                   title = "KOB Decomposition: Bedrooms with Intercept",
-                                   show_total = TRUE) {
+pretty_labels <- c(
+  us_born = "U.S. born",
+  tenure = "Tenure",
+  RACE_ETH_bucket = "Race / Ethnicity",
+  INCTOT_cpiu_2010_bucket = "Income",
+  gender = "Sex",
+  EDUC_bucket = "Education",
+  cpuma = "CPUMA",
+  AGE_bucket = "Age",
+  Intercept = "Intercept",
+  Total = "Total"
+)
+
+prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
   # Collapse into one row per variable
   collapsed <- kob_output |>
     filter(variable %in% varnames) |> 
     group_by(variable) |>
     summarise(
       across(starts_with("coef_"), ~ NA_real_),
-      across(c("prop_2000", "prop_2019", "u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
+      across(c("u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
       across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE))),
       .groups = "drop"
     ) |>
@@ -89,7 +99,7 @@ plot_kob_decomposition <- function(kob_output, varnames,
     ) |>
     select(-e_se, -c_se)
   
-  # Add intercept row if present
+  # Add intercept if present
   if ("(Intercept)" %in% kob_output$term) {
     intercept_row <- kob_output |>
       filter(term == "(Intercept)") |>
@@ -103,42 +113,37 @@ plot_kob_decomposition <- function(kob_output, varnames,
     collapsed <- bind_rows(collapsed, intercept_row)
   }
   
-  # Add total row if requested
-  if (show_total) {
-    total_row <- collapsed |>
-      summarise(
-        variable = "Total",
-        component = "Total",
-        estimate = sum(estimate, na.rm = TRUE),
-        se = NA_real_,  # Total uncertainty is often not shown
-        .groups = "drop"
-      )
-    collapsed <- bind_rows(collapsed, total_row)
+  # Add total row unconditionally
+  total_row <- collapsed |>
+    summarise(
+      variable = "Total",
+      component = "Total",
+      estimate = sum(estimate, na.rm = TRUE),
+      se = NA_real_,
+      .groups = "drop"
+    )
+  collapsed <- bind_rows(collapsed, total_row)
+  
+  # Rename variables if a mapping is provided
+  if (!is.null(pretty_labels)) {
+    collapsed <- collapsed |>
+      mutate(variable = recode(variable, !!!pretty_labels))
   }
   
-  # Rescale intercept and total bars for readability
-  intercept_scale <- 0.2 / max(abs(collapsed$estimate), na.rm = TRUE)
-  plot_data <- collapsed |>
-    mutate(
-      estimate_rescaled = case_when(
-        component == "Intercept" ~ estimate * intercept_scale,
-        component == "Total" ~ estimate * intercept_scale,
-        TRUE ~ estimate
-      ),
-      se_rescaled = case_when(
-        component == "Intercept" ~ se * intercept_scale,
-        component == "Total" ~ se * intercept_scale,
-        TRUE ~ se
-      ),
-      variable = factor(variable, levels = rev(unique(variable)))
-    )
+  return(collapsed)
+}
+
+
+plot_kob_decomposition <- function(plot_data, title = "KOB Decomposition", show_total = TRUE) {
+  if (!show_total) {
+    plot_data <- plot_data |> filter(component != "Total")
+  }
   
-  # Plot
-  ggplot(plot_data, aes(x = estimate_rescaled, y = variable, fill = component)) +
+  ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
     geom_col(position = position_stack(reverse = TRUE)) +
     geom_errorbarh(
-      aes(xmin = estimate_rescaled - se_rescaled,
-          xmax = estimate_rescaled + se_rescaled),
+      aes(xmin = estimate - se,
+          xmax = estimate + se),
       height = 0.25, color = "black", na.rm = TRUE
     ) +
     facet_grid(rows = vars(component), scales = "free_y", space = "free_y", switch = "y") +
@@ -161,7 +166,6 @@ plot_kob_decomposition <- function(kob_output, varnames,
       legend.position = "none"
     )
 }
-
-
-plot_kob_decomposition(kob_bedroom_updated, varnames = varnames_dict, show_total = TRUE)
+plot_data <- prepare_kob_plot_data(kob_bedroom, varnames = varnames_dict, pretty_labels = pretty_labels)
+plot_kob_decomposition(plot_data, title = "Bedrooms", show_total = TRUE)
 
