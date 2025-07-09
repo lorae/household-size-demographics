@@ -22,6 +22,8 @@ library("ggplot2")
 library("oaxaca")
 library("tibble")
 
+source("src/utils/regression-tools.R") # add_intercept function
+
 # ----- Step 1: Load in data ----- #
 source("kob/scripts/kob-prepare-data.R") # only needs to run if kob_input.rds doesn't already exist
 kob_input <- readRDS("throughput/kob_input.rds")
@@ -118,47 +120,7 @@ ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
 
 ### Is the big result on race being driven by the choice to not have an intercept?
 # Let's find out
-kob_bedroom
-
-race_df <- kob_bedroom |> 
-  filter(variable == "RACE_ETH_bucket")
-
-white_row <- race_df |> 
-  filter(value == "White")
-
-race_df_shifted <- race_df |> 
-  filter(value != "White") |> 
-  mutate(
-    coef_2000    = coef_2000 - white_row$coef_2000,
-    coef_2019    = coef_2019 - white_row$coef_2019,
-    coef_2000_se = sqrt(coef_2000_se^2 + white_row$coef_2000_se^2),
-    coef_2019_se = sqrt(coef_2019_se^2 + white_row$coef_2019_se^2)
-  )
-
-intercept_row <- white_row |> 
-  mutate(
-    term = "(Intercept)",
-    value = "(Intercept)",
-    coef_2000    = coef_2000,
-    coef_2019    = coef_2019,
-    coef_2000_se = coef_2000_se,
-    coef_2019_se = coef_2019_se,
-    prop_2000    = NA_real_,
-    prop_2000_se = NA_real_,
-    prop_2019    = NA_real_,
-    prop_2019_se = NA_real_
-  )
-
-race_transformed <- bind_rows(race_df_shifted, intercept_row)
-
-race_transformed <- race_transformed |> 
-  select(-starts_with("u"), -starts_with("e"), -c("c", "c_se"))
-
-race_recomputed <- kob(race_transformed)
-
-kob_bedroom_updated <- kob_bedroom |> 
-  filter(variable != "RACE_ETH_bucket") |> 
-  bind_rows(race_recomputed)
+kob_bedroom_updated <- add_intercept(kob_bedroom, variable = "RACE_ETH_bucket", reference_value = "White")
 
 # Validate against aggregates (again)
 kob_output_validate(
