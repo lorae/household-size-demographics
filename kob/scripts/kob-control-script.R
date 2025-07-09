@@ -68,7 +68,8 @@ kob_output_validate(
 # ----- Step 3: Graph ----- #
 # Define a function to plot the decomp
 plot_kob_decomposition <- function(kob_output, varnames,
-                                   title = "KOB Decomposition: Bedrooms with Intercept") {
+                                   title = "KOB Decomposition: Bedrooms with Intercept",
+                                   show_total = TRUE) {
   # Collapse into one row per variable
   collapsed <- kob_output |>
     filter(variable %in% varnames) |> 
@@ -99,32 +100,53 @@ plot_kob_decomposition <- function(kob_output, varnames,
         se = sqrt(sum(u_se^2, na.rm = TRUE)),
         .groups = "drop"
       )
-    
     collapsed <- bind_rows(collapsed, intercept_row)
   }
   
-  # Rescale intercept
+  # Add total row if requested
+  if (show_total) {
+    total_row <- collapsed |>
+      summarise(
+        variable = "Total",
+        component = "Total",
+        estimate = sum(estimate, na.rm = TRUE),
+        se = NA_real_,  # Total uncertainty is often not shown
+        .groups = "drop"
+      )
+    collapsed <- bind_rows(collapsed, total_row)
+  }
+  
+  # Rescale intercept and total bars for readability
   intercept_scale <- 0.2 / max(abs(collapsed$estimate), na.rm = TRUE)
   plot_data <- collapsed |>
     mutate(
-      estimate_rescaled = ifelse(component == "Intercept", estimate * intercept_scale, estimate),
-      se_rescaled = ifelse(component == "Intercept", se * intercept_scale, se),
+      estimate_rescaled = case_when(
+        component == "Intercept" ~ estimate * intercept_scale,
+        component == "Total" ~ estimate * intercept_scale,
+        TRUE ~ estimate
+      ),
+      se_rescaled = case_when(
+        component == "Intercept" ~ se * intercept_scale,
+        component == "Total" ~ se * intercept_scale,
+        TRUE ~ se
+      ),
       variable = factor(variable, levels = rev(unique(variable)))
     )
   
-  # Final plot
+  # Plot
   ggplot(plot_data, aes(x = estimate_rescaled, y = variable, fill = component)) +
     geom_col(position = position_stack(reverse = TRUE)) +
     geom_errorbarh(
       aes(xmin = estimate_rescaled - se_rescaled,
           xmax = estimate_rescaled + se_rescaled),
-      height = 0.25, color = "black"
+      height = 0.25, color = "black", na.rm = TRUE
     ) +
     facet_grid(rows = vars(component), scales = "free_y", space = "free_y", switch = "y") +
     scale_fill_manual(values = c(
       "Endowments" = "#56B4E9",
       "Coefficients" = "#E69F00",
-      "Intercept" = "gray50"
+      "Intercept" = "gray50",
+      "Total" = "black"
     )) +
     theme_minimal(base_size = 13) +
     labs(
@@ -141,5 +163,5 @@ plot_kob_decomposition <- function(kob_output, varnames,
 }
 
 
-plot_kob_decomposition(kob_bedroom_updated, varnames = varnames_dict)
+plot_kob_decomposition(kob_bedroom_updated, varnames = varnames_dict, show_total = TRUE)
 
