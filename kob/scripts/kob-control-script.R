@@ -21,9 +21,6 @@ library("glue")
 library("ggplot2")
 library("oaxaca")
 library("tibble")
-library(ggplot2)
-library(dplyr)
-library(tidyr)
 
 # ----- Step 1: Load in data ----- #
 source("kob/scripts/kob-prepare-data.R") # only needs to run if kob_input.rds doesn't already exist
