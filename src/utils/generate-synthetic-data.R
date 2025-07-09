@@ -6,7 +6,7 @@ n <- 5000
 educ_levels <- c("less_than_hs", "hs", "some_college", "college_4yr_plus")
 inc_levels <- c("less_than_10k", "from_10k_to_100k", "greater_than_100k")
 
-save_path <- "kob/synthetic-data"
+save_path <- "synthetic-data"
 
 # Function to draw positive integers from a normal distribution
 draw_positive_ints <- function(n, mean, sd) {
