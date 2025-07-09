@@ -25,7 +25,11 @@ library("tibble")
 source("src/utils/regression-tools.R") # add_intercept function
 
 # ----- Step 1: Load in data ----- #
-source("kob/scripts/kob-prepare-data.R") # only needs to run if kob_input.rds doesn't already exist
+# Only run this if kob_input.rds doesn't already exist
+if (!file.exists("throughput/kob_input.rds")) {
+  source("kob/scripts/kob-prepare-data.R")
+}
+
 kob_input <- readRDS("throughput/kob_input.rds")
 
 # This is for validation (kob_output_validate)
@@ -51,7 +55,8 @@ source("kob/scripts/kob-function.R") # defines the `kob` function and `kob-outpu
 # Produce the results
 kob_bedroom <- kob(kob_input$bedroom) |>
   # Append `variable` and `value` columns
-  kob_tidy_output()
+  kob_tidy_output() |>
+  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 # Validate against aggregates
 kob_output_validate(
@@ -60,77 +65,8 @@ kob_output_validate(
   mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
 )
 
-# Consolidate for graphing
-# First pass at aggregating up estimates
-kob_collapse_variable <- function(kob_output, variable) {
-  kob_output |>
-    filter(.data$variable == !!variable) |>
-    summarise(
-      across(starts_with("coef_"), ~ NA_real_),
-      across(c("prop_2000", "prop_2019", "u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
-      across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE)))
-    )
-}
-
-# Creates a single row which summarizes across cpumas
-kob_bedroom_cpuma_summary <- kob_collapse_variable(kob_bedroom, "cpuma")
-
-# Run the function on all vars in varnames_dict and bind rows together
-kob_collapsed_all <- map_dfr(varnames_dict, function(var) {
-  kob_collapse_variable(kob_bedroom, var) |>
-    mutate(variable = var, .before = 1)
-}) |>
-  select(variable, u, e, c, u_se, e_se, c_se)
-
-# Validate against aggregates (again)
-kob_output_validate(
-  kob_collapsed_all,
-  mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
-)
-aggregates
-
-# Prepare long-format data with bars
-plot_data <- kob_collapsed_all |>
-  select(variable, e, e_se, c, c_se) |>
-  pivot_longer(cols = c(e, c), names_to = "component", values_to = "estimate") |>
-  mutate(
-    se = if_else(component == "e", e_se, c_se),
-    component = recode(component, e = "Endowments", c = "Coefficients")
-  ) |>
-  select(-e_se, -c_se)
-
-# To use bars, we need an explicit "width" for error bars
-ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
-  geom_col(width = 0.6, position = "identity") +
-  geom_errorbarh(
-    aes(xmin = estimate - se, xmax = estimate + se),
-    height = 0.2
-  ) +
-  facet_wrap(~component, scales = "free_x") +
-  geom_vline(xintercept = 0, linetype = "dotted") +
-  labs(
-    x = "Contribution to Outcome Gap",
-    y = NULL,
-    title = "KOB Decomposition: # Bedrooms"
-  ) +
-  scale_fill_manual(values = c("Endowments" = "#56B4E9", "Coefficients" = "#E69F00")) +
-  theme_minimal(base_size = 13) +
-  theme(legend.position = "none")
-
-### Is the big result on race being driven by the choice to not have an intercept?
-# Let's find out
-kob_bedroom_updated <- add_intercept(kob_bedroom, variable = "RACE_ETH_bucket", reference_value = "White")
-
-# Validate against aggregates (again)
-kob_output_validate(
-  kob_bedroom_updated,
-  mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
-)
-
 # Stack Coefficients and Endowments vertically with shared x-axis
-plot_data_updated <- kob_bedroom_updated |>
+plot_data_updated <- kob_bedroom |>
   filter(variable %in% varnames_dict) |> 
   group_by(variable) |>
   summarise(
