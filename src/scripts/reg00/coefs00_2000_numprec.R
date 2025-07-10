@@ -25,11 +25,11 @@ formula <- NUMPREC ~ -1 +
   cpuma
 
 # Initialize output path
-output_path <- glue("kob/throughput/model00_{year}_numprec_summary-v3.rds")
+output_path <- glue("throughput/model00_{year}_numprec_summary-v3.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")
-design <- readRDS(glue("kob/throughput/design_{year}_survey.rds"))
+design <- readRDS(glue("throughput/design_{year}_survey.rds"))
 toc()
 
 tic("Run model")
