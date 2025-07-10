@@ -24,14 +24,13 @@ formula <- NUMPREC ~ -1 +
   gender +
   cpuma
 
+# Initialize output path
+output_path <- glue("kob/throughput/model00_{year}_numprec_summary-v3.rds")
+
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")
 design <- readRDS(glue("kob/throughput/design_{year}_survey.rds"))
 toc()
-
-tic("Subset the survey by GQ")
-design <- subset(design, GQ %in% c(0, 1, 2))
-toc(log = TRUE)
 
 tic("Run model")
 model <- svyglm(formula, design = design)
@@ -42,6 +41,6 @@ model_summary <- broom::tidy(model)
 toc()
 
 # Save results in throughput
-tic("Save model to kob/throughput")
-saveRDS(model_summary, file = glue("kob/throughput/model00_{year}_numprec_summary-v2.rds"))
+tic(glue("Save model to {output_path}"))
+saveRDS(model_summary, file = output_path)
 toc(log = TRUE)

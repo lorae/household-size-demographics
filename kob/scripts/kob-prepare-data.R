@@ -17,7 +17,7 @@ input_paths <- tibble::tribble(
   "props",   2000,  "throughput/props00_2000.rds",
   "props",   2019,  "throughput/props00_2019.rds",
   "numprec", 2000,  "throughput/model00_2000_numprec_summary-v2.rds",
-  "numprec", 2019,  "throughput/model00_2019_numprec_summary-beta.rds",
+  "numprec", 2019,  "throughput/model00_2019_numprec_summary-beta.rds", #kob/throughput/model00_2019_numprec_summary.rds
   "ppr",     2000,  "throughput/model00_2000_persons_per_room_summary.rds",
   "ppr",     2019,  "throughput/model00_2019_persons_per_room_summary-v5.rds",
   "ppbr",    2000,  "throughput/model00_2000_persons_per_bedroom_summary.rds",

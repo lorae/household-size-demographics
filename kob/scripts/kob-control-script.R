@@ -51,18 +51,61 @@ varnames_dict <- c(
 # Each section covers a separate outcome
 source("kob/scripts/kob-function.R") # defines the `kob` function and `kob-output-validate()`
 
-# --- bedroom outcome ---
-# Produce the results
+# TODO: refactor teh aggregates df so the variable names match the aliases in kob_input
+# --- Bedroom ---
 kob_bedroom <- kob(kob_input$bedroom) |>
-  # Append `variable` and `value` columns
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
-# Validate against aggregates
 kob_output_validate(
   kob_bedroom,
   mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
   mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
+)
+
+# --- Number of People ---
+# TODO: FIX!!!
+kob_numprec <- kob(kob_input$numprec) |>
+  kob_tidy_output() |>
+  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+
+kob_output_validate(
+  kob_numprec,
+  mean_2000 = aggregates |> filter(variable == "NUMPREC") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "NUMPREC") |> pull(mean_2019)
+)
+
+# --- Rooms ---
+kob_room <- kob(kob_input$room) |>
+  kob_tidy_output() |>
+  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+
+kob_output_validate(
+  kob_room,
+  mean_2000 = aggregates |> filter(variable == "room") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "room") |> pull(mean_2019)
+)
+
+# --- Persons per Room (PPR) ---
+kob_ppr <- kob(kob_input$ppr) |>
+  kob_tidy_output() |>
+  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+
+kob_output_validate(
+  kob_ppr,
+  mean_2000 = aggregates |> filter(variable == "persons_per_room") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "persons_per_room") |> pull(mean_2019)
+)
+
+# --- Persons per Bedroom (PPBR) ---
+kob_ppbr <- kob(kob_input$ppbr) |>
+  kob_tidy_output() |>
+  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+
+kob_output_validate(
+  kob_ppbr,
+  mean_2000 = aggregates |> filter(variable == "persons_per_bedroom") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(variable == "persons_per_bedroom") |> pull(mean_2019)
 )
 
 # ----- Step 3: Graph ----- #
@@ -166,6 +209,23 @@ plot_kob_decomposition <- function(plot_data, title = "KOB Decomposition", show_
       legend.position = "none"
     )
 }
-plot_data <- prepare_kob_plot_data(kob_bedroom, varnames = varnames_dict, pretty_labels = pretty_labels)
-plot_kob_decomposition(plot_data, title = "Bedrooms", show_total = TRUE)
 
+# ----- Step 4: Graph all outcomes ----- #
+
+# Create named list of KOB outputs and plot titles
+kob_outputs <- list(
+  "Bedrooms" = kob_bedroom,
+  "Number of People" = kob_numprec,
+  "Rooms" = kob_room,
+  "Persons per Room" = kob_ppr,
+  "Persons per Bedroom" = kob_ppbr
+)
+
+# Generate and print all five plots
+plots <- imap(kob_outputs, ~{
+  plot_data <- prepare_kob_plot_data(.x, varnames = varnames_dict, pretty_labels = pretty_labels)
+  plot_kob_decomposition(plot_data, title = .y, show_total = TRUE)
+})
+
+# Optional: Display plots in RStudio
+for (p in plots) print(p)

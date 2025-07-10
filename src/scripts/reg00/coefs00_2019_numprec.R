@@ -1,21 +1,18 @@
 #kob/scripts/coefs00_2019_numprec.R
-# This script runs regression 0 with NUMPREC as the outcome variable
+cat("
+This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
+using the dataduck matrix-based regression backend and successive differences replication (SDR).
+This is the main production pipeline.
+")
 
-library(survey)
-library(tictoc)
-library(duckdb)
-library(dplyr)
-library(tibble)
-library(purrr)
-library(broom)
+# ----- Step 0: User settings ----- #
+# Define output path for model summary
+out_path <- "kob/throughput/model00_2019_numprec_summary.rds"
+# TODO: figure out why this bootstrap file isn't saving. or, if deprecated,
+# delete this functionality
+out_path_bootstrap <- "kob/throughput/model00_2019_numprec-bootstrap.rds"
 
-# Load the dataduck package
-devtools::load_all("../dataduck")
-
-# Load the create-benchmark-data and helper functions
-source("kob/benchmark/create-benchmark-data.R")
-
-# Initialize formula
+# Define regression formula
 formula <- NUMPREC ~ -1 + 
   RACE_ETH_bucket +
   AGE_bucket +
@@ -23,27 +20,65 @@ formula <- NUMPREC ~ -1 +
   INCTOT_cpiu_2010_bucket +
   us_born +
   tenure +
-  gender + 
+  gender +
   cpuma
 
-# Read in the pre-subsetted survey
-tic("Read survey design as RDS")
-design <- readRDS("kob/throughput/design_2019_survey.rds")
+# ----- Step 1: Config ----- #
+
+library(tictoc)
+library(dplyr)
+library(glue)
+library(purrr)
+library(duckdb)
+library(devtools)
+library(future)
+library(furrr)
+
+# dataduck internal package & helper scripts
+load_all("../dataduck")
+source("kob/benchmark/regression-backends.R")
+
+# Plan parallel session
+options(future.globals.maxSize = 20 * 1024^3)  # 20 GiB
+plan(multicore, workers = 10)
+
+# ----- Step 2: Load data from saved ipums_2019_tb tibble ----- #
+tic("Collect 2019 ipums tibble")
+ipums_2019_tb <- readRDS("kob/throughput/ipums_2019_tb.rds")
 toc()
 
-tic("Subset the survey by GQ")
-design <- subset(design, GQ %in% c(0, 1, 2))
-toc(log = TRUE)
-
-tic("Run model")
-model <- svyglm(formula, design = design)
-toc(log = TRUE)
-
-tic("Extract the coefs and std. errors using broom")
-model_summary <- broom::tidy(model)
+tic("Filter out group quarters residents")
+filtered_tb <- ipums_2019_tb |> filter(GQ %in% c(0, 1, 2))
 toc()
 
-# Save results in throughput
-tic("Save model to kob/throughput")
-saveRDS(model_summary, file = "kob/throughput/model00_2019_numprec_summary-v6.rds")
-toc(log = TRUE)
+# ----- Step 4: Estimate model using dataduck reg backend ----- #
+# TODO: refactor to select reg function from reg_backends list at top of script
+tic("Run bootstrap replicates")
+bootstrap_results <- bootstrap_replicates_parallel(
+  data = filtered_tb,
+  f = dataduck_reg_matrix_2,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", 1:80),
+  # constant = 4 / 80,
+  # se_cols = c("estimate"),
+  id_cols = "term",
+  formula = formula,
+  verbose = TRUE
+)
+toc()
+
+tic("Get model results")
+model_output <- se_from_bootstrap(
+  bootstrap = bootstrap_results,
+  constant = 4 / 80,
+  se_cols = c("estimate")
+)
+toc()
+
+# ----- Step 4: Save results ----- #
+message(glue("Saving model output. Output path: {out_path}"))
+
+tic("Save model output")
+saveRDS(bootstrap_results, file = out_path_bootstrap)
+saveRDS(model_output, file = out_path)
+toc()
