@@ -72,6 +72,8 @@ slurm*
 # SLURM jobs - will commit once I'm ready to create templates
 jobs/
 
-# Survey design objects
+# Survey design objects + large data files
 throughput/design_2000_survey.rds
 throughput/design_2019_survey.rds
+throughput/ipums_2019_tb.rds
+throughput/ipums_2000_tb.rds
