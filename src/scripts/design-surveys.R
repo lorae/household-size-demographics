@@ -31,7 +31,8 @@ library(dplyr)
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
-# Collect 2000 data into memory
+# 2000 Data
+tic("Collect 2000 data into memory")
 ipums_2000_tb <- ipums_db |>
   # Don't need REPWT series of variables for the 2000 data: that's a 2019 survey
   # design variable used to calculate standard errors using successive differences
@@ -40,8 +41,8 @@ ipums_2000_tb <- ipums_db |>
   select(-starts_with("REPWT")) |>
   filter(YEAR == 2000) |> 
   collect()
+toc()
 
-# Design the 2000 survey
 tic("Design the 2000 survey")
 design_2000_survey <- svydesign(
   ids = ~CLUSTER,
@@ -53,38 +54,38 @@ design_2000_survey <- svydesign(
   subset(GQ %in% c(0, 1, 2))
 toc()
 
-# Save the 2000 survey
 tic("Save 2000 survey design as RDS")
 saveRDS(design_2000_survey, file = "throughput/design_2000_survey.rds")
 toc()
 
-# Collect 2019 data into memory
-ipums_2019_tb <- ipums_db |>
-  filter(YEAR == 2019) |>
-  collect()
-
-# Design the 2019 survey
-tic("Design the 2019 survey")
-design_2019_survey <- svrepdesign(
-  weights = ~PERWT,
-  repweights = "REPWTP[0-9]+",  # regex pattern to match columns
-  type = "Fay",
-  rho = 0.5,
-  mse = TRUE,
-  data = ipums_2019_tb
-)
-design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
-toc()
-
-# Save the 2019 survey
-# Note: this took 47 minutes last time
-tic("Save 2019 survey design as RDS")
-saveRDS(design_2019_survey, file = "throughput/design_2019_survey.rds")
-toc()
-
-# Save the 2019 raw tibble
-# Note: This took 25 minutes last time
-tic("Save the 2019 raw tibble, unfiltered")
-saveRDS(ipums_2019_tb, file = "throughput/ipums_2019_tb.rds")
-toc()
+## NOTE! Commented out 7/10/2025 because we do not need the 2019 survey design object
+# # Collect 2019 data into memory
+# ipums_2019_tb <- ipums_db |>
+#   filter(YEAR == 2019) |>
+#   collect()
+# 
+# # Design the 2019 survey
+# tic("Design the 2019 survey")
+# design_2019_survey <- svrepdesign(
+#   weights = ~PERWT,
+#   repweights = "REPWTP[0-9]+",  # regex pattern to match columns
+#   type = "Fay",
+#   rho = 0.5,
+#   mse = TRUE,
+#   data = ipums_2019_tb
+# )
+# design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
+# toc()
+# 
+# # Save the 2019 survey
+# # Note: this took 47 minutes last time
+# tic("Save 2019 survey design as RDS")
+# saveRDS(design_2019_survey, file = "throughput/design_2019_survey.rds")
+# toc()
+# 
+# # Save the 2019 raw tibble
+# # Note: This took 25 minutes last time
+# tic("Save the 2019 raw tibble, unfiltered")
+# saveRDS(ipums_2019_tb, file = "throughput/ipums_2019_tb.rds")
+# toc()
 
