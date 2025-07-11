@@ -67,7 +67,8 @@ plot_kob_decomposition <- function(
     plot_data,
     title = "KOB Decomposition",
     show_total = TRUE,
-    hide_facet_labels = TRUE
+    hide_facet_labels = FALSE,
+    hide_variable_labels = FALSE
 ) {
   if (!show_total) {
     plot_data <- plot_data |> filter(component != "Total")
@@ -103,13 +104,21 @@ plot_kob_decomposition <- function(
       legend.position = "none"
     )
   
-  # Conditionally hide facet strip labels
+  # Optionally hide facet labels
   if (hide_facet_labels) {
     p <- p + theme(
       strip.text.x = element_blank(),
       strip.text.y = element_blank(),
       strip.text.y.left = element_blank(),
       strip.placement = NULL
+    )
+  }
+  
+  # Optionally hide variable labels (like "U.S. Born", "Tenure", etc.)
+  if (hide_variable_labels) {
+    p <- p + theme(
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
     )
   }
   

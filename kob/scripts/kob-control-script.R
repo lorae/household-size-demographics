@@ -203,31 +203,90 @@ plot_kob_decomposition(
   plot_data, 
   title = "Persons per Bedroom", 
   show_total = TRUE,
-  hide_facet_labels = FALSE
+  hide_facet_labels = FALSE,
+  hide_variable_labels = TRUE
   )
 
-# Generate and print all five plots
-plots <- imap(kob_outputs, ~{
-  plot_data <- prepare_kob_plot_data(.x, varnames = varnames_dict, pretty_labels = pretty_labels)
-  plot_kob_decomposition(plot_data, title = .y, show_total = TRUE)
-})
+# Figure 7 shows # Persons, # Bedrooms, Persons per Bedroom
+p7_data <- prepare_kob_plot_data(
+  kob_numprec, 
+  varnames = varnames_dict, 
+  pretty_labels = pretty_labels
+)
+p7 <- plot_kob_decomposition(
+  plot_data, 
+  title = "Number of Persons", 
+  show_total = TRUE,
+  hide_facet_labels = FALSE,
+  hide_variable_labels = FALSE
+)
 
-# Optional: Display plots in RStudio
-for (p in plots) print(p)
+r7_data <- prepare_kob_plot_data(
+  kob_room, 
+  varnames = varnames_dict, 
+  pretty_labels = pretty_labels
+)
+r7 <- plot_kob_decomposition(
+  r7_data, 
+  title = "Nunmber of Rooms", 
+  show_total = TRUE,
+  hide_facet_labels = TRUE,
+  hide_variable_labels = TRUE
+)
 
-# Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
-fig07 <- (plots$`Number of People` + plots$`Number of Bedrooms` + plots$`Persons per Bedroom`) +
+b7_data <- prepare_kob_plot_data(
+  kob_bedroom, 
+  varnames = varnames_dict, 
+  pretty_labels = pretty_labels
+)
+b7 <- plot_kob_decomposition(
+  b7_data, 
+  title = "Number of Bedrooms", 
+  show_total = TRUE,
+  hide_facet_labels = TRUE,
+  hide_variable_labels = TRUE
+)
+
+ppr7_data <- prepare_kob_plot_data(
+  kob_ppr, 
+  varnames = varnames_dict, 
+  pretty_labels = pretty_labels
+)
+ppr7 <- plot_kob_decomposition(
+  ppr7_data, 
+  title = "Persons per Room", 
+  show_total = TRUE,
+  hide_facet_labels = TRUE,
+  hide_variable_labels = TRUE
+)
+
+ppbr7_data <- prepare_kob_plot_data(
+  kob_ppbr, 
+  varnames = varnames_dict, 
+  pretty_labels = pretty_labels
+)
+ppbr7 <- plot_kob_decomposition(
+  ppbr7_data, 
+  title = "Persons per Bedroom", 
+  show_total = TRUE,
+  hide_facet_labels = TRUE,
+  hide_variable_labels = TRUE
+)
+
+# Figure 7A shows # Persons, # Bedooms, Persons per Bedoom
+fig07 <- (p7 + b7 + ppbr7) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
 # Figure &A (Appendix version) shows # Persons, # Rooms, Persons per Room
-fig06a <- (plots$`Number of People` + plots$`Number of Rooms` + plots$`Persons per Room`) +
+fig07a <- (p7 + r7 + ppr7) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
+# TODO: optionally turn off x-axis label, make the facet names like Intercept not get cutoff
 ggsave(
   "output/figures/fig07-kob-decomp-bars.png", 
-  plot = fig06a, 
-  width = 3000, height = 2400, units = "px", dpi = 300
+  plot = fig07, 
+  width = 3000, height = 2000, units = "px", dpi = 200
 )
 
