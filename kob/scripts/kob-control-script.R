@@ -64,7 +64,6 @@ kob_output_validate(
 )
 
 # --- Number of People ---
-# TODO: FIX!!!
 kob_numprec <- kob(kob_input$numprec) |>
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
