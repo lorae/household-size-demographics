@@ -151,11 +151,13 @@ fig06_data <- aggregates |>
   select(-min_val, -max_val)
 
 # Generate all five plots
-p1 <- make_fig06_barplot("Number of People", fig06_data)
-p2 <- make_fig06_barplot("Number of Bedrooms", fig06_data)
-p3 <- make_fig06_barplot("Persons per Bedroom", fig06_data)
-combined_plot <- p1 + p2 + p3
-combined_plot
+p <- make_fig06_barplot("Number of People", fig06_data, yaxis_override = c(3, 3.5))
+b <- make_fig06_barplot("Number of Bedrooms", fig06_data, yaxis_override = c(2, 3.5))
+ppbr <- make_fig06_barplot("Persons per Bedroom", fig06_data, yaxis_override = c(1, 1.5))
+fig06 <- (p + b + ppbr) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+fig06
 
 # --- 3.7: Figure 7 -  KOB decomposition bar charts
 source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot

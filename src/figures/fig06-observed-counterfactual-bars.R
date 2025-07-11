@@ -11,15 +11,28 @@
 # TODO: write a unit test or example script that does this. Also, have kob-control-script
 # save the kob results before producing graphs, rather than relying on global vars.
 
-make_fig06_barplot <- function(target_name, fig06_data) {
+make_fig06_barplot <- function(target_name, fig06_data, yaxis_override = NULL) {
   # Get the relevant row including ymin/ymax
   row <- fig06_data |> filter(name == target_name)
+  
+  # Validate yaxis_override if provided
+  if (!is.null(yaxis_override)) {
+    if (!is.numeric(yaxis_override) || length(yaxis_override) != 2) {
+      stop("yaxis_override must be a numeric vector of length 2.")
+    }
+    if (yaxis_override[1] >= yaxis_override[2]) {
+      stop("The first element of yaxis_override must be less than the second.")
+    }
+    ylim_vals <- yaxis_override
+  } else {
+    ylim_vals <- c(row$ymin, row$ymax)
+  }
   
   # Build plot data
   fig_data <- tibble::tibble(
     Category = factor(
-      c("2000 Observed", "2019 Observed", "2019 Expected"),
-      levels = c("2000 Observed", "2019 Observed", "2019 Expected")
+      c("2000\nObserved", "2019\nObserved", "2019\nExpected"),
+      levels = c("2000\nObserved", "2019\nObserved", "2019\nExpected")
     ),
     Household_Size = c(row$observed_2000, row$observed_2019, row$expected_2019),
     Type = c("Observed", "Observed", "Expected")
@@ -41,11 +54,11 @@ make_fig06_barplot <- function(target_name, fig06_data) {
       title = target_name,
       y = NULL, x = NULL
     ) +
-    coord_cartesian(ylim = c(row$ymin, row$ymax)) +
+    coord_cartesian(ylim = ylim_vals) +
     theme_minimal() +
     theme(
       legend.position = "none",
-      axis.text.x = element_text(size = 11),
-      plot.title = element_text(size = 13)
+      axis.text.x = element_text(size = 11, margin = margin(t = 5)),
+      plot.title = element_text(size = 13, margin = margin(b = 10))
     )
 }
