@@ -107,7 +107,18 @@ kob_output_validate(
   mean_2019 = aggregates |> filter(variable == "persons_per_bedroom") |> pull(mean_2019)
 )
 
-# ----- Step 3: Graph ----- #
+# ----- Step 3: Graphs ----- #
+# General: Create named list of KOB outputs and plot titles
+kob_outputs <- list(
+  "Bedrooms" = kob_bedroom,
+  "Number of People" = kob_numprec,
+  "Rooms" = kob_room,
+  "Persons per Room" = kob_ppr,
+  "Persons per Bedroom" = kob_ppbr
+)
+
+# --- 3.7: Figure 7 -  KOB decomposition bar charts
+source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot
 pretty_labels <- c(
   us_born = "U.S. born",
   tenure = "Tenure",
@@ -121,105 +132,6 @@ pretty_labels <- c(
   Total = "Total"
 )
 
-prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
-  # Collapse into one row per variable
-  collapsed <- kob_output |>
-    filter(variable %in% varnames) |> 
-    group_by(variable) |>
-    summarise(
-      across(starts_with("coef_"), ~ NA_real_),
-      across(c("u", "e", "c"), ~ sum(.x, na.rm = TRUE)),
-      across(c("prop_2000_se", "prop_2019_se", "u_se", "e_se", "c_se"), ~ sqrt(sum(.x^2, na.rm = TRUE))),
-      .groups = "drop"
-    ) |>
-    select(variable, e, e_se, c, c_se) |>
-    pivot_longer(cols = c(e, c), names_to = "component", values_to = "estimate") |>
-    mutate(
-      se = if_else(component == "e", e_se, c_se),
-      component = recode(component, e = "Endowments", c = "Coefficients"),
-      component = factor(component, levels = c("Coefficients", "Endowments"))
-    ) |>
-    select(-e_se, -c_se)
-  
-  # Add intercept if present
-  if ("(Intercept)" %in% kob_output$term) {
-    intercept_row <- kob_output |>
-      filter(term == "(Intercept)") |>
-      summarise(
-        variable = "Intercept",
-        component = "Intercept",
-        estimate = sum(u, na.rm = TRUE),
-        se = sqrt(sum(u_se^2, na.rm = TRUE)),
-        .groups = "drop"
-      )
-    collapsed <- bind_rows(collapsed, intercept_row)
-  }
-  
-  # Add total row unconditionally
-  total_row <- collapsed |>
-    summarise(
-      variable = "Total",
-      component = "Total",
-      estimate = sum(estimate, na.rm = TRUE),
-      se = NA_real_,
-      .groups = "drop"
-    )
-  collapsed <- bind_rows(collapsed, total_row)
-  
-  # Rename variables if a mapping is provided
-  if (!is.null(pretty_labels)) {
-    collapsed <- collapsed |>
-      mutate(variable = recode(variable, !!!pretty_labels))
-  }
-  
-  return(collapsed)
-}
-
-
-plot_kob_decomposition <- function(plot_data, title = "KOB Decomposition", show_total = TRUE) {
-  if (!show_total) {
-    plot_data <- plot_data |> filter(component != "Total")
-  }
-  
-  ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
-    geom_col(position = position_stack(reverse = TRUE)) +
-    geom_errorbarh(
-      aes(xmin = estimate - se,
-          xmax = estimate + se),
-      height = 0.25, color = "black", na.rm = TRUE
-    ) +
-    facet_grid(rows = vars(component), scales = "free_y", space = "free_y", switch = "y") +
-    scale_fill_manual(values = c(
-      "Endowments" = "#56B4E9",
-      "Coefficients" = "#E69F00",
-      "Intercept" = "gray50",
-      "Total" = "black"
-    )) +
-    theme_minimal(base_size = 13) +
-    labs(
-      title = title,
-      x = "Contribution to Outcome Gap",
-      y = NULL
-    ) +
-    theme(
-      strip.placement = "outside",
-      strip.text.y.left = element_text(angle = 0),
-      panel.spacing.y = unit(1, "lines"),
-      legend.position = "none"
-    )
-}
-
-# ----- Step 4: Graph all outcomes ----- #
-
-# Create named list of KOB outputs and plot titles
-kob_outputs <- list(
-  "Bedrooms" = kob_bedroom,
-  "Number of People" = kob_numprec,
-  "Rooms" = kob_room,
-  "Persons per Room" = kob_ppr,
-  "Persons per Bedroom" = kob_ppbr
-)
-
 # Generate and print all five plots
 plots <- imap(kob_outputs, ~{
   plot_data <- prepare_kob_plot_data(.x, varnames = varnames_dict, pretty_labels = pretty_labels)
@@ -228,3 +140,6 @@ plots <- imap(kob_outputs, ~{
 
 # Optional: Display plots in RStudio
 for (p in plots) print(p)
+
+
+
