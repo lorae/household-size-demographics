@@ -154,11 +154,30 @@ fig06_data <- aggregates |>
 p <- make_fig06_barplot("Number of People", fig06_data, yaxis_override = c(3, 3.5))
 b <- make_fig06_barplot("Number of Bedrooms", fig06_data, yaxis_override = c(2, 3.5))
 ppbr <- make_fig06_barplot("Persons per Bedroom", fig06_data, yaxis_override = c(1, 1.5))
+r <- make_fig06_barplot("Number of Rooms", fig06_data, yaxis_override = c(5.5, 6.5))
+ppr <- make_fig06_barplot("Persons per Room", fig06_data, yaxis_override = c(0, 1))
+
+# Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
 fig06 <- (p + b + ppbr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
-fig06
 
+# Figure 6A (Appendix version) shows # Persons, # Rooms, Persons per Room
+fig06a <- (p + r + ppr) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+
+# Save
+ggsave(
+  "output/figures/fig06-observed-counterfactual-bars.png", 
+  plot = fig06, 
+  width = 3000, height = 2400, units = "px", dpi = 300
+  )
+ggsave(
+  "output/figures/fig06-appendix-observed-counterfactual-bars.png", 
+  plot = fig06a, 
+  width = 3000, height = 2400, units = "px", dpi = 300
+)
 # --- 3.7: Figure 7 -  KOB decomposition bar charts
 source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot
 pretty_labels <- c(
