@@ -207,7 +207,7 @@ plot_kob_decomposition(
   hide_variable_labels = TRUE
   )
 
-# Figure 7 shows # Persons, # Bedrooms, Persons per Bedroom
+# TODO: This needs to be refactored to be DRY
 p7_data <- prepare_kob_plot_data(
   kob_numprec, 
   varnames = varnames_dict, 
@@ -228,7 +228,7 @@ r7_data <- prepare_kob_plot_data(
 )
 r7 <- plot_kob_decomposition(
   r7_data, 
-  title = "Nunmber of Rooms", 
+  title = "Number of Rooms", 
   show_total = TRUE,
   hide_facet_labels = TRUE,
   hide_variable_labels = TRUE
@@ -287,6 +287,11 @@ fig07a <- (p7 + r7 + ppr7) +
 ggsave(
   "output/figures/fig07-kob-decomp-bars.png", 
   plot = fig07, 
+  width = 3000, height = 2000, units = "px", dpi = 200
+)
+ggsave(
+  "output/figures/fig07a-kob-decomp-bars.png", 
+  plot = fig07a, 
   width = 3000, height = 2000, units = "px", dpi = 200
 )
 
