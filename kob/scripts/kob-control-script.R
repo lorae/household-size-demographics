@@ -110,43 +110,36 @@ kob_output_validate(
 
 # ----- Step 3: Graphs ----- #
 # General: Create named list of KOB outputs and plot titles
-kob_outputs <- list(
-  "Number of People" = kob_numprec,
-  "Number of Rooms" = kob_room,
-  "Number of Bedrooms" = kob_bedroom,
-  "Persons per Room" = kob_ppr,
-  "Persons per Bedroom" = kob_ppbr
+kob_output <- tibble::tibble(
+  variable = c("NUMPREC", "bedroom", "room", "persons_per_room", "persons_per_bedroom"),
+  name = c("Number of People", "Number of Bedrooms", "Number of Rooms", "Persons per Room", "Persons per Bedroom"),
+  kob = list(kob_numprec, kob_bedroom, kob_room, kob_ppr, kob_ppbr)
 )
 
 # --- 3.6: Figure 6 -  KOB counterfactual bar charts
 source("src/figures/fig06-observed-counterfactual-bars.R")
-# TODO: include appendix chart
-label_lookup <- tibble::tibble(
-  variable = c("NUMPREC", "bedroom", "room", "persons_per_room", "persons_per_bedroom"),
-  name = c("Number of People", "Number of Bedrooms", "Number of Rooms", "Persons per Room", "Persons per Bedroom")
-)
 
 # Rounding helpers
 round_down_to <- function(x, base) base * floor(x / base)
 round_up_to <- function(x, base) base * ceiling(x / base)
 
+increment <- 1  # rounding granularity for axis limits
+
 # Create an observed, expected table used to produce these figures. Observed values
 # in 2000 are already in `aggregates` - we rename those cols and add on a third 
 # col using kob results
-increment <- 1  # Used to designate the level of rounding up & down for y axis max and min
-
 fig06_data <- aggregates |>
   rename(
     observed_2000 = mean_2000,
     observed_2019 = mean_2019
   ) |>
-  left_join(label_lookup, by = "variable") |>
-  relocate(name, .before = variable) |>  # Ensures name is present and used for kob_outputs lookup
+  left_join(kob_output, by = "variable") |>
+  relocate(name, .before = variable) |>
   rowwise() |>
   mutate(
-    e = sum(kob_outputs[[name]]$e, na.rm = TRUE),
-    c = sum(kob_outputs[[name]]$c, na.rm = TRUE),
-    u = sum(kob_outputs[[name]]$u, na.rm = TRUE),
+    e = sum(kob$e, na.rm = TRUE),
+    c = sum(kob$c, na.rm = TRUE),
+    u = sum(kob$u, na.rm = TRUE),
     expected_2019 = observed_2000 + e,
     min_val = min(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
     max_val = max(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
