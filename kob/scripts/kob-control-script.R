@@ -21,6 +21,7 @@ library("glue")
 library("ggplot2")
 library("oaxaca")
 library("tibble")
+library("patchwork")
 
 source("src/utils/regression-tools.R") # add_intercept function
 
@@ -110,18 +111,19 @@ kob_output_validate(
 # ----- Step 3: Graphs ----- #
 # General: Create named list of KOB outputs and plot titles
 kob_outputs <- list(
-  "Bedrooms" = kob_bedroom,
   "Number of People" = kob_numprec,
-  "Rooms" = kob_room,
+  "Number of Rooms" = kob_room,
+  "Number of Bedrooms" = kob_bedroom,
   "Persons per Room" = kob_ppr,
   "Persons per Bedroom" = kob_ppbr
 )
 
 # --- 3.6: Figure 6 -  KOB counterfactual bar charts
+source("src/figures/fig06-observed-counterfactual-bars.R")
 # TODO: include appendix chart
 label_lookup <- tibble::tibble(
   variable = c("NUMPREC", "bedroom", "room", "persons_per_room", "persons_per_bedroom"),
-  name = c("Number of People", "Bedrooms", "Rooms", "Persons per Room", "Persons per Bedroom")
+  name = c("Number of People", "Number of Bedrooms", "Number of Rooms", "Persons per Room", "Persons per Bedroom")
 )
 
 # Rounding helpers
@@ -131,9 +133,15 @@ round_up_to <- function(x, base) base * ceiling(x / base)
 # Create an observed, expected table used to produce these figures. Observed values
 # in 2000 are already in `aggregates` - we rename those cols and add on a third 
 # col using kob results
-increment <- 0.5  # Change this to 1 or 0.2 if you want
+increment <- 1  # Used to designate the level of rounding up & down for y axis max and min
 
-fig06_data <- fig06_data |>
+fig06_data <- aggregates |>
+  rename(
+    observed_2000 = mean_2000,
+    observed_2019 = mean_2019
+  ) |>
+  left_join(label_lookup, by = "variable") |>
+  relocate(name, .before = variable) |>  # Ensures name is present and used for kob_outputs lookup
   rowwise() |>
   mutate(
     e = sum(kob_outputs[[name]]$e, na.rm = TRUE),
@@ -149,50 +157,12 @@ fig06_data <- fig06_data |>
   relocate(expected_2019, .after = observed_2019) |>
   select(-min_val, -max_val)
 
-
-# Choose the variable to plot
-target_name <- "Persons per Bedroom"
-
-# Get the relevant row including ymin/ymax
-row <- fig06_data |> filter(name == target_name)
-
-# Build plot data
-fig_data <- tibble(
-  Category = factor(
-    c("2000 Observed", "2019 Observed", "2019 Expected"),
-    levels = c("2000 Observed", "2019 Observed", "2019 Expected")
-  ),
-  Household_Size = c(row$observed_2000, row$observed_2019, row$expected_2019),
-  Type = c("Observed", "Observed", "Expected"),
-  ymin = row$ymin,
-  ymax = row$ymax
-)
-
-# Use computed limits from the row
-fig <- ggplot(fig_data, aes(x = Category, y = Household_Size, fill = Type, linetype = Type)) +
-  geom_bar(stat = "identity", color = "black", linewidth = 0.2, width = 0.6) +
-  geom_text(aes(label = sprintf("%.3f", Household_Size)), vjust = 1.5, color = "white", size = 4) +
-  scale_fill_manual(values = c(
-    "Observed" = "steelblue", 
-    "Expected" = scales::alpha("steelblue", 0.5)
-  )) +
-  scale_linetype_manual(values = c(
-    "Observed" = "solid", 
-    "Expected" = "dotted"
-  )) +
-  labs(
-    title = target_name,
-    y = NULL, x = NULL
-  ) +
-  coord_cartesian(ylim = c(row$ymin, row$ymax)) +
-  theme_minimal() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text(size = 11),
-    plot.title = element_text(size = 13)
-  )
-
-fig
+# Generate all five plots
+p1 <- make_fig06_barplot("Number of People", fig06_data)
+p2 <- make_fig06_barplot("Number of Bedrooms", fig06_data)
+p3 <- make_fig06_barplot("Persons per Bedroom", fig06_data)
+combined_plot <- p1 + p2 + p3
+combined_plot
 
 # --- 3.7: Figure 7 -  KOB decomposition bar charts
 source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot
