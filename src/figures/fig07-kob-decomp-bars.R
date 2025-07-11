@@ -63,19 +63,29 @@ prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
 }
 
 
-plot_kob_decomposition <- function(plot_data, title = "KOB Decomposition", show_total = TRUE) {
+plot_kob_decomposition <- function(
+    plot_data,
+    title = "KOB Decomposition",
+    show_total = TRUE,
+    hide_facet_labels = TRUE
+) {
   if (!show_total) {
     plot_data <- plot_data |> filter(component != "Total")
   }
   
-  ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
+  p <- ggplot(plot_data, aes(x = estimate, y = variable, fill = component)) +
     geom_col(position = position_stack(reverse = TRUE)) +
     geom_errorbarh(
       aes(xmin = estimate - se,
           xmax = estimate + se),
       height = 0.25, color = "black", na.rm = TRUE
     ) +
-    facet_grid(rows = vars(component), scales = "free_y", space = "free_y", switch = "y") +
+    facet_grid(
+      rows = vars(component),
+      scales = "free_y",
+      space = "free_y",
+      switch = "y"
+    ) +
     scale_fill_manual(values = c(
       "Endowments" = "#56B4E9",
       "Coefficients" = "#E69F00",
@@ -89,9 +99,19 @@ plot_kob_decomposition <- function(plot_data, title = "KOB Decomposition", show_
       y = NULL
     ) +
     theme(
-      strip.placement = "outside",
-      strip.text.y.left = element_text(angle = 0),
       panel.spacing.y = unit(1, "lines"),
       legend.position = "none"
     )
+  
+  # Conditionally hide facet strip labels
+  if (hide_facet_labels) {
+    p <- p + theme(
+      strip.text.x = element_blank(),
+      strip.text.y = element_blank(),
+      strip.text.y.left = element_blank(),
+      strip.placement = NULL
+    )
+  }
+  
+  return(p)
 }

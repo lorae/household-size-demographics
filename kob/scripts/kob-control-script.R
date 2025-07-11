@@ -178,10 +178,11 @@ ggsave(
   plot = fig06a, 
   width = 3000, height = 2400, units = "px", dpi = 300
 )
+
 # --- 3.7: Figure 7 -  KOB decomposition bar charts
 source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot
 pretty_labels <- c(
-  us_born = "U.S. born",
+  us_born = "U.S. Born",
   tenure = "Tenure",
   RACE_ETH_bucket = "Race / Ethnicity",
   INCTOT_cpiu_2010_bucket = "Income",
@@ -189,9 +190,21 @@ pretty_labels <- c(
   EDUC_bucket = "Education",
   cpuma = "CPUMA",
   AGE_bucket = "Age",
-  Intercept = "Intercept",
-  Total = "Total"
+  Intercept = "",
+  Total = ""
 )
+
+plot_data <- prepare_kob_plot_data(
+  kob_ppbr, 
+  varnames = varnames_dict, 
+  pretty_labels = pretty_labels
+  )
+plot_kob_decomposition(
+  plot_data, 
+  title = "Persons per Bedroom", 
+  show_total = TRUE,
+  hide_facet_labels = FALSE
+  )
 
 # Generate and print all five plots
 plots <- imap(kob_outputs, ~{
@@ -202,5 +215,19 @@ plots <- imap(kob_outputs, ~{
 # Optional: Display plots in RStudio
 for (p in plots) print(p)
 
+# Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
+fig07 <- (plots$`Number of People` + plots$`Number of Bedrooms` + plots$`Persons per Bedroom`) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
+# Figure &A (Appendix version) shows # Persons, # Rooms, Persons per Room
+fig06a <- (plots$`Number of People` + plots$`Number of Rooms` + plots$`Persons per Room`) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+
+ggsave(
+  "output/figures/fig07-kob-decomp-bars.png", 
+  plot = fig06a, 
+  width = 3000, height = 2400, units = "px", dpi = 300
+)
 
