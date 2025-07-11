@@ -17,7 +17,7 @@ input_paths <- tibble::tribble(
   "props",   2000,  "throughput/props00_2000.rds",
   "props",   2019,  "throughput/props00_2019.rds",
   "numprec", 2000,  "throughput/model00_2000_numprec_summary-v2.rds",
-  "numprec", 2019,  "throughput/model00_2019_numprec_summary-beta.rds", #kob/throughput/model00_2019_numprec_summary.rds
+  "numprec", 2019,  "throughput/model00_2019_numprec_summary.rds", #throughput/model00_2019_numprec_summary-beta.rds"
   "ppr",     2000,  "throughput/model00_2000_persons_per_room_summary.rds",
   "ppr",     2019,  "throughput/model00_2019_persons_per_room_summary-v5.rds",
   "ppbr",    2000,  "throughput/model00_2000_persons_per_bedroom_summary.rds",
@@ -39,14 +39,6 @@ missing_paths <- input_paths |> filter(!file.exists(path))
 
 if (nrow(missing_paths) > 0) {
   stop("❌ Missing file(s):\n", paste(missing_paths$path, collapse = "\n"))
-}
-
-# Quality check: Do any of above defined files have NA values?
-na_summary <- map(kob_input, ~ anyNA(.x))
-
-if (any(unlist(na_summary))) {
-  failed <- names(na_summary[na_summary == TRUE])
-  stop("❌ NA values detected in the following `kob_input` entries: ", paste(failed, collapse = ", "))
 }
 
 # ----- Step 2: Read in proportion data ----- #
@@ -141,6 +133,14 @@ join_coefs_props <- function(coef_name) {
 
 # Apply this function and save outcomes in a named list
 kob_input <- map(coef_names, join_coefs_props) |>  set_names(coef_names)
+
+# Quality check: Do any of above defined files have NA values?
+na_summary <- map(kob_input, ~ anyNA(.x))
+
+if (any(unlist(na_summary))) {
+  failed <- names(na_summary[na_summary == TRUE])
+  stop("❌ NA values detected in the following `kob_input` entries: ", paste(failed, collapse = ", "))
+}
 
 # Save kob_input to throughput/
 saveRDS(kob_input, "throughput/kob_input.rds")
