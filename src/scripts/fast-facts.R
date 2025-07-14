@@ -165,3 +165,46 @@ aggregates <- readRDS("throughput/aggregates.rds")
 mean_2000 <- aggregates |> filter(variable == "bedroom") |> pull(mean_2000)
 mean_2019 <- aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
 (mean_2019 / mean_2000 - 1) * 100
+
+#####
+# Over the same period, average bedroom counts rose from 2.82_____ to 3.01_____. 
+# Had 2000 preferences remained stable and been applied to the 2019 population 
+# structure, we would have expected an average of 2.78_____ bedrooms. That is, 
+# observed 2019 average bedroom counts are ___% larger than expected. Likewise, 
+# we find that crowding fell from ___ to ___ persons per bedroom, but that in the 
+# counterfactual scenario it would have fallen to just _____ persons per bedroom.
+# Note to self: run the kob-control-script: fig06_data contains this info.
+# TODO: somehow save the fig06_data and make this less brittle. Perhaps put into 
+# a counterfactuals script or something that is saved, later
+o_2000 <- fig06_data |> filter(variable == "bedroom") |> pull(observed_2000)
+o_2000
+o_2019 <- fig06_data |> filter(variable == "bedroom") |> pull(observed_2019)
+o_2019
+e_2019 <- fig06_data |> filter(variable == "bedroom") |> pull(expected_2019)
+e_2019
+( o_2019 / e_2019 - 1) * 100
+
+o_2000 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(observed_2000)
+o_2000
+o_2019 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(observed_2019)
+o_2019
+e_2019 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(expected_2019)
+e_2019
+( o_2019 / e_2019 - 1) * 100
+
+# As noted above, the average American household size in 2000 was 3.47 people, a 
+# figure that fell to 3.37 people in 2019. Had preferences remained stable from 
+# 2000 onwards, we would expect that average household size in 2019 would have 
+# fallen to 3.33456 people. In other words, average household size fell by 0.093 p
+# eople between 2000 and 2019, which amounts to  83% of the expected decline based 
+# on changes  in population structure (0.112 people). This gap suggests that unobserved 
+# factors partially offset the demographic forces driving household size decline. 
+o_2000 <- fig06_data |> filter(variable == "NUMPREC") |> pull(observed_2000)
+o_2000
+o_2019 <- fig06_data |> filter(variable == "NUMPREC") |> pull(observed_2019)
+o_2019
+e_2019 <- fig06_data |> filter(variable == "NUMPREC") |> pull(expected_2019)
+e_2019
+o_2000 - o_2019
+o_2000 - e_2019
+(o_2000 - o_2019)/(o_2000 - e_2019)
