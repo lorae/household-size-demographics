@@ -160,19 +160,19 @@ pretty_labels <- c(
 )
 
 # ----- Step 2: Make plots ----- #
-p7    <- make_kob_plot(kob_numprec, "Number of Persons", hide_variable_labels = FALSE)
-r7    <- make_kob_plot(kob_room, "Number of Rooms")
-b7    <- make_kob_plot(kob_bedroom, "Number of Bedrooms")
-ppr7  <- make_kob_plot(kob_ppr, "Persons per Room")
-ppbr7 <- make_kob_plot(kob_ppbr, "Persons per Bedroom", hide_variable_labels = TRUE)
+p    <- make_kob_plot(kob_numprec, "Number of Persons", hide_variable_labels = FALSE)
+r    <- make_kob_plot(kob_room, "Number of Rooms")
+b    <- make_kob_plot(kob_bedroom, "Number of Bedrooms")
+ppr  <- make_kob_plot(kob_ppr, "Persons per Room")
+ppbr <- make_kob_plot(kob_ppbr, "Persons per Bedroom", hide_variable_labels = TRUE)
 
 # Figure 7 shows # Persons, # Bedooms, Persons per Bedoom
-fig07 <- (p7 + b7 + ppbr7) +
+fig07 <- (p + b + ppbr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
 # Figure 7A (Appendix version) shows # Persons, # Rooms, Persons per Room
-fig07a <- (p7 + r7 + ppr7) +
+fig07a <- (p + r + ppr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
