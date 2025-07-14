@@ -1,13 +1,14 @@
 # #src/figures/fig07-kob-decomp-bars.R
-# The purpose of this script is to define functions that produce bar charts showing
-# the kob decomposition.
-# Input: various global vars for kob decomposition, such as kob_ppbr, defined in 
-#        kob/scripts/kob-control-script.R
-# Output: Functions defined below, called in kob/scripts/kob-control-script.R
+# Produce bar charts showing the kob decomposition.
 #
-# TODO: write a unit test or example script that does this. Also, have kob-control-script
-# save the kob results before producing graphs, rather than relying on global vars.
+# Input: throughput/kob_output.rds
+# Output: output/figures/fig07-kob-decomp-bars.png, output/figures/fig07a-kob-decomp-bars.png
+#
+# TODO: write unit tests for functions
+# TODO: optionally turn off x-axis label, make the facet names like Intercept not get cutoff
 
+# ----- Step 0: Define functions -----
+# Data preparation function
 prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
   # Collapse into one row per variable
   collapsed <- kob_output |>
@@ -62,7 +63,7 @@ prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
   return(collapsed)
 }
 
-
+# Plotting function
 plot_kob_decomposition <- function(
     plot_data,
     title = "KOB Decomposition",
@@ -124,3 +125,65 @@ plot_kob_decomposition <- function(
   
   return(p)
 }
+
+# Helper function to prep and plot ---
+make_kob_plot <- function(data, title, show_total = TRUE, 
+                          hide_facet_labels = TRUE, 
+                          hide_variable_labels = TRUE) {
+  plot_data <- prepare_kob_plot_data(
+    data,
+    varnames = varnames_dict,
+    pretty_labels = pretty_labels
+  )
+  plot_kob_decomposition(
+    plot_data,
+    title = title,
+    show_total = show_total,
+    hide_facet_labels = hide_facet_labels,
+    hide_variable_labels = hide_variable_labels
+  )
+}
+# ----- Step 1: Read in data, define labels ----- #
+kob_output <- readRDS("throughput/kob_output.rds")
+
+pretty_labels <- c(
+  us_born = "U.S. Born",
+  tenure = "Tenure",
+  RACE_ETH_bucket = "Race / Ethnicity",
+  INCTOT_cpiu_2010_bucket = "Income",
+  gender = "Sex",
+  EDUC_bucket = "Education",
+  cpuma = "CPUMA",
+  AGE_bucket = "Age",
+  Intercept = "",
+  Total = ""
+)
+
+# ----- Step 2: Make plots ----- #
+p7    <- make_kob_plot(kob_numprec, "Number of Persons", hide_variable_labels = FALSE)
+r7    <- make_kob_plot(kob_room, "Number of Rooms")
+b7    <- make_kob_plot(kob_bedroom, "Number of Bedrooms")
+ppr7  <- make_kob_plot(kob_ppr, "Persons per Room")
+ppbr7 <- make_kob_plot(kob_ppbr, "Persons per Bedroom", hide_variable_labels = TRUE)
+
+# Figure 7 shows # Persons, # Bedooms, Persons per Bedoom
+fig07 <- (p7 + b7 + ppbr7) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+
+# Figure 7A (Appendix version) shows # Persons, # Rooms, Persons per Room
+fig07a <- (p7 + r7 + ppr7) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+
+# ----- Step 3: Save plots ----- #
+ggsave(
+  "output/figures/fig07-kob-decomp-bars.png", 
+  plot = fig07, 
+  width = 3000, height = 2000, units = "px", dpi = 200
+)
+ggsave(
+  "output/figures/fig07a-kob-decomp-bars.png", 
+  plot = fig07a, 
+  width = 3000, height = 2000, units = "px", dpi = 200
+)

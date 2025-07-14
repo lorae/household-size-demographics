@@ -116,6 +116,12 @@ kob_output <- tibble::tibble(
   kob = list(kob_numprec, kob_bedroom, kob_room, kob_ppr, kob_ppbr)
 )
 
+saveRDS(kob_output, "throughput/kob_output.rds")
+# TODO: separate reg output into a subfolder in throughput to make it more tractable
+
+# --- 3.5: Figure 5 -  Average Household Crowding by Race/Ethnicity, Tenure, and Year
+
+
 # --- 3.6: Figure 6 -  KOB counterfactual bar charts
 source("src/figures/fig06-observed-counterfactual-bars.R")
 
@@ -179,66 +185,5 @@ ggsave(
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 
-# --- 3.7: Figure 7 -  KOB decomposition bar charts
-source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot
 
-pretty_labels <- c(
-  us_born = "U.S. Born",
-  tenure = "Tenure",
-  RACE_ETH_bucket = "Race / Ethnicity",
-  INCTOT_cpiu_2010_bucket = "Income",
-  gender = "Sex",
-  EDUC_bucket = "Education",
-  cpuma = "CPUMA",
-  AGE_bucket = "Age",
-  Intercept = "",
-  Total = ""
-)
-
-# --- Helper function to prep and plot ---
-make_kob_plot <- function(data, title, show_total = TRUE, 
-                          hide_facet_labels = TRUE, 
-                          hide_variable_labels = TRUE) {
-  plot_data <- prepare_kob_plot_data(
-    data,
-    varnames = varnames_dict,
-    pretty_labels = pretty_labels
-  )
-  plot_kob_decomposition(
-    plot_data,
-    title = title,
-    show_total = show_total,
-    hide_facet_labels = hide_facet_labels,
-    hide_variable_labels = hide_variable_labels
-  )
-}
-
-# Make plots
-p7    <- make_kob_plot(kob_numprec, "Number of Persons", hide_variable_labels = FALSE)
-r7    <- make_kob_plot(kob_room, "Number of Rooms")
-b7    <- make_kob_plot(kob_bedroom, "Number of Bedrooms")
-ppr7  <- make_kob_plot(kob_ppr, "Persons per Room")
-ppbr7 <- make_kob_plot(kob_ppbr, "Persons per Bedroom", hide_variable_labels = TRUE)
-
-# Figure 7A shows # Persons, # Bedooms, Persons per Bedoom
-fig07 <- (p7 + b7 + ppbr7) +
-  plot_annotation() &
-  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
-
-# Figure &A (Appendix version) shows # Persons, # Rooms, Persons per Room
-fig07a <- (p7 + r7 + ppr7) +
-  plot_annotation() &
-  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
-
-# TODO: optionally turn off x-axis label, make the facet names like Intercept not get cutoff
-ggsave(
-  "output/figures/fig07-kob-decomp-bars.png", 
-  plot = fig07, 
-  width = 3000, height = 2000, units = "px", dpi = 200
-)
-ggsave(
-  "output/figures/fig07a-kob-decomp-bars.png", 
-  plot = fig07a, 
-  width = 3000, height = 2000, units = "px", dpi = 200
-)
 
