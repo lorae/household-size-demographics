@@ -8,7 +8,11 @@
 #
 # TODO: write unit tests for functions
 
-# ----- Step 0: Define functions -----
+# ----- Step 0: Config ----- 
+library("patchwork")
+library("ggplot2")
+
+# ----- Step 1: Define functions -----
 # Plotting function
 make_fig06_barplot <- function(target_name, fig06_data, yaxis_override = NULL) {
   # Get the relevant row including ymin/ymax
@@ -66,7 +70,7 @@ make_fig06_barplot <- function(target_name, fig06_data, yaxis_override = NULL) {
 round_down_to <- function(x, base) base * floor(x / base)
 round_up_to <- function(x, base) base * ceiling(x / base)
 
-# ----- Step 1: Read in data, define parameters ----- #
+# ----- Step 2: Read in data, define parameters ----- #
 kob_output <- readRDS("throughput/kob_output.rds")
 aggregates <- readRDS("throughput/aggregates.rds")
 
@@ -98,7 +102,7 @@ fig06_data <- aggregates |>
 # Rounding granularity for axis limits
 increment <- 1  
 
-# ----- Step 2: Make plots ----- #
+# ----- Step 3: Make plots ----- #
 p <- make_fig06_barplot("Number of People", fig06_data, yaxis_override = c(3, 3.5))
 b <- make_fig06_barplot("Number of Bedrooms", fig06_data, yaxis_override = c(2, 3.5))
 ppbr <- make_fig06_barplot("Persons per Bedroom", fig06_data, yaxis_override = c(1, 1.5))
@@ -115,7 +119,7 @@ fig06a <- (p + r + ppr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
-# ----- Step 3: Save plots ----- #
+# ----- Step 4: Save plots ----- #
 ggsave(
   "output/figures/fig06-observed-counterfactual-bars.png", 
   plot = fig06, 

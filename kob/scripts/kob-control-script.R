@@ -18,10 +18,8 @@ library("stringr")
 library("tidyr")
 library("purrr")
 library("glue")
-library("ggplot2")
 library("oaxaca")
 library("tibble")
-library("patchwork")
 
 source("src/utils/regression-tools.R") # add_intercept function
 

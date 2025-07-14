@@ -7,7 +7,11 @@
 # TODO: write unit tests for functions
 # TODO: optionally turn off x-axis label, make the facet names like Intercept not get cutoff
 
-# ----- Step 0: Define functions -----
+# ----- Step 0: Config ----- 
+library("patchwork")
+library("ggplot2")
+
+# ----- Step 1: Define functions -----
 # Data preparation function
 prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
   # Collapse into one row per variable
@@ -143,7 +147,7 @@ make_kob_plot <- function(data, title, show_total = TRUE,
     hide_variable_labels = hide_variable_labels
   )
 }
-# ----- Step 1: Read in data, define labels ----- #
+# ----- Step 2: Read in data, define labels ----- #
 kob_output <- readRDS("throughput/kob_output.rds")
 
 pretty_labels <- c(
@@ -159,7 +163,7 @@ pretty_labels <- c(
   Total = ""
 )
 
-# ----- Step 2: Make plots ----- #
+# ----- Step 3: Make plots ----- #
 p    <- make_kob_plot(kob_numprec, "Number of Persons", hide_variable_labels = FALSE)
 r    <- make_kob_plot(kob_room, "Number of Rooms")
 b    <- make_kob_plot(kob_bedroom, "Number of Bedrooms")
@@ -176,7 +180,7 @@ fig07a <- (p + r + ppr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
-# ----- Step 3: Save plots ----- #
+# ----- Step 4: Save plots ----- #
 ggsave(
   "output/figures/fig07-kob-decomp-bars.png", 
   plot = fig07, 
