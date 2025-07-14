@@ -27,7 +27,6 @@ source("src/utils/aggregation-tools.R")
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
-# ----- Step 3: Make plots ----- #
 combos <- expand.grid(
   tenure = c("renter", "homeowner"),
   year = c(2000, 2019),
@@ -44,28 +43,16 @@ fig05_data <- pmap_dfr(combos, function(tenure, year) {
     mutate(year = year, tenure = tenure)
 })
 
+# ----- Step 3: Make plots ----- #
 # Define a single main color for all bars
 main_color <- "steelblue"
 
 # Generate the plot
-fig05_renter <- ggplot(fig05_data |> filter(tenure == "renter"), aes(x = subgroup, y = hhsize, fill = factor(year))) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.8),
-           width = 0.8, color = "black") +  # Bar border
-  geom_text(aes(label = round(hhsize, 2), group = year),
-            position = position_dodge(width = 0.8),
-            vjust = -0.5, size = 3) +
-  scale_fill_manual(
-    values = c("2000" = alpha(main_color, 0.4), "2019" = alpha(main_color, 0.8)),
-    name = "") +  # Ensures the legend colors match bar colors
-  labs(y = "Average Household Size") +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    axis.title.x = element_blank(),
-    plot.margin = margin(t = 10, r = 10, b = 0, l = 10)
-  )
+source("src/utils/plotting-tools.R")
+
+main_color <- "steelblue"
+fig05_renter <- plot_year_subgroup_bars(fig05_data |> filter(tenure == "renter"), main_color)
+fig05_homeowner <- plot_year_subgroup_bars(fig05_data |> filter(tenure == "homeowner"), main_color)
 
 # ----- Step 4: Save plots ----- #
 # ggsave(
