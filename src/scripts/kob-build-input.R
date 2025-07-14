@@ -15,20 +15,22 @@ library(dplyr)
 devtools::load_all("../dataduck")
 
 # ----- Step 1: Define throughput file paths  ----- #
+# TODO: unify terms with abbrev_variable and other ways I refer to these 
+# regression outcomes across the pipeline workflow
 input_paths <- tibble::tribble(
   ~term,     ~year, ~path,
-  "props",   2000,  "throughput/props00_2000.rds",
-  "props",   2019,  "throughput/props00_2019.rds",
-  "numprec", 2000,  "throughput/model00_2000_numprec_summary-v2.rds",
-  "numprec", 2019,  "throughput/model00_2019_numprec_summary.rds", 
-  "ppr",     2000,  "throughput/model00_2000_persons_per_room_summary.rds",
-  "ppr",     2019,  "throughput/model00_2019_persons_per_room_summary-v5.rds",
-  "ppbr",    2000,  "throughput/model00_2000_persons_per_bedroom_summary.rds",
-  "ppbr",    2019,  "throughput/model00_2019_persons_per_bedroom_summary-v5.rds",
-  "room",    2000,  "throughput/model00_2000_room_summary.rds",
-  "room",    2019,  "throughput/model00_2019_room_summary-v5.rds",
-  "bedroom", 2000,  "throughput/model00_2000_bedroom_summary.rds",
-  "bedroom", 2019,  "throughput/model00_2019_bedroom_summary-v5.rds"
+  "props",   2000,  "throughput/reg00/props00_2000.rds",
+  "props",   2019,  "throughput/reg00/props00_2019.rds",
+  "numprec", 2000,  "throughput/reg00/model00_2000_numprec_summary-v2.rds",
+  "numprec", 2019,  "throughput/reg00/model00_2019_numprec_summary.rds", 
+  "ppr",     2000,  "throughput/reg00/model00_2000_persons_per_room_summary.rds",
+  "ppr",     2019,  "throughput/reg00/model00_2019_persons_per_room_summary-v5.rds",
+  "ppbr",    2000,  "throughput/reg00/model00_2000_persons_per_bedroom_summary.rds",
+  "ppbr",    2019,  "throughput/reg00/model00_2019_persons_per_bedroom_summary-v5.rds",
+  "room",    2000,  "throughput/reg00/model00_2000_room_summary.rds",
+  "room",    2019,  "throughput/reg00/model00_2019_room_summary-v5.rds",
+  "bedroom", 2000,  "throughput/reg00/model00_2000_bedroom_summary.rds",
+  "bedroom", 2019,  "throughput/reg00/model00_2019_bedroom_summary-v5.rds"
 )
 
 get_path <- function(term, year) {

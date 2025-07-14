@@ -7,8 +7,9 @@ This is the main production pipeline.
 
 # ----- Step 0: User settings ----- #
 # Define output path for model summary
-out_path <- "kob/throughput/model00_2019_persons_per_room_summary-v5.rds"
-out_path_bootstrap <- "kob/throughput/model00_2019_bootstrap-ppr.rds"
+out_path <- "throughput/reg00/model00_2019_persons_per_room_summary-v5.rds"
+# TODO: make two subfolders: one for bootstrap and one for summary results?
+out_path_bootstrap <- "throughput/reg00/model00_2019_bootstrap-ppr.rds"
 
 # Define regression formula
 formula <- persons_per_room ~ -1 + 

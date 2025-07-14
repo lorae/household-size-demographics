@@ -18,21 +18,22 @@ library("glue")
 library("oaxaca")
 library("tibble")
 
-
 source("src/utils/regression-tools.R") # add_intercept function
 
 # ----- Step 1: Load in data ----- #
 # Only run this if kob_input.rds doesn't already exist
+# TODO: eventually handle this with targets or document more clearly or use
+# a large control script that runs the project from beginning to end
 if (!file.exists("throughput/kob_input.rds")) {
   source("kob/scripts/kob-prepare-data.R")
 }
 
 kob_input <- readRDS("throughput/kob_input.rds")
 
-# This is for validation (kob_output_validate)
+# For validation (kob_output_validate)
 aggregates <- readRDS("throughput/aggregates.rds")
 
-# This is for tidying (kob_tidy_output)
+# For tidying (kob_tidy_output)
 varnames_dict <- c(
   "RACE_ETH_bucket",
   "AGE_bucket",
@@ -45,8 +46,8 @@ varnames_dict <- c(
 )
 
 # ----- Step 2: Run the kob analysis ----- #
-# Each section covers a separate outcome
-source("kob/scripts/kob-function.R") # defines the `kob` function and `kob-output-validate()`
+# Defines `kob()` and `kob-output-validate()`
+source("kob/scripts/kob-function.R")
 
 # --- Number of Persons (p) ---
 kob_p <- kob(kob_input$numprec) |>
@@ -114,7 +115,5 @@ kob_output <- list(
   ppbr = kob_ppbr
   )
 
-# TODO: separate reg output into a subfolder in throughput to make these main
-# throughput files easier to find
 saveRDS(kob_output, "throughput/kob_output.rds")
 
