@@ -1,16 +1,15 @@
 # #src/figures/fig06-observed-counterfactual-bars.R
-# The purpose of this script is to define functions that produce bar charts showing
-# 2000 observed, 2019 observed, and 2019 and expected (counterfactual) outcomes 
-# of number of people in a household, number bedrooms in a household, and bedroom 
-# crowding. Also an appendix version that does the same set of 3 bars by room.
+# Produce bar charts showing 2000 observed, 2019 observed, and 2019 and expected 
+# (counterfactual) outcomes.
 #
-# Input: various global vars for kob decomposition, such as kob_ppbr, defined in 
-#        kob/scripts/kob-control-script.R
-# Output: Functions defined below, called in kob/scripts/kob-control-script.R
+# Input: throughput/kob_output.rds
+# Output: output/figures/fig06-observed-counterfactual-bars.png, 
+#         output/figures/fig06-appendix-observed-counterfactual-bars.png
 #
-# TODO: write a unit test or example script that does this. Also, have kob-control-script
-# save the kob results before producing graphs, rather than relying on global vars.
+# TODO: write unit tests for functions
 
+# ----- Step 0: Define functions -----
+# Plotting function
 make_fig06_barplot <- function(target_name, fig06_data, yaxis_override = NULL) {
   # Get the relevant row including ymin/ymax
   row <- fig06_data |> filter(name == target_name)
@@ -62,3 +61,69 @@ make_fig06_barplot <- function(target_name, fig06_data, yaxis_override = NULL) {
       plot.title = element_text(size = 13, margin = margin(b = 10))
     )
 }
+
+# Rounding helpers
+round_down_to <- function(x, base) base * floor(x / base)
+round_up_to <- function(x, base) base * ceiling(x / base)
+
+# ----- Step 1: Read in data, define parameters ----- #
+kob_output <- readRDS("throughput/kob_output.rds")
+aggregates <- readRDS("throughput/aggregates.rds")
+
+# Create an observed, expected table used to produce these figures. Observed values
+# in 2000 are already in `aggregates` - we rename those cols and add on a third 
+# col using kob results
+fig06_data <- aggregates |>
+  rename(
+    observed_2000 = mean_2000,
+    observed_2019 = mean_2019
+  ) |>
+  left_join(kob_output, by = "variable") |>
+  relocate(name, .before = variable) |>
+  rowwise() |>
+  mutate(
+    e = sum(kob$e, na.rm = TRUE),
+    c = sum(kob$c, na.rm = TRUE),
+    u = sum(kob$u, na.rm = TRUE),
+    expected_2019 = observed_2000 + e,
+    min_val = min(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
+    max_val = max(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
+    ymin = round_down_to(min_val, increment),
+    ymax = round_up_to(max_val, increment)
+  ) |>
+  ungroup() |>
+  relocate(expected_2019, .after = observed_2019) |>
+  select(-min_val, -max_val)
+
+# Rounding granularity for axis limits
+increment <- 1  
+
+# ----- Step 2: Make plots ----- #
+p <- make_fig06_barplot("Number of People", fig06_data, yaxis_override = c(3, 3.5))
+b <- make_fig06_barplot("Number of Bedrooms", fig06_data, yaxis_override = c(2, 3.5))
+ppbr <- make_fig06_barplot("Persons per Bedroom", fig06_data, yaxis_override = c(1, 1.5))
+r <- make_fig06_barplot("Number of Rooms", fig06_data, yaxis_override = c(5.5, 6.5))
+ppr <- make_fig06_barplot("Persons per Room", fig06_data, yaxis_override = c(0, 1))
+
+# Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
+fig06 <- (p + b + ppbr) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+
+# Figure 6A (Appendix version) shows # Persons, # Rooms, Persons per Room
+fig06a <- (p + r + ppr) +
+  plot_annotation() &
+  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
+
+# ----- Step 3: Save plots ----- #
+ggsave(
+  "output/figures/fig06-observed-counterfactual-bars.png", 
+  plot = fig06, 
+  width = 3000, height = 2400, units = "px", dpi = 300
+)
+ggsave(
+  "output/figures/fig06-appendix-observed-counterfactual-bars.png", 
+  plot = fig06a, 
+  width = 3000, height = 2400, units = "px", dpi = 300
+)
+

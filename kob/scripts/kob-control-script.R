@@ -116,74 +116,7 @@ kob_output <- tibble::tibble(
   kob = list(kob_numprec, kob_bedroom, kob_room, kob_ppr, kob_ppbr)
 )
 
+# TODO: separate reg output into a subfolder in throughput to make these main
+# throughput files easier to find
 saveRDS(kob_output, "throughput/kob_output.rds")
-# TODO: separate reg output into a subfolder in throughput to make it more tractable
-
-# --- 3.5: Figure 5 -  Average Household Crowding by Race/Ethnicity, Tenure, and Year
-
-
-# --- 3.6: Figure 6 -  KOB counterfactual bar charts
-source("src/figures/fig06-observed-counterfactual-bars.R")
-
-# Rounding helpers
-round_down_to <- function(x, base) base * floor(x / base)
-round_up_to <- function(x, base) base * ceiling(x / base)
-
-increment <- 1  # rounding granularity for axis limits
-
-# Create an observed, expected table used to produce these figures. Observed values
-# in 2000 are already in `aggregates` - we rename those cols and add on a third 
-# col using kob results
-fig06_data <- aggregates |>
-  rename(
-    observed_2000 = mean_2000,
-    observed_2019 = mean_2019
-  ) |>
-  left_join(kob_output, by = "variable") |>
-  relocate(name, .before = variable) |>
-  rowwise() |>
-  mutate(
-    e = sum(kob$e, na.rm = TRUE),
-    c = sum(kob$c, na.rm = TRUE),
-    u = sum(kob$u, na.rm = TRUE),
-    expected_2019 = observed_2000 + e,
-    min_val = min(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
-    max_val = max(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
-    ymin = round_down_to(min_val, increment),
-    ymax = round_up_to(max_val, increment)
-  ) |>
-  ungroup() |>
-  relocate(expected_2019, .after = observed_2019) |>
-  select(-min_val, -max_val)
-
-# Generate all five plots
-p <- make_fig06_barplot("Number of People", fig06_data, yaxis_override = c(3, 3.5))
-b <- make_fig06_barplot("Number of Bedrooms", fig06_data, yaxis_override = c(2, 3.5))
-ppbr <- make_fig06_barplot("Persons per Bedroom", fig06_data, yaxis_override = c(1, 1.5))
-r <- make_fig06_barplot("Number of Rooms", fig06_data, yaxis_override = c(5.5, 6.5))
-ppr <- make_fig06_barplot("Persons per Room", fig06_data, yaxis_override = c(0, 1))
-
-# Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
-fig06 <- (p + b + ppbr) +
-  plot_annotation() &
-  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
-
-# Figure 6A (Appendix version) shows # Persons, # Rooms, Persons per Room
-fig06a <- (p + r + ppr) +
-  plot_annotation() &
-  theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
-
-# Save
-ggsave(
-  "output/figures/fig06-observed-counterfactual-bars.png", 
-  plot = fig06, 
-  width = 3000, height = 2400, units = "px", dpi = 300
-  )
-ggsave(
-  "output/figures/fig06-appendix-observed-counterfactual-bars.png", 
-  plot = fig06a, 
-  width = 3000, height = 2400, units = "px", dpi = 300
-)
-
-
 
