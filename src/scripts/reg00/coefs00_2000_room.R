@@ -1,4 +1,5 @@
 #kob/scripts/coefs00_2000_room.R
+# TODO: rename output to r_2000 and adjust downstream kob scripts accordingly
 # This script runs regression 0 with `room` as the outcome variable
 
 library(survey)

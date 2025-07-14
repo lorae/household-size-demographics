@@ -1,4 +1,5 @@
 # kob/refactor/props00_2000
+# TODO: rename output to prop_2019 and adjust downstream kob scripts accordingly
 # This script runs the props for regression 00 in 2000.
 
 # TODO: explore whether I can generate a survey design without pulling data into

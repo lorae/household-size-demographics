@@ -1,4 +1,5 @@
 # kob/throughput/coefs00_2019_persons_per_bedroom.R
+# TODO: rename output to ppbr_2019 and adjust downstream kob scripts accordingly
 cat("
 This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
 using the dataduck matrix-based regression backend and successive differences replication (SDR).

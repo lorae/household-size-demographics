@@ -1,4 +1,5 @@
 #kob/scripts/coefs00_2000_persons_per_bedroom.R
+# TODO: rename output to ppbr_2000 and adjust downstream kob scripts accordingly
 # This script runs regression 0 with `persons_per_bedroom` as the outcome variable
 
 library(survey)

@@ -1,4 +1,5 @@
 # kob/refactor/props00_2019.R
+# TODO: rename output to prop_2000 and adjust downstream kob scripts accordingly
 # The purpose of this script is to calculate population proportions in 2019.
 
 # ----- STEP 0: Config ----- #
