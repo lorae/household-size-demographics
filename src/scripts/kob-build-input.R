@@ -1,8 +1,8 @@
-# kob/scripts/kob-prepare-data.R
+# src/scripts/kob-build-input.R
 # 
 # Read raw regression results and population proportions. Standardize into kob_input 
 # list of data frames, with each named entry (e.g. $numprec, $bedroom) having all 
-# the necessary columns to be analyzed in kob-run.R
+# the necessary columns to be ingested in kob-build-output.R
 #
 # Input: throughput/ files - see input_paths below
 # Output: throughput/kob_input.rds

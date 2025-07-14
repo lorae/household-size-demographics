@@ -1,8 +1,8 @@
-# kob/scripts/kob-control-script.R
+# src/scripts/kob-build-output.R
 # 
-# Ingest regression results; apply KOB functions, validate output, and save clean, 
-# re-usable throughput files with KOB results for downstream graphing, tabulation,
-# and description.
+# Ingest KOB input; apply KOB function, validate output, and save clean, reusable 
+# throughput containing KOB results for downstream graphing, tabulation, and 
+# description.
 # 
 # Input: throughput/kob_input.rds
 # Output: throughput/kob_output.rds
