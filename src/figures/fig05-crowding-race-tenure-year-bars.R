@@ -48,24 +48,24 @@ fig05_data <- pmap_dfr(combos, function(tenure, year) {
 main_color <- "steelblue"
 
 # Generate the plot
-# fig01 <- ggplot(race_summary, aes(x = subgroup, y = hhsize, fill = factor(year))) +
-#   geom_bar(stat = "identity", position = position_dodge(width = 0.8), 
-#            width = 0.8, color = "black") +  # Bar border
-#   geom_text(aes(label = round(hhsize, 2), group = year), 
-#             position = position_dodge(width = 0.8), 
-#             vjust = -0.5, size = 3) +  
-#   scale_fill_manual(
-#     values = c("2000" = alpha(main_color, 0.4), "2019" = alpha(main_color, 0.8)), 
-#     name = "") +  # Ensures the legend colors match bar colors
-#   labs(y = "Average Household Size") +
-#   theme_minimal() +
-#   theme(
-#     axis.text.x = element_text(angle = 0, hjust = 0.5),
-#     legend.position = "bottom",
-#     legend.box = "horizontal",
-#     axis.title.x = element_blank(),
-#     plot.margin = margin(t = 10, r = 10, b = 0, l = 10)
-#   )
+fig05_renter <- ggplot(fig05_data |> filter(tenure == "renter"), aes(x = subgroup, y = hhsize, fill = factor(year))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8),
+           width = 0.8, color = "black") +  # Bar border
+  geom_text(aes(label = round(hhsize, 2), group = year),
+            position = position_dodge(width = 0.8),
+            vjust = -0.5, size = 3) +
+  scale_fill_manual(
+    values = c("2000" = alpha(main_color, 0.4), "2019" = alpha(main_color, 0.8)),
+    name = "") +  # Ensures the legend colors match bar colors
+  labs(y = "Average Household Size") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    axis.title.x = element_blank(),
+    plot.margin = margin(t = 10, r = 10, b = 0, l = 10)
+  )
 
 # ----- Step 4: Save plots ----- #
 # ggsave(
