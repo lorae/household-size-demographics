@@ -1,9 +1,12 @@
 # kob/scripts/kob-prepare-data.R
-# The purpose of this script is to use outputs of regression to prepare data for input into 
-# the kob pipeline in kob-function.R
-# It standardizes regression results and population proportinos into kob_input 
-# list of data frames, with each named entry (e.g. $numprec, $bedroom) having
-# all the necessary columns to compute the kob function.
+# 
+# Read raw regression results and population proportions. Standardize into kob_input 
+# list of data frames, with each named entry (e.g. $numprec, $bedroom) having all 
+# the necessary columns to be analyzed in kob-run.R
+#
+# Input: throughput/ files - see input_paths below
+# Output: throughput/kob_input.rds
+#
 
 # ----- Step 0: Config & source helper functions ----- #
 library(purrr)
@@ -17,7 +20,7 @@ input_paths <- tibble::tribble(
   "props",   2000,  "throughput/props00_2000.rds",
   "props",   2019,  "throughput/props00_2019.rds",
   "numprec", 2000,  "throughput/model00_2000_numprec_summary-v2.rds",
-  "numprec", 2019,  "throughput/model00_2019_numprec_summary.rds", #throughput/model00_2019_numprec_summary-beta.rds"
+  "numprec", 2019,  "throughput/model00_2019_numprec_summary.rds", 
   "ppr",     2000,  "throughput/model00_2000_persons_per_room_summary.rds",
   "ppr",     2019,  "throughput/model00_2019_persons_per_room_summary-v5.rds",
   "ppbr",    2000,  "throughput/model00_2000_persons_per_bedroom_summary.rds",
