@@ -15,6 +15,7 @@ library("patchwork")
 library("ggplot2")
 library("tidyr")
 library("purrr")
+library("patchwork")
 
 devtools::load_all("../dataduck")
 
@@ -44,15 +45,31 @@ fig05_data <- pmap_dfr(combos, function(tenure, year) {
 })
 
 # ----- Step 3: Make plots ----- #
-# Define a single main color for all bars
-main_color <- "steelblue"
-
-# Generate the plot
+# Define `plot_year_subgroup_bars()`
 source("src/utils/plotting-tools.R")
 
+# Define a single main color for all bars
 main_color <- "steelblue"
-fig05_renter <- plot_year_subgroup_bars(fig05_data |> filter(tenure == "renter"), main_color)
-fig05_homeowner <- plot_year_subgroup_bars(fig05_data |> filter(tenure == "homeowner"), main_color)
+ymin = 0
+ymax = 5
+
+# Generate the plot
+fig05_renter <- plot_year_subgroup_bars(
+  fig05_data |> filter(tenure == "renter"), 
+  main_color,
+  ymin, ymax,
+  legend = FALSE
+  )
+fig05_homeowner <- plot_year_subgroup_bars(
+  fig05_data |> filter(tenure == "homeowner"), 
+  main_color,
+  ymin, ymax,
+  legend = TRUE
+  )
+
+# Combine
+fig05 <- fig05_renter / fig05_homeowner +
+  plot_layout(ncol = 1)
 
 # ----- Step 4: Save plots ----- #
 # ggsave(
