@@ -28,31 +28,21 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
 # ----- Step 3: Make plots ----- #
-race_summary_2000_renter <- tabulate_summary(
-  data = ipums_db |> filter(tenure == "renter"), 
-  year = 2000, 
-  group_by = "RACE_ETH_bucket"
-  ) |> mutate(year = 2000)
-race_summary_2019_renter <- tabulate_summary(
-  data = ipums_db |> filter(tenure == "renter"), 
-  year = 2019, 
-  group_by = "RACE_ETH_bucket"
-  ) |> mutate(year = 2019)
-race_summary_renter <- union_all(race_summary_2000_renter, race_summary_2019_renter) |>
-  mutate(tenure = "renter")
+combos <- expand.grid(
+  tenure = c("renter", "homeowner"),
+  year = c(2000, 2019),
+  stringsAsFactors = FALSE
+)
 
-race_summary_2000_homeowner <- tabulate_summary(
-  data = ipums_db |> filter(tenure == "homeowner"), 
-  year = 2000, 
-  group_by = "RACE_ETH_bucket"
-) |> mutate(year = 2000)
-race_summary_2019_homeowner <- tabulate_summary(
-  data = ipums_db |> filter(tenure == "homeowner"), 
-  year = 2019, 
-  group_by = "RACE_ETH_bucket"
-) |> mutate(year = 2019)
-race_summary_homeowner <- union_all(race_summary_2000_homeowner, race_summary_2019_homeowner) |>
-  mutate(tenure = "homeowner")
+# Apply tabulate_summary over all combinations
+fig05_data <- pmap_dfr(combos, function(tenure, year) {
+  tabulate_summary(
+    data = ipums_db |> filter(tenure == !!tenure),
+    year = year,
+    group_by = "RACE_ETH_bucket"
+  ) |> 
+    mutate(year = year, tenure = tenure)
+})
 
 # Define a single main color for all bars
 main_color <- "steelblue"
