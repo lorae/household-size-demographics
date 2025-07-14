@@ -181,6 +181,7 @@ ggsave(
 
 # --- 3.7: Figure 7 -  KOB decomposition bar charts
 source("src/figures/fig07-kob-decomp-bars.R") # Defines functions needed for this plot
+
 pretty_labels <- c(
   us_born = "U.S. Born",
   tenure = "Tenure",
@@ -194,84 +195,30 @@ pretty_labels <- c(
   Total = ""
 )
 
-plot_data <- prepare_kob_plot_data(
-  kob_ppbr, 
-  varnames = varnames_dict, 
-  pretty_labels = pretty_labels
+# --- Helper function to prep and plot ---
+make_kob_plot <- function(data, title, show_total = TRUE, 
+                          hide_facet_labels = TRUE, 
+                          hide_variable_labels = TRUE) {
+  plot_data <- prepare_kob_plot_data(
+    data,
+    varnames = varnames_dict,
+    pretty_labels = pretty_labels
   )
-plot_kob_decomposition(
-  plot_data, 
-  title = "Persons per Bedroom", 
-  show_total = TRUE,
-  hide_facet_labels = FALSE,
-  hide_variable_labels = TRUE
+  plot_kob_decomposition(
+    plot_data,
+    title = title,
+    show_total = show_total,
+    hide_facet_labels = hide_facet_labels,
+    hide_variable_labels = hide_variable_labels
   )
+}
 
-# TODO: This needs to be refactored to be DRY
-p7_data <- prepare_kob_plot_data(
-  kob_numprec, 
-  varnames = varnames_dict, 
-  pretty_labels = pretty_labels
-)
-p7 <- plot_kob_decomposition(
-  plot_data, 
-  title = "Number of Persons", 
-  show_total = TRUE,
-  hide_facet_labels = FALSE,
-  hide_variable_labels = FALSE
-)
-
-r7_data <- prepare_kob_plot_data(
-  kob_room, 
-  varnames = varnames_dict, 
-  pretty_labels = pretty_labels
-)
-r7 <- plot_kob_decomposition(
-  r7_data, 
-  title = "Number of Rooms", 
-  show_total = TRUE,
-  hide_facet_labels = TRUE,
-  hide_variable_labels = TRUE
-)
-
-b7_data <- prepare_kob_plot_data(
-  kob_bedroom, 
-  varnames = varnames_dict, 
-  pretty_labels = pretty_labels
-)
-b7 <- plot_kob_decomposition(
-  b7_data, 
-  title = "Number of Bedrooms", 
-  show_total = TRUE,
-  hide_facet_labels = TRUE,
-  hide_variable_labels = TRUE
-)
-
-ppr7_data <- prepare_kob_plot_data(
-  kob_ppr, 
-  varnames = varnames_dict, 
-  pretty_labels = pretty_labels
-)
-ppr7 <- plot_kob_decomposition(
-  ppr7_data, 
-  title = "Persons per Room", 
-  show_total = TRUE,
-  hide_facet_labels = TRUE,
-  hide_variable_labels = TRUE
-)
-
-ppbr7_data <- prepare_kob_plot_data(
-  kob_ppbr, 
-  varnames = varnames_dict, 
-  pretty_labels = pretty_labels
-)
-ppbr7 <- plot_kob_decomposition(
-  ppbr7_data, 
-  title = "Persons per Bedroom", 
-  show_total = TRUE,
-  hide_facet_labels = TRUE,
-  hide_variable_labels = TRUE
-)
+# Make plots
+p7    <- make_kob_plot(kob_numprec, "Number of Persons", hide_variable_labels = FALSE)
+r7    <- make_kob_plot(kob_room, "Number of Rooms")
+b7    <- make_kob_plot(kob_bedroom, "Number of Bedrooms")
+ppr7  <- make_kob_plot(kob_ppr, "Persons per Room")
+ppbr7 <- make_kob_plot(kob_ppbr, "Persons per Bedroom", hide_variable_labels = TRUE)
 
 # Figure 7A shows # Persons, # Bedooms, Persons per Bedoom
 fig07 <- (p7 + b7 + ppbr7) +
