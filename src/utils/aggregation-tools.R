@@ -78,6 +78,11 @@ tabulate_summary <- function(
     group_by = NULL,  # Supports only NULL or a single string (e.g., "SEX")
     group_encoding = NULL # Optional: a named vector for mapping values (e.g., c("1" = "Male", "2" = "Female"))
 ) {
+  # Validate input: only one group_by value allowed ---
+  if (!is.null(group_by) && (length(group_by) != 1 || !is.character(group_by))) {
+    stop("❌ `group_by` must be a single string or NULL — multiple variables are not currently supported.")
+  }
+  
   # Filter data for the specified year and not living in group quarters
   data_filtered <- data |> filter(YEAR == year, GQ %in% c(0,1,2))
   
@@ -133,6 +138,7 @@ tabulate_summary_2year <- function(
     group_encoding = NULL # Optional encoding of factor labels for group_by variable. E.g. if
     # group_by = "SEX", you may input 1 = "Male", 2 = "Female"
 ) {
+  
   # Extract years dynamically
   year1 <- years[1]
   year2 <- years[2]
