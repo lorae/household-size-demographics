@@ -58,13 +58,15 @@ fig05_renter <- plot_year_subgroup_bars(
   fig05_data |> filter(tenure == "renter"), 
   main_color,
   ymin, ymax,
-  legend = FALSE
+  legend = FALSE,
+  title = "Renter-Occupied"
   )
 fig05_homeowner <- plot_year_subgroup_bars(
   fig05_data |> filter(tenure == "homeowner"), 
   main_color,
   ymin, ymax,
-  legend = TRUE
+  legend = TRUE,
+  "Owner-Occupied"
   )
 
 # Combine

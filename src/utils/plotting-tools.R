@@ -1,5 +1,12 @@
-# Create a paired bar chart by subgroup and year
-plot_year_subgroup_bars <- function(data, main_color, y_min = NULL, y_max = NULL, legend = TRUE) {
+# Paired bar chart by subgroup and year
+plot_year_subgroup_bars <- function(
+    data, 
+    main_color, 
+    ymin = NULL, 
+    ymax = NULL, 
+    legend = TRUE, 
+    title = NULL
+    ) {
   p <- ggplot(data, aes(x = subgroup, y = hhsize, fill = factor(year))) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.8),
              width = 0.8, color = "black") +
@@ -20,8 +27,12 @@ plot_year_subgroup_bars <- function(data, main_color, y_min = NULL, y_max = NULL
       plot.margin = margin(t = 10, r = 10, b = 0, l = 10)
     )
   
-  if (!is.null(y_min) || !is.null(y_max)) {
-    p <- p + coord_cartesian(ylim = c(y_min %||% -Inf, y_max %||% Inf))
+  if (!is.null(title)) {
+    p <- p + labs(title = title)
+  }
+  
+  if (!is.null(ymin) || !is.null(ymax)) {
+    p <- p + coord_cartesian(ylim = c(ymin %||% -Inf, ymax %||% Inf))
   }
   
   return(p)
