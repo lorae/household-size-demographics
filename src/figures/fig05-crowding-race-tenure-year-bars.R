@@ -74,8 +74,8 @@ fig05 <- fig05_renter / fig05_homeowner +
   plot_layout(ncol = 1)
 
 # ----- Step 4: Save plots ----- #
-# ggsave(
-#   "output/figures/fig01-hhsize-race-year-bars.png", 
-#   plot = fig01, 
-#   width = 3000, height = 2400, units = "px", dpi = 400
-# )
+ggsave(
+  "output/figures/fig05-crowding-race-tenure-year-bars.png",
+  plot = fig05,
+  width = 3000, height = 4000, units = "px", dpi = 400
+)
