@@ -74,6 +74,22 @@ round_up_to <- function(x, base) base * ceiling(x / base)
 kob_output <- readRDS("throughput/kob_output.rds")
 aggregates <- readRDS("throughput/aggregates.rds")
 
+# TODO: add e_se, c_se, and u_se (non-urgent unless needed; would be nice)
+# TODO: move this into kob-build-output
+kob_aggregates <- imap_dfr(kob_output, function(df, abbrev_variable) {
+  df |>
+    summarise(
+      e = sum(e, na.rm = TRUE),
+      c = sum(c, na.rm = TRUE),
+      u = sum(u, na.rm = TRUE)
+    ) |>
+    mutate(abbrev_variable = abbrev_variable)
+}) |>
+  select(abbrev_variable, e, c, u)
+
+# Rounding granularity for axis limits
+increment <- 1  
+
 # Create an observed, expected table used to produce these figures. Observed values
 # in 2000 are already in `aggregates` - we rename those cols and add on a third 
 # col using kob results
@@ -82,13 +98,10 @@ fig06_data <- aggregates |>
     observed_2000 = mean_2000,
     observed_2019 = mean_2019
   ) |>
-  left_join(kob_output, by = "variable") |>
-  relocate(name, .before = variable) |>
+  left_join(kob_aggregates, by = "abbrev_variable") |>
+  #relocate(name, .before = variable) |>
   rowwise() |>
   mutate(
-    e = sum(kob$e, na.rm = TRUE),
-    c = sum(kob$c, na.rm = TRUE),
-    u = sum(kob$u, na.rm = TRUE),
     expected_2019 = observed_2000 + e,
     min_val = min(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
     max_val = max(observed_2000, observed_2019, expected_2019, na.rm = TRUE),
@@ -99,8 +112,7 @@ fig06_data <- aggregates |>
   relocate(expected_2019, .after = observed_2019) |>
   select(-min_val, -max_val)
 
-# Rounding granularity for axis limits
-increment <- 1  
+
 
 # ----- Step 3: Make plots ----- #
 p <- make_fig06_barplot("Number of People", fig06_data, yaxis_override = c(3, 3.5))

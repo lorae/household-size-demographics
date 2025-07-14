@@ -48,69 +48,71 @@ varnames_dict <- c(
 # Each section covers a separate outcome
 source("kob/scripts/kob-function.R") # defines the `kob` function and `kob-output-validate()`
 
-# TODO: refactor teh aggregates df so the variable names match the aliases in kob_input
-# --- Bedroom ---
-kob_bedroom <- kob(kob_input$bedroom) |>
+# --- Number of Persons (p) ---
+kob_p <- kob(kob_input$numprec) |>
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
-  kob_bedroom,
-  mean_2000 = aggregates |> filter(variable == "bedroom") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
+  kob_p,
+  mean_2000 = aggregates |> filter(abbrev_variable == "p") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(abbrev_variable == "p") |> pull(mean_2019)
 )
 
-# --- Number of People ---
-kob_numprec <- kob(kob_input$numprec) |>
+
+# --- Number of Bedrooms (b) ---
+kob_b <- kob(kob_input$bedroom) |>
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
-  kob_numprec,
-  mean_2000 = aggregates |> filter(variable == "NUMPREC") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "NUMPREC") |> pull(mean_2019)
+  kob_b,
+  mean_2000 = aggregates |> filter(abbrev_variable == "b") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(abbrev_variable == "b") |> pull(mean_2019)
 )
 
-# --- Rooms ---
-kob_room <- kob(kob_input$room) |>
+# --- Number of Rooms (r) ---
+kob_r <- kob(kob_input$room) |>
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
-  kob_room,
-  mean_2000 = aggregates |> filter(variable == "room") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "room") |> pull(mean_2019)
+  kob_r,
+  mean_2000 = aggregates |> filter(abbrev_variable == "r") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(abbrev_variable == "r") |> pull(mean_2019)
 )
 
-# --- Persons per Room (PPR) ---
+# --- Persons per Room (ppr) ---
 kob_ppr <- kob(kob_input$ppr) |>
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
   kob_ppr,
-  mean_2000 = aggregates |> filter(variable == "persons_per_room") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "persons_per_room") |> pull(mean_2019)
+  mean_2000 = aggregates |> filter(abbrev_variable == "ppr") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(abbrev_variable == "ppr") |> pull(mean_2019)
 )
 
-# --- Persons per Bedroom (PPBR) ---
+# --- Persons per Bedroom (ppbr) ---
 kob_ppbr <- kob(kob_input$ppbr) |>
   kob_tidy_output() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
   kob_ppbr,
-  mean_2000 = aggregates |> filter(variable == "persons_per_bedroom") |> pull(mean_2000),
-  mean_2019 = aggregates |> filter(variable == "persons_per_bedroom") |> pull(mean_2019)
+  mean_2000 = aggregates |> filter(abbrev_variable == "ppbr") |> pull(mean_2000),
+  mean_2019 = aggregates |> filter(abbrev_variable == "ppbr") |> pull(mean_2019)
 )
 
 # ----- Step 3: Output data ----- #
 # General: Create named list of KOB outputs and plot titles
-kob_output <- tibble::tibble(
-  variable = c("NUMPREC", "bedroom", "room", "persons_per_room", "persons_per_bedroom"),
-  name = c("Number of People", "Number of Bedrooms", "Number of Rooms", "Persons per Room", "Persons per Bedroom"),
-  kob = list(kob_numprec, kob_bedroom, kob_room, kob_ppr, kob_ppbr)
-)
+kob_output <- list(
+  p = kob_p, 
+  b = kob_b, 
+  r = kob_r, 
+  ppr = kob_ppr, 
+  ppbr = kob_ppbr
+  )
 
 # TODO: separate reg output into a subfolder in throughput to make these main
 # throughput files easier to find
