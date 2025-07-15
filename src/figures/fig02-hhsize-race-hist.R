@@ -51,17 +51,49 @@ fig02_data <- hhsize_race_2019 |>
 filtered_data <- fig02_data |> filter(RACE_ETH_bucket == "Black")
 main_color <- "steelblue"
 
-ggplot(filtered_data, aes(x = factor(NUMPREC), y = freq)) +
-  geom_bar(
-    stat = "identity",
-    width = 1,
-    fill = scales::alpha(main_color, 0.5),
-    color = main_color,
-    size = 0.3
-  ) +
-  labs(
-    x = "Household Size (NUMPREC)",
-    y = "Frequency",
-    title = paste("Household Size Distribution —", unique(filtered_data$RACE_ETH_bucket))
-  ) +
-  theme_minimal()
+plot_hhsize_histogram <- function(data = fig02_data,
+                                  main_color = "steelblue",
+                                  title = NULL,
+                                  xtitle = TRUE,
+                                  ytitle = TRUE) {
+  # Filter to single race group
+  race_group <- unique(data$RACE_ETH_bucket)
+  if (length(race_group) != 1) {
+    stop("Data must be filtered to a single RACE_ETH_bucket.")
+  }
+  
+  # Build plot
+  p <- ggplot(data, aes(x = factor(NUMPREC), y = freq)) +
+    geom_bar(
+      stat = "identity",
+      width = 1,
+      fill = scales::alpha(main_color, 0.5),
+      color = main_color,
+      size = 0.3
+    ) +
+    theme_minimal()
+  
+  # Title
+  if (is.null(title)) {
+    p <- p + labs(title = paste("Household Size Distribution —", race_group))
+  } else {
+    p <- p + labs(title = title)
+  }
+  
+  # Axis labels
+  p <- p + labs(
+    x = if (xtitle) "Household Size (NUMPREC)" else NULL,
+    y = if (ytitle) "Frequency" else NULL
+  )
+  
+  return(p)
+}
+
+
+plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
+  main_color = "tomato",
+  title = "Black Households",
+  xtitle = FALSE,
+  ytitle = TRUE
+)
