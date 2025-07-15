@@ -26,4 +26,23 @@ hhsize_race_2019 <- crosstab_count(
   wt_col = "PERWT",
   group_by = c("NUMPREC", "RACE_ETH_bucket"),
   every_combo = TRUE
-) |> collect()
+) |> collect() |> arrange(RACE_ETH_bucket, NUMPREC)
+
+# ----- Step 3: Make plots ----- #
+# Choose a max NUMPREC (household size) to display in histogram
+topcode_hhsize <- 10 
+
+# Topcode the table
+fig02_data <- hhsize_race_2019 |>
+  mutate(NUMPREC = if_else(NUMPREC >= topcode_hhsize, topcode_hhsize, NUMPREC)) |>
+  group_by(RACE_ETH_bucket, NUMPREC) |>
+  summarize(
+    weighted_count = sum(weighted_count),
+    count = sum(count),
+    .groups = "drop"
+  ) |>
+  arrange(RACE_ETH_bucket, NUMPREC) |>
+  # Add frequencies for each NUMPREC value within RACE_ETH_bucket subpopulations
+  group_by(RACE_ETH_bucket) |>
+  mutate(freq = weighted_count / sum(weighted_count)) |>
+  ungroup()
