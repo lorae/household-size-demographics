@@ -10,6 +10,7 @@ library("ggplot2")
 library("duckdb")
 library("dplyr")
 library("tidyr")
+library("glue")
 
 devtools::load_all("../dataduck") # The crosstab_count() function used here is defined in dataduck
 
@@ -56,10 +57,16 @@ plot_hhsize_histogram <- function(data = fig02_data,
                                   title = NULL,
                                   xtitle = TRUE,
                                   ytitle = TRUE) {
-  # Filter to single race group
+  # Input validation: Only one race group in data
   race_group <- unique(data$RACE_ETH_bucket)
   if (length(race_group) != 1) {
     stop("Data must be filtered to a single RACE_ETH_bucket.")
+  }
+  
+  # Input validation: Frequencies sum to one
+  freq_sum <- sum(data$freq)
+  if (abs(freq_sum - 1) > 1e-6) {
+    stop(glue("Frequencies must sum to one within 1e-6 tolerance. Frequencies sum to {freq_sum}"))
   }
   
   # Build plot
@@ -75,7 +82,7 @@ plot_hhsize_histogram <- function(data = fig02_data,
   
   # Title
   if (is.null(title)) {
-    p <- p + labs(title = paste("Household Size Distribution —", race_group))
+    p <- p
   } else {
     p <- p + labs(title = title)
   }
