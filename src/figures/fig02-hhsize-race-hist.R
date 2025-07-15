@@ -46,3 +46,22 @@ fig02_data <- hhsize_race_2019 |>
   group_by(RACE_ETH_bucket) |>
   mutate(freq = weighted_count / sum(weighted_count)) |>
   ungroup()
+
+# Plot!!!
+filtered_data <- fig02_data |> filter(RACE_ETH_bucket == "Black")
+main_color <- "steelblue"
+
+ggplot(filtered_data, aes(x = factor(NUMPREC), y = freq)) +
+  geom_bar(
+    stat = "identity",
+    width = 1,
+    fill = scales::alpha(main_color, 0.5),
+    color = main_color,
+    size = 0.3
+  ) +
+  labs(
+    x = "Household Size (NUMPREC)",
+    y = "Frequency",
+    title = paste("Household Size Distribution —", unique(filtered_data$RACE_ETH_bucket))
+  ) +
+  theme_minimal()
