@@ -11,6 +11,7 @@ library("duckdb")
 library("dplyr")
 library("tidyr")
 library("glue")
+library("patchwork")
 
 devtools::load_all("../dataduck") # The crosstab_count() function used here is defined in dataduck
 
@@ -61,12 +62,12 @@ plot_hhsize_histogram <- function(data = fig02_data,
   if (!is.null(title)) {
     p <- p + labs(title = title)
   } else {
-    p <- p + labs(title = paste("Household Size Distribution —", race_group))
+    p <- p
   }
   
   # Axis labels
   p <- p + labs(
-    x = if (xtitle) "Household Size (NUMPREC)" else NULL,
+    x = if (xtitle) "Number of Persons in Household" else NULL,
     y = if (ytitle) "Frequency" else NULL
   )
   
@@ -88,7 +89,7 @@ hhsize_race_2019 <- crosstab_count(
 
 # ----- Step 3: Make plots ----- #
 # Choose a max NUMPREC (household size) to display in histogram
-topcode_hhsize <- 10 
+topcode_hhsize <- 8
 
 # Topcode the table
 fig02_data <- hhsize_race_2019 |>
@@ -105,13 +106,43 @@ fig02_data <- hhsize_race_2019 |>
   mutate(freq = weighted_count / sum(weighted_count)) |>
   ungroup()
 
-# Plot
+# Generate the plots
 main_color <- "steelblue"
+ymax <- 0.4
 
-plot_hhsize_histogram(
-  data = fig02_data |> filter(RACE_ETH_bucket == "White"),
+black <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
   main_color = main_color,
   title = "Black",
   xtitle = FALSE,
-  ytitle = TRUE
+  ytitle = TRUE,
+  ymax = ymax
+)
+
+hispanic <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
+  main_color = main_color,
+  title = "Hispanic",
+  xtitle = TRUE,
+  ytitle = FALSE,
+  ymax = ymax
+)
+
+white <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "White"),
+  main_color = main_color,
+  title = "White",
+  xtitle = FALSE,
+  ytitle = FALSE,
+  ymax = ymax
+)
+
+# Combine
+fig02 <- black + hispanic + white
+
+# ----- Step 4: Save plots ----- #
+ggsave(
+  "output/figures/fig02-hhsize-race-hist.png",
+  plot = fig02,
+  width = 3000, height = 2400, units = "px", dpi = 300
 )
