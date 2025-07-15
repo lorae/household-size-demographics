@@ -20,7 +20,8 @@ plot_hhsize_histogram <- function(data = fig02_data,
                                   main_color = "steelblue",
                                   title = NULL,
                                   xtitle = TRUE,
-                                  ytitle = TRUE) {
+                                  ytitle = TRUE,
+                                  ymax = NULL) {
   # Input validation: Only one race group in data
   race_group <- unique(data$RACE_ETH_bucket)
   if (length(race_group) != 1) {
@@ -33,7 +34,14 @@ plot_hhsize_histogram <- function(data = fig02_data,
     stop(glue("Frequencies must sum to one within 1e-6 tolerance. Frequencies sum to {freq_sum}"))
   }
   
-  # Build plot
+  # Input validation: ymax >= largest freq value
+  largest_freq <- max(data$freq)
+  if (!is.null(ymax) && ymax < largest_freq) {
+    stop(glue("Largest frequency provided of {largest_freq} exceeds `ymax` specified of {ymax}. 
+              Please increase `ymax` setting."))
+  } 
+  
+  # Build base plot
   p <- ggplot(data, aes(x = factor(NUMPREC), y = freq)) +
     geom_bar(
       stat = "identity",
@@ -44,11 +52,16 @@ plot_hhsize_histogram <- function(data = fig02_data,
     ) +
     theme_minimal()
   
+  # Add y-axis limit if specified
+  if (!is.null(ymax)) {
+    p <- p + ylim(0, ymax)
+  }
+  
   # Title
-  if (is.null(title)) {
-    p <- p
-  } else {
+  if (!is.null(title)) {
     p <- p + labs(title = title)
+  } else {
+    p <- p + labs(title = paste("Household Size Distribution —", race_group))
   }
   
   # Axis labels
@@ -59,6 +72,7 @@ plot_hhsize_histogram <- function(data = fig02_data,
   
   return(p)
 }
+
 
 # ----- Step 2: Import and wrangle data ----- #
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
