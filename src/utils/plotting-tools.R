@@ -1,23 +1,24 @@
 # Paired bar chart by subgroup and year
 plot_year_subgroup_bars <- function(
     data, 
+    yvar, # variable being plotted
     main_color, 
     ymin = NULL, 
     ymax = NULL, 
     legend = TRUE, 
     title = NULL
-    ) {
-  p <- ggplot(data, aes(x = subgroup, y = hhsize, fill = factor(year))) +
+) {
+  p <- ggplot(data, aes(x = subgroup, y = {{ yvar }}, fill = factor(year))) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.8),
              width = 0.8, color = "black") +
-    geom_text(aes(label = round(hhsize, 2), group = year),
+    geom_text(aes(label = round({{ yvar }}, 2), group = year),
               position = position_dodge(width = 0.8),
               vjust = -0.5, size = 3) +
     scale_fill_manual(
       values = c("2000" = alpha(main_color, 0.4), "2019" = alpha(main_color, 0.8)),
       name = ""
     ) +
-    labs(y = "Average Household Size") +
+    labs(y = as_label(enquo(yvar))) +  # Automatically labels y-axis
     theme_minimal() +
     theme(
       axis.text.x = element_text(angle = 0, hjust = 0.5),

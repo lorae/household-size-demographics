@@ -38,6 +38,7 @@ combos <- expand.grid(
 fig05_data <- pmap_dfr(combos, function(tenure, year) {
   tabulate_summary(
     data = ipums_db |> filter(tenure == !!tenure),
+    value = "persons_per_bedroom",
     year = year,
     group_by = "RACE_ETH_bucket"
   ) |> 
@@ -51,11 +52,12 @@ source("src/utils/plotting-tools.R")
 # Define a single main color for all bars
 main_color <- "steelblue"
 ymin = 0
-ymax = 5
+ymax = 3
 
 # Generate the plot
 fig05_renter <- plot_year_subgroup_bars(
   fig05_data |> filter(tenure == "renter"), 
+  yvar = ppbedroom,
   main_color,
   ymin, ymax,
   legend = FALSE,
@@ -63,6 +65,7 @@ fig05_renter <- plot_year_subgroup_bars(
   )
 fig05_homeowner <- plot_year_subgroup_bars(
   fig05_data |> filter(tenure == "homeowner"), 
+  yvar = ppbedroom,
   main_color,
   ymin, ymax,
   legend = TRUE,
