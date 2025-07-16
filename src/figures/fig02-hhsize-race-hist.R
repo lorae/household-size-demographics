@@ -52,7 +52,11 @@ plot_hhsize_histogram <- function(data = fig02_data,
       color = main_color,
       size = 0.3
     ) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    )
   
   # Add y-axis limit if specified
   if (!is.null(ymax)) {
@@ -154,7 +158,9 @@ plot_hhsize_histogram_double <- function(
     theme_minimal() +
     theme(
       plot.title = element_text(hjust = 0.5),
-      legend.position = if (add_legend) "bottom" else "none"
+      legend.position = if (add_legend) "bottom" else "none",
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
     )
 }
 
