@@ -81,13 +81,15 @@ plot_hhsize_histogram_double <- function(
     per1 = 2000,
     per2 = 2019,
     bar_fills = list(
-      per1 = list(color = "skyblue", alpha = 0.4, line_color = "skyblue", line_type = "dashed"),
-      per2 = list(color = "forestgreen", alpha = 0.2, line_color = "forestgreen", line_type = "solid")
+      per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"),
+      per2 = list(color = "forestgreen", alpha = 0.8, line_type = "solid")
     ),
     title = NULL,
     xtitle = TRUE,
     ytitle = TRUE,
-    ymax = NULL) {
+    ymax = NULL,
+    add_legend = FALSE
+) {
   # Input validation
   race_group <- unique(data$RACE_ETH_bucket)
   if (length(race_group) != 1) {
@@ -99,45 +101,61 @@ plot_hhsize_histogram_double <- function(
     stop(glue::glue("Data must include both per1 ({per1}) and per2 ({per2}) years. Found: {paste(years_present, collapse=', ')}"))
   }
   
-  # If ymax not specified, use max observed value
-  max_freq <- max(data$freq)
+  # Explicit factor levels for year labels
+  d1 <- data |> filter(year == per1) |> mutate(year_label = factor("2000", levels = c("2000", "2019")))
+  d2 <- data |> filter(year == per2) |> mutate(year_label = factor("2019", levels = c("2000", "2019")))
+  all_data <- bind_rows(d1, d2)
+  
+  # y-axis limit
   if (is.null(ymax)) {
-    ymax <- max_freq * 1.05
+    ymax <- max(all_data$freq) * 1.05
   }
   
-  p <- ggplot(data, aes(x = factor(NUMPREC))) +
+  ggplot(mapping = aes(x = factor(NUMPREC), y = freq)) +
     geom_bar(
-      data = data |> dplyr::filter(year == per1),
-      aes(y = freq),
+      data = d1,
+      aes(fill = year_label, color = year_label, linetype = year_label),
       stat = "identity",
-      fill = scales::alpha(bar_fills$per1$color, bar_fills$per1$alpha),
-      color = bar_fills$per1$line_color,
-      linetype = bar_fills$per1$line_type,
+      alpha = bar_fills$per1$alpha,
+      width = 0.9,
       size = 0.3,
-      width = 0.90
+      show.legend = add_legend
     ) +
     geom_bar(
-      data = data |> dplyr::filter(year == per2),
-      aes(y = freq),
+      data = d2,
+      aes(fill = year_label, color = year_label, linetype = year_label),
       stat = "identity",
-      fill = scales::alpha(bar_fills$per2$color, bar_fills$per2$alpha),
-      color = bar_fills$per2$line_color,
-      linetype = bar_fills$per2$line_type,
+      alpha = bar_fills$per2$alpha,
+      width = 0.6,
       size = 0.3,
-      width = 0.6
+      show.legend = add_legend
     ) +
     coord_cartesian(ylim = c(0, ymax)) +
-    theme_minimal() +
+    scale_fill_manual(
+      values = c("2000" = bar_fills$per1$color, "2019" = bar_fills$per2$color),
+      guide = if (add_legend) "legend" else "none"
+    ) +
+    scale_color_manual(
+      values = c("2000" = bar_fills$per1$color, "2019" = bar_fills$per2$color),
+      guide = if (add_legend) "legend" else "none"
+    ) +
+    scale_linetype_manual(
+      values = c("2000" = bar_fills$per1$line_type, "2019" = bar_fills$per2$line_type),
+      guide = if (add_legend) "legend" else "none"
+    ) +
     labs(
       title = title,
       x = if (xtitle) "Number of Persons in Household" else NULL,
-      y = if (ytitle) "Frequency" else NULL
+      y = if (ytitle) "Frequency" else NULL,
+      fill = NULL,
+      color = NULL,
+      linetype = NULL
     ) +
+    theme_minimal() +
     theme(
-      plot.title = element_text(hjust = 0.5)
+      plot.title = element_text(hjust = 0.5),
+      legend.position = if (add_legend) "bottom" else "none"
     )
-  
-  return(p)
 }
 
 # ----- Step 2: Import and wrangle data ----- #
@@ -188,13 +206,15 @@ color_2000 <- "skyblue"
 alpha_2000 <- 0.4
 line_type_2000 <- "dashed"
 
-ymax <- 0.4
+ymax <- 0.35
 
 # ... Figure 2 ... (default format)
 black <- plot_hhsize_histogram_double(
   data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
   title = "Black",
   ymax = ymax,
+  ytitle = TRUE,
+  xtitle = FALSE,
   bar_fills = list(
     per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
     per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
@@ -205,21 +225,28 @@ hispanic <- plot_hhsize_histogram_double(
   data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
   title = "Hispanic",
   ymax = ymax,
+  ytitle = FALSE,
+  xtitle = TRUE,
   bar_fills = list(
     per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
     per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
   ),
+  add_legend = TRUE
 )
 
 white <- plot_hhsize_histogram_double(
   data = fig02_data |> filter(RACE_ETH_bucket == "White"),
   title = "White",
   ymax = ymax,
+  ytitle = FALSE,
+  xtitle = FALSE,
   bar_fills = list(
     per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
     per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
   ),
 )
+# Combine
+fig02 <- (black + hispanic + white) 
 
 # ... Figure 2B ... (alternate format)
 # 2019
@@ -304,17 +331,15 @@ fig02b <- (
 
 # ----- Step 4: Save plots ----- #
 ggsave(
+  "output/figures/fig02-hhsize-race-hist.png",
+  plot = fig02,
+  width = 3000, height = 1500, units = "px", dpi = 300
+)
+
+ggsave(
   "output/figures/fig02b-hhsize-race-hist.png",
   plot = fig02b,
   width = 3000, height = 2400, units = "px", dpi = 300
 )
-
-
-
-
-
-# ----------------------
-
-
 
 
