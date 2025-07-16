@@ -283,41 +283,9 @@ plot_hhsize_histogram_double(
   title = "Black",
   ymax = 0.4
 )
-# ----- Define a function which creates a 5-facet histogram plot ----- #
 
-
-
-
-
-double_hist_race <- function(
-    data = fig02_data,
-    title = "",
-    races = NULL,  # defaults to all races present
-    per1 = 2000,
-    per2 = 2019,
-    xmax = 8,
-    ymax = 0.4,
-    bar_fills = list(
-      per1 = list(color = "steelblue", alpha = 0.4, line_color = "steelblue", line_type = "dashed"),
-      per2 = list(color = "tomato", alpha = 0.5, line_color = "tomato", line_type = "solid")
-    )
-) {
-  # Determine which race groups to use
-  if (is.null(races)) {
-    races <- unique(data$RACE_ETH_bucket)
-  }
-  
-  # Create race plots
-  plots <- purrr::map2(races, seq_along(races), function(race, i) {
-    make_double_histogram(
-      data = data |> filter(RACE_ETH_bucket == race),
-      title = race,
-      xtitle = if (i == length(races)) "Household Size (NUMPREC)" else "",
-      ytitle = if (i == 1) "Frequency" else "",
-      per1 = per1,
-      per2 = per2,
-      xmax = xmax,
-      ymax = ymax,
-      bar_fills = bar_fills
-    )
-  })
+plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "White"),
+  title = "White",
+  ymax = 0.4
+)
