@@ -204,14 +204,17 @@ fig02_data <- hhsize_race_year |>
   ungroup() |> 
   arrange(year, RACE_ETH_bucket, NUMPREC)
 
-# Generate the plots
-color_2019 <- "forestgreen"
-alpha_2019 <- 0.4
-line_type_2019 <- "solid" 
-color_2000 <- "skyblue"
-alpha_2000 <- 0.4
-line_type_2000 <- "dashed"
-
+# Configure plot settings
+theme_2019 = list(
+  color = "forestgreen",
+  alpha = 0.4,
+  line_type = "solid"
+)
+theme_2000 <- list(
+  color = "skyblue",
+  alpha = 0.4,
+  line_type = "dashed"
+)
 ymax <- 0.35
 
 # ... Figure 2 ... (default format)
@@ -222,8 +225,8 @@ black <- plot_hhsize_histogram_double(
   ytitle = TRUE,
   xtitle = FALSE,
   bar_fills = list(
-    per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
-    per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
   ),
 )
 
