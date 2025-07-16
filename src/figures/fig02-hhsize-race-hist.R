@@ -12,6 +12,7 @@ library("dplyr")
 library("tidyr")
 library("glue")
 library("patchwork")
+library("grid")
 
 devtools::load_all("../dataduck") # The crosstab_count() function used here is defined in dataduck
 
@@ -79,58 +80,97 @@ plot_hhsize_histogram <- function(data = fig02_data,
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
-# 2019 estimate of non-group-quarters population in household of X size and Y race/ethnicity
+# Estimate of non-group-quarters population in household of X size and Y race/ethnicity
 hhsize_race_2019 <- crosstab_count(
   data = ipums_db |> filter(YEAR == 2019 & GQ %in% c(0,1,2)),
   wt_col = "PERWT",
   group_by = c("NUMPREC", "RACE_ETH_bucket"),
   every_combo = TRUE
-) |> collect() |> arrange(RACE_ETH_bucket, NUMPREC)
+) |> collect() |> mutate(year = 2019)
+
+hhsize_race_2000 <- crosstab_count(
+  data = ipums_db |> filter(YEAR == 2000 & GQ %in% c(0,1,2)),
+  wt_col = "PERWT",
+  group_by = c("NUMPREC", "RACE_ETH_bucket"),
+  every_combo = TRUE
+) |> collect() |> mutate(year = 2000)
+
+hhsize_race_year <- bind_rows(hhsize_race_2000, hhsize_race_2019)
 
 # ----- Step 3: Make plots ----- #
 # Choose a max NUMPREC (household size) to display in histogram
 topcode_hhsize <- 8
 
 # Topcode the table
-fig02_data <- hhsize_race_2019 |>
+fig02_data <- hhsize_race_year |>
   mutate(NUMPREC = if_else(NUMPREC >= topcode_hhsize, topcode_hhsize, NUMPREC)) |>
-  group_by(RACE_ETH_bucket, NUMPREC) |>
+  group_by(RACE_ETH_bucket, NUMPREC, year) |>
   summarize(
     weighted_count = sum(weighted_count),
     count = sum(count),
     .groups = "drop"
   ) |>
-  arrange(RACE_ETH_bucket, NUMPREC) |>
   # Add frequencies for each NUMPREC value within RACE_ETH_bucket subpopulations
-  group_by(RACE_ETH_bucket) |>
+  group_by(RACE_ETH_bucket, year) |>
   mutate(freq = weighted_count / sum(weighted_count)) |>
-  ungroup()
+  ungroup() |> 
+  arrange(year, RACE_ETH_bucket, NUMPREC)
 
 # Generate the plots
-main_color <- "steelblue"
+color_2019 <- "tomato"
+color_2000 <- "steelblue"
 ymax <- 0.4
 
-black <- plot_hhsize_histogram(
-  data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
-  main_color = main_color,
+# 2019
+black_2019 <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Black" & year == 2019),
+  main_color = color_2019,
   title = "Black",
   xtitle = FALSE,
   ytitle = TRUE,
   ymax = ymax
 )
 
-hispanic <- plot_hhsize_histogram(
-  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
-  main_color = main_color,
+hispanic_2019 <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic" & year == 2019),
+  main_color = color_2019,
+  title = "Hispanic",
+  xtitle = FALSE,
+  ytitle = FALSE,
+  ymax = ymax
+)
+
+white_2019 <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "White" & year == 2019),
+  main_color = color_2019,
+  title = "White",
+  xtitle = FALSE,
+  ytitle = FALSE,
+  ymax = ymax
+)
+
+# 2000
+black_2000 <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Black" & year == 2000),
+  main_color = color_2000,
+  title = "Black",
+  xtitle = FALSE,
+  ytitle = TRUE,
+  ymax = ymax
+)
+
+hispanic_2000 <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic" & year == 2000),
+  main_color = color_2000,
   title = "Hispanic",
   xtitle = TRUE,
   ytitle = FALSE,
   ymax = ymax
 )
 
-white <- plot_hhsize_histogram(
-  data = fig02_data |> filter(RACE_ETH_bucket == "White"),
-  main_color = main_color,
+white_2000 <- plot_hhsize_histogram(
+  data = fig02_data |> filter(RACE_ETH_bucket == "White" & year == 2000),
+  main_color = color_2000,
   title = "White",
   xtitle = FALSE,
   ytitle = FALSE,
@@ -138,7 +178,28 @@ white <- plot_hhsize_histogram(
 )
 
 # Combine
-fig02 <- black + hispanic + white
+# Function to create a styled year label
+make_year_label <- function(text) {
+  ggplot() +
+    annotate("text", x = 1, y = 1, label = text, hjust = 1, size = 4.5, fontface = "bold") +
+    theme_void() +
+    theme(
+      plot.margin = margin(5, 10, 5, 10),  # spacing around text
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3)
+    ) +
+    coord_cartesian(xlim = c(0, 2), ylim = c(0, 2))
+}
+
+# Create year labels
+title_2019 <- make_year_label("2019")
+title_2000 <- make_year_label("2000")
+
+# Combine all plots
+fig02 <- (
+  title_2019 / (black_2019 + hispanic_2019 + white_2019) /
+    title_2000 / (black_2000 + hispanic_2000 + white_2000)
+) + plot_layout(heights = c(0.11, 1, 0.11, 1))
+
 
 # ----- Step 4: Save plots ----- #
 ggsave(
@@ -146,3 +207,117 @@ ggsave(
   plot = fig02,
   width = 3000, height = 2400, units = "px", dpi = 300
 )
+
+
+
+
+
+# ----------------------
+plot_hhsize_histogram_double <- function(
+    data,
+    per1 = 2000,
+    per2 = 2019,
+    bar_fills = list(
+      per1 = list(color = "skyblue", alpha = 0.4, line_color = "skyblue", line_type = "dashed"),
+      per2 = list(color = "forestgreen", alpha = 0.2, line_color = "forestgreen", line_type = "solid")
+     ),
+   title = NULL,
+   xtitle = TRUE,
+   ytitle = TRUE,
+   xmax = 8,
+   ymax = NULL) {
+  # Input validation
+  race_group <- unique(data$RACE_ETH_bucket)
+  if (length(race_group) != 1) {
+    stop("Data must be filtered to a single RACE_ETH_bucket.")
+  }
+  
+  years_present <- sort(unique(data$year))
+  if (!all(c(per1, per2) %in% years_present)) {
+    stop(glue::glue("Data must include both per1 ({per1}) and per2 ({per2}) years. Found: {paste(years_present, collapse=', ')}"))
+  }
+  
+  # If ymax not specified, use max observed value
+  max_freq <- max(data$freq)
+  if (is.null(ymax)) {
+    ymax <- max_freq * 1.05
+  }
+  
+  p <- ggplot(data, aes(x = factor(NUMPREC))) +
+    geom_bar(
+      data = data |> dplyr::filter(year == per1),
+      aes(y = freq),
+      stat = "identity",
+      fill = scales::alpha(bar_fills$per1$color, bar_fills$per1$alpha),
+      color = bar_fills$per1$line_color,
+      linetype = bar_fills$per1$line_type,
+      size = 0.3,
+      width = 0.9
+    ) +
+    geom_bar(
+      data = data |> dplyr::filter(year == per2),
+      aes(y = freq),
+      stat = "identity",
+      fill = scales::alpha(bar_fills$per2$color, bar_fills$per2$alpha),
+      color = bar_fills$per2$line_color,
+      linetype = bar_fills$per2$line_type,
+      size = 0.3,
+      width = 0.6
+    ) +
+    coord_cartesian(ylim = c(0, ymax)) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = if (xtitle) "Number of Persons in Household" else NULL,
+      y = if (ytitle) "Frequency" else NULL
+    ) +
+    theme(
+      plot.title = element_text(hjust = 0.5)
+    )
+  
+  return(p)
+}
+
+plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
+  title = "Black",
+  ymax = 0.4
+)
+# ----- Define a function which creates a 5-facet histogram plot ----- #
+
+
+
+
+
+double_hist_race <- function(
+    data = fig02_data,
+    title = "",
+    races = NULL,  # defaults to all races present
+    per1 = 2000,
+    per2 = 2019,
+    xmax = 8,
+    ymax = 0.4,
+    bar_fills = list(
+      per1 = list(color = "steelblue", alpha = 0.4, line_color = "steelblue", line_type = "dashed"),
+      per2 = list(color = "tomato", alpha = 0.5, line_color = "tomato", line_type = "solid")
+    )
+) {
+  # Determine which race groups to use
+  if (is.null(races)) {
+    races <- unique(data$RACE_ETH_bucket)
+  }
+  
+  # Create race plots
+  plots <- purrr::map2(races, seq_along(races), function(race, i) {
+    make_double_histogram(
+      data = data |> filter(RACE_ETH_bucket == race),
+      title = race,
+      xtitle = if (i == length(races)) "Household Size (NUMPREC)" else "",
+      ytitle = if (i == 1) "Frequency" else "",
+      per1 = per1,
+      per2 = per2,
+      xmax = xmax,
+      ymax = ymax,
+      bar_fills = bar_fills
+    )
+  })
