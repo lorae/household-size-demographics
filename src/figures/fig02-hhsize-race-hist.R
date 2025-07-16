@@ -75,6 +75,70 @@ plot_hhsize_histogram <- function(data = fig02_data,
   return(p)
 }
 
+# Plotting function for two overlaid histograms
+plot_hhsize_histogram_double <- function(
+    data,
+    per1 = 2000,
+    per2 = 2019,
+    bar_fills = list(
+      per1 = list(color = "skyblue", alpha = 0.4, line_color = "skyblue", line_type = "dashed"),
+      per2 = list(color = "forestgreen", alpha = 0.2, line_color = "forestgreen", line_type = "solid")
+    ),
+    title = NULL,
+    xtitle = TRUE,
+    ytitle = TRUE,
+    ymax = NULL) {
+  # Input validation
+  race_group <- unique(data$RACE_ETH_bucket)
+  if (length(race_group) != 1) {
+    stop("Data must be filtered to a single RACE_ETH_bucket.")
+  }
+  
+  years_present <- sort(unique(data$year))
+  if (!all(c(per1, per2) %in% years_present)) {
+    stop(glue::glue("Data must include both per1 ({per1}) and per2 ({per2}) years. Found: {paste(years_present, collapse=', ')}"))
+  }
+  
+  # If ymax not specified, use max observed value
+  max_freq <- max(data$freq)
+  if (is.null(ymax)) {
+    ymax <- max_freq * 1.05
+  }
+  
+  p <- ggplot(data, aes(x = factor(NUMPREC))) +
+    geom_bar(
+      data = data |> dplyr::filter(year == per1),
+      aes(y = freq),
+      stat = "identity",
+      fill = scales::alpha(bar_fills$per1$color, bar_fills$per1$alpha),
+      color = bar_fills$per1$line_color,
+      linetype = bar_fills$per1$line_type,
+      size = 0.3,
+      width = 0.90
+    ) +
+    geom_bar(
+      data = data |> dplyr::filter(year == per2),
+      aes(y = freq),
+      stat = "identity",
+      fill = scales::alpha(bar_fills$per2$color, bar_fills$per2$alpha),
+      color = bar_fills$per2$line_color,
+      linetype = bar_fills$per2$line_type,
+      size = 0.3,
+      width = 0.6
+    ) +
+    coord_cartesian(ylim = c(0, ymax)) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = if (xtitle) "Number of Persons in Household" else NULL,
+      y = if (ytitle) "Frequency" else NULL
+    ) +
+    theme(
+      plot.title = element_text(hjust = 0.5)
+    )
+  
+  return(p)
+}
 
 # ----- Step 2: Import and wrangle data ----- #
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
@@ -117,10 +181,47 @@ fig02_data <- hhsize_race_year |>
   arrange(year, RACE_ETH_bucket, NUMPREC)
 
 # Generate the plots
-color_2019 <- "tomato"
-color_2000 <- "steelblue"
+color_2019 <- "forestgreen"
+alpha_2019 <- 0.4
+line_type_2019 <- "solid" 
+color_2000 <- "skyblue"
+alpha_2000 <- 0.4
+line_type_2000 <- "dashed"
+
 ymax <- 0.4
 
+# ... Figure 2 ... (default format)
+black <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
+  title = "Black",
+  ymax = ymax,
+  bar_fills = list(
+    per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
+    per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
+  ),
+)
+
+hispanic <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
+  title = "Hispanic",
+  ymax = ymax,
+  bar_fills = list(
+    per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
+    per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
+  ),
+)
+
+white <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "White"),
+  title = "White",
+  ymax = ymax,
+  bar_fills = list(
+    per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
+    per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
+  ),
+)
+
+# ... Figure 2B ... (alternate format)
 # 2019
 black_2019 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "Black" & year == 2019),
@@ -195,7 +296,7 @@ title_2019 <- make_year_label("2019")
 title_2000 <- make_year_label("2000")
 
 # Combine all plots
-fig02 <- (
+fig02b <- (
   title_2019 / (black_2019 + hispanic_2019 + white_2019) /
     title_2000 / (black_2000 + hispanic_2000 + white_2000)
 ) + plot_layout(heights = c(0.11, 1, 0.11, 1))
@@ -203,8 +304,8 @@ fig02 <- (
 
 # ----- Step 4: Save plots ----- #
 ggsave(
-  "output/figures/fig02-hhsize-race-hist.png",
-  plot = fig02,
+  "output/figures/fig02b-hhsize-race-hist.png",
+  plot = fig02b,
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 
@@ -213,79 +314,7 @@ ggsave(
 
 
 # ----------------------
-plot_hhsize_histogram_double <- function(
-    data,
-    per1 = 2000,
-    per2 = 2019,
-    bar_fills = list(
-      per1 = list(color = "skyblue", alpha = 0.4, line_color = "skyblue", line_type = "dashed"),
-      per2 = list(color = "forestgreen", alpha = 0.2, line_color = "forestgreen", line_type = "solid")
-     ),
-   title = NULL,
-   xtitle = TRUE,
-   ytitle = TRUE,
-   xmax = 8,
-   ymax = NULL) {
-  # Input validation
-  race_group <- unique(data$RACE_ETH_bucket)
-  if (length(race_group) != 1) {
-    stop("Data must be filtered to a single RACE_ETH_bucket.")
-  }
-  
-  years_present <- sort(unique(data$year))
-  if (!all(c(per1, per2) %in% years_present)) {
-    stop(glue::glue("Data must include both per1 ({per1}) and per2 ({per2}) years. Found: {paste(years_present, collapse=', ')}"))
-  }
-  
-  # If ymax not specified, use max observed value
-  max_freq <- max(data$freq)
-  if (is.null(ymax)) {
-    ymax <- max_freq * 1.05
-  }
-  
-  p <- ggplot(data, aes(x = factor(NUMPREC))) +
-    geom_bar(
-      data = data |> dplyr::filter(year == per1),
-      aes(y = freq),
-      stat = "identity",
-      fill = scales::alpha(bar_fills$per1$color, bar_fills$per1$alpha),
-      color = bar_fills$per1$line_color,
-      linetype = bar_fills$per1$line_type,
-      size = 0.3,
-      width = 0.9
-    ) +
-    geom_bar(
-      data = data |> dplyr::filter(year == per2),
-      aes(y = freq),
-      stat = "identity",
-      fill = scales::alpha(bar_fills$per2$color, bar_fills$per2$alpha),
-      color = bar_fills$per2$line_color,
-      linetype = bar_fills$per2$line_type,
-      size = 0.3,
-      width = 0.6
-    ) +
-    coord_cartesian(ylim = c(0, ymax)) +
-    theme_minimal() +
-    labs(
-      title = title,
-      x = if (xtitle) "Number of Persons in Household" else NULL,
-      y = if (ytitle) "Frequency" else NULL
-    ) +
-    theme(
-      plot.title = element_text(hjust = 0.5)
-    )
-  
-  return(p)
-}
 
-plot_hhsize_histogram_double(
-  data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
-  title = "Black",
-  ymax = 0.4
-)
 
-plot_hhsize_histogram_double(
-  data = fig02_data |> filter(RACE_ETH_bucket == "White"),
-  title = "White",
-  ymax = 0.4
-)
+
+
