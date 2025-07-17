@@ -11,6 +11,8 @@
 library("patchwork")
 library("ggplot2")
 library("tidyr")
+library("duckdb")
+library("dplyr")
 
 devtools::load_all("../dataduck")
 
@@ -29,8 +31,18 @@ race_summary <- union_all(race_summary_2000, race_summary_2019) # Row bind the t
 
 # ----- Step 3: Make plots ----- #
 source("src/utils/plotting-tools.R")
+bar_fills <- list(
+  per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"), # 2000
+  per2 = list(color = "forestgreen", alpha = 0.5, line_type = "solid") # 2019
+)
 
-fig01 <- plot_year_subgroup_bars(data = race_summary, main_color = "steelblue")
+fig01 <- plot_year_subgroup_bars(
+  data = race_summary,
+  yvar = hhsize,
+  bar_fills = bar_fills,
+  title = NULL
+)
+fig01
 
 # ----- Step 4: Save plots ----- #
 ggsave(
