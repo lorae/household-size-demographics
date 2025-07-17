@@ -183,7 +183,14 @@ hhsize_race_2000 <- crosstab_count(
   every_combo = TRUE
 ) |> collect() |> mutate(year = 2000)
 
-hhsize_race_year <- bind_rows(hhsize_race_2000, hhsize_race_2019)
+hhsize_allraces_allyears <- crosstab_count(
+  data = ipums_db |> filter(GQ %in% c(0,1,2)),
+  wt_col = "PERWT",
+  group_by = c("NUMPREC", "YEAR"),
+  every_combo = TRUE
+) |> collect() |> rename(year = YEAR) |> mutate(RACE_ETH_bucket = "All")
+
+hhsize_race_year <- bind_rows(hhsize_race_2000, hhsize_race_2019, hhsize_allraces_allyears)
 
 # ----- Step 3: Make plots ----- #
 # Choose a max NUMPREC (household size) to display in histogram
@@ -205,6 +212,16 @@ fig02_data <- hhsize_race_year |>
   arrange(year, RACE_ETH_bucket, NUMPREC)
 
 # Configure plot settings
+theme_2019_all = list(
+  color = "darkgrey",
+  alpha = 0.4,
+  line_type = "solid"
+)
+theme_2000_all <- list(
+  color = "lightgrey",
+  alpha = 0.4,
+  line_type = "dashed"
+)
 theme_2019 = list(
   color = "forestgreen",
   alpha = 0.4,
@@ -218,11 +235,23 @@ theme_2000 <- list(
 ymax <- 0.35
 
 # ... Figure 2 ... (default format)
+all <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "All"),
+  title = "All",
+  ymax = ymax,
+  ytitle = TRUE,
+  xtitle = FALSE,
+  bar_fills = list(
+    per1 = list(color = theme_2000_all$color, alpha = theme_2000_all$alpha, line_color = theme_2000_all$color, line_type = theme_2000_all$line_type),
+    per2 = list(color = theme_2019_all$color, alpha = theme_2019_all$alpha, line_color = theme_2019_all$color, line_type = theme_2019_all$line_type)
+  ),
+)
+
 black <- plot_hhsize_histogram_double(
   data = fig02_data |> filter(RACE_ETH_bucket == "Black"),
   title = "Black",
   ymax = ymax,
-  ytitle = TRUE,
+  ytitle = FALSE,
   xtitle = FALSE,
   bar_fills = list(
     per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
@@ -234,11 +263,11 @@ hispanic <- plot_hhsize_histogram_double(
   data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
   title = "Hispanic",
   ymax = ymax,
-  ytitle = FALSE,
+  ytitle = TRUE,
   xtitle = TRUE,
   bar_fills = list(
-    per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
-    per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
   ),
   add_legend = TRUE
 )
@@ -248,14 +277,14 @@ white <- plot_hhsize_histogram_double(
   title = "White",
   ymax = ymax,
   ytitle = FALSE,
-  xtitle = FALSE,
+  xtitle = TRUE,
   bar_fills = list(
-    per1 = list(color = color_2000, alpha = alpha_2000, line_color = color_2000, line_type = line_type_2000),
-    per2 = list(color = color_2019, alpha = alpha_2019, line_color = color_2019, line_type = line_type_2019)
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
   ),
 )
 # Combine
-fig02 <- (black + hispanic + white) 
+fig02 <- (all + black) / (hispanic + white) 
 
 # ... Figure 2B ... (alternate format)
 # 2019
