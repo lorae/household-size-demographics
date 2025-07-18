@@ -232,4 +232,20 @@ pop_hispanic_2019 <- sum(fig02_data |> filter(RACE_ETH_bucket == "Hispanic" & ye
 # of all households had four or fewer individuals in 2000 (___% in 2019), and only __% 
 # had six or more (___% in 2019). Between 2000 and 2019, the share of individuals living 
 # in the smallest households increased, with ________
-
+fig02_data |> filter(RACE_ETH_bucket == "All") # look at data, easy to see modal hhsize is 2
+# prop living in 2p hh in 2019
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2019" & NUMPREC == 2) |> pull(freq)
+# prop living in 2p hh in 2000
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC == 2) |> pull(freq)
+# prop living <=4p hh in 2019
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2019" & NUMPREC <= 4) |> pull(freq) |> sum()
+# prop living <=4p hh in 2000
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC <= 4) |> pull(freq) |> sum()
+# prop living >=6p hh in 2019
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2019" & NUMPREC >= 6) |> pull(freq) |> sum()
+# prop living <4 p hh in 2000
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC >= 6) |> pull(freq) |> sum()
+# prop living 1p hh in 2019
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2019" & NUMPREC == 1) |> pull(freq)
+# prop living 1p hh in 2000
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC == 1) |> pull(freq)
