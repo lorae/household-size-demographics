@@ -176,21 +176,22 @@ mean_2019 <- aggregates |> filter(variable == "bedroom") |> pull(mean_2019)
 # Note to self: run the kob-control-script: fig06_data contains this info.
 # TODO: somehow save the fig06_data and make this less brittle. Perhaps put into 
 # a counterfactuals script or something that is saved, later
-o_2000 <- fig06_data |> filter(variable == "bedroom") |> pull(observed_2000)
-o_2000
-o_2019 <- fig06_data |> filter(variable == "bedroom") |> pull(observed_2019)
-o_2019
-e_2019 <- fig06_data |> filter(variable == "bedroom") |> pull(expected_2019)
-e_2019
-( o_2019 / e_2019 - 1) * 100
-
-o_2000 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(observed_2000)
-o_2000
-o_2019 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(observed_2019)
-o_2019
-e_2019 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(expected_2019)
-e_2019
-( o_2019 / e_2019 - 1) * 100
+# TODO: !!!!!!!!!!! FIX BY SAVING FIG06_data!!!!
+# o_2000 <- fig06_data |> filter(variable == "bedroom") |> pull(observed_2000)
+# o_2000
+# o_2019 <- fig06_data |> filter(variable == "bedroom") |> pull(observed_2019)
+# o_2019
+# e_2019 <- fig06_data |> filter(variable == "bedroom") |> pull(expected_2019)
+# e_2019
+# ( o_2019 / e_2019 - 1) * 100
+# 
+# o_2000 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(observed_2000)
+# o_2000
+# o_2019 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(observed_2019)
+# o_2019
+# e_2019 <- fig06_data |> filter(variable == "persons_per_bedroom") |> pull(expected_2019)
+# e_2019
+# ( o_2019 / e_2019 - 1) * 100
 
 # As noted above, the average American household size in 2000 was 3.47 people, a 
 # figure that fell to 3.37 people in 2019. Had preferences remained stable from 
@@ -199,12 +200,36 @@ e_2019
 # eople between 2000 and 2019, which amounts to  83% of the expected decline based 
 # on changes  in population structure (0.112 people). This gap suggests that unobserved 
 # factors partially offset the demographic forces driving household size decline. 
-o_2000 <- fig06_data |> filter(variable == "NUMPREC") |> pull(observed_2000)
-o_2000
-o_2019 <- fig06_data |> filter(variable == "NUMPREC") |> pull(observed_2019)
-o_2019
-e_2019 <- fig06_data |> filter(variable == "NUMPREC") |> pull(expected_2019)
-e_2019
-o_2000 - o_2019
-o_2000 - e_2019
-(o_2000 - o_2019)/(o_2000 - e_2019)
+# TODO: !!!!!!!!!!! FIX BY SAVING FIG06_data!!!!
+# o_2000 <- fig06_data |> filter(variable == "NUMPREC") |> pull(observed_2000)
+# o_2000
+# o_2019 <- fig06_data |> filter(variable == "NUMPREC") |> pull(observed_2019)
+# o_2019
+# e_2019 <- fig06_data |> filter(variable == "NUMPREC") |> pull(expected_2019)
+# e_2019
+# o_2000 - o_2019
+# o_2000 - e_2019
+# (o_2000 - o_2019)/(o_2000 - e_2019)
+
+# In Figure 2 we plot the shifting distribution of household size for all Americans 
+# (top-left panel) and for individuals in the three largest racial/ethnic groups 
+# (white, Hispanic, and Black, which jointly make up ____% of the population in 2019).
+fig02_data <- readRDS("output/figures/fig02-data.rds")
+# Total number of measured people not in GQs in 2019
+pop_2019 <- sum(fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2019") |> pull(weighted_count))
+pop_2019
+# Sanity check: this should also equal total number of measured people not in GQs in 2019
+sum(fig02_data |> filter(RACE_ETH_bucket != "All" & year == "2019") |> pull(weighted_count))
+# Total number of Black + Hispanic + white
+pop_white_2019 <- sum(fig02_data |> filter(RACE_ETH_bucket == "White" & year == "2019") |> pull(weighted_count))
+pop_black_2019 <- sum(fig02_data |> filter(RACE_ETH_bucket == "Black" & year == "2019") |> pull(weighted_count))
+pop_hispanic_2019 <- sum(fig02_data |> filter(RACE_ETH_bucket == "Hispanic" & year == "2019") |> pull(weighted_count))
+# Fraction Black + Hispanic + white
+(pop_white_2019 + pop_black_2019 + pop_hispanic_2019) / pop_2019
+
+# In both 2000 and 2019, the most-common household size for Americans was ____ individuals, 
+# an arrangement that held for ___% of individuals in 2000 and ___% in 2019. Fully ___% 
+# of all households had four or fewer individuals in 2000 (___% in 2019), and only __% 
+# had six or more (___% in 2019). Between 2000 and 2019, the share of individuals living 
+# in the smallest households increased, with ________
+

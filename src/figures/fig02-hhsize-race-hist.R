@@ -4,6 +4,7 @@
 #
 # Input: data/db/ipums.duckdb
 # Output: output/figures/fig02-hhsize-race-hist.png
+#         output/figures/fig02-data.rds 
 #
 # ----- Step 0: Config ----- #
 library("ggplot2")
@@ -367,7 +368,7 @@ fig02b <- (
 ) + plot_layout(heights = c(0.11, 1, 0.11, 1))
 
 
-# ----- Step 4: Save plots ----- #
+# ----- Step 4: Save plots & data ----- #
 ggsave(
   "output/figures/fig02-hhsize-race-hist.png",
   plot = fig02,
@@ -380,4 +381,5 @@ ggsave(
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 
+saveRDS(fig02_data, "output/figures/fig02-data.rds")
 
