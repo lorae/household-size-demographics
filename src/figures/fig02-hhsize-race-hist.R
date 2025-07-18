@@ -85,8 +85,8 @@ plot_hhsize_histogram_double <- function(
     per1 = 2000,
     per2 = 2019,
     bar_fills = list(
-      per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"),
-      per2 = list(color = "forestgreen", alpha = 0.8, line_type = "solid")
+      per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"), # 2000
+      per2 = list(color = "forestgreen", alpha = 0.8, line_type = "solid") # 2019
     ),
     title = NULL,
     xtitle = TRUE,
@@ -290,7 +290,7 @@ fig02 <- (all + black) / (hispanic + white)
 # 2019
 black_2019 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "Black" & year == 2019),
-  main_color = color_2019,
+  main_color = theme_2019$color,
   title = "Black",
   xtitle = FALSE,
   ytitle = TRUE,
@@ -299,7 +299,7 @@ black_2019 <- plot_hhsize_histogram(
 
 hispanic_2019 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic" & year == 2019),
-  main_color = color_2019,
+  main_color = theme_2019$color,
   title = "Hispanic",
   xtitle = FALSE,
   ytitle = FALSE,
@@ -308,7 +308,7 @@ hispanic_2019 <- plot_hhsize_histogram(
 
 white_2019 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "White" & year == 2019),
-  main_color = color_2019,
+  main_color = theme_2019$color,
   title = "White",
   xtitle = FALSE,
   ytitle = FALSE,
@@ -318,7 +318,7 @@ white_2019 <- plot_hhsize_histogram(
 # 2000
 black_2000 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "Black" & year == 2000),
-  main_color = color_2000,
+  main_color = theme_2000$color,
   title = "Black",
   xtitle = FALSE,
   ytitle = TRUE,
@@ -327,7 +327,7 @@ black_2000 <- plot_hhsize_histogram(
 
 hispanic_2000 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic" & year == 2000),
-  main_color = color_2000,
+  main_color = theme_2000$color,
   title = "Hispanic",
   xtitle = TRUE,
   ytitle = FALSE,
@@ -336,7 +336,7 @@ hispanic_2000 <- plot_hhsize_histogram(
 
 white_2000 <- plot_hhsize_histogram(
   data = fig02_data |> filter(RACE_ETH_bucket == "White" & year == 2000),
-  main_color = color_2000,
+  main_color = theme_2000$color,
   title = "White",
   xtitle = FALSE,
   ytitle = FALSE,
@@ -371,7 +371,7 @@ fig02b <- (
 ggsave(
   "output/figures/fig02-hhsize-race-hist.png",
   plot = fig02,
-  width = 3000, height = 1500, units = "px", dpi = 300
+  width = 3000, height = 3000, units = "px", dpi = 300
 )
 
 ggsave(
