@@ -278,3 +278,29 @@ prop_hispan_2_2019
 prop_hispan_2_2019 - prop_hispan_2_2000
 # prop living 1p hh in 2000
 fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC == 1) |> pull(freq)
+
+# More about race and hhsize increase/decrease
+# TODO: move this back to fig02 script, maybe add to appendix?
+# fig02_data_wide: show year frequencies side-by-side
+fig02_data_wide <- fig02_data |>
+  select(RACE_ETH_bucket, NUMPREC, year, freq) |>
+  mutate(year = paste0("freq_", year)) |>
+  pivot_wider(
+    names_from = year,
+    values_from = freq
+  ) |>
+  mutate(freq_diff = freq_2019 - freq_2000)
+fig02_data_wide |> filter(RACE_ETH_bucket != "All" & NUMPREC <= 2) |> 
+  group_by(RACE_ETH_bucket) |>
+  summarize(
+    freq_2000 = sum(freq_2000),
+    freq_2019 = sum(freq_2019),
+  ) |>
+  mutate(freq_diff = freq_2019 - freq_2000)
+fig02_data_wide |> filter(RACE_ETH_bucket != "All" & NUMPREC >= 6) |> 
+  group_by(RACE_ETH_bucket) |>
+  summarize(
+    freq_2000 = sum(freq_2000),
+    freq_2019 = sum(freq_2019),
+  ) |>
+  mutate(freq_diff = freq_2019 - freq_2000)
