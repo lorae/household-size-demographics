@@ -249,3 +249,32 @@ fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC >= 6) |
 fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2019" & NUMPREC == 1) |> pull(freq)
 # prop living 1p hh in 2000
 fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC == 1) |> pull(freq)
+
+
+# ... between 2000 and 2019, the share of Hispanic individuals living in one-person 
+# households rose by ____ percentage points (___% to ___%) and in two-person households 
+# by ____ percentage points (____% to ___%). During the same period, the share of white 
+# individuals in one-person households fell slightly and the share in two-person households 
+# remained stable.
+# prop hispan living 1p hh 
+prop_hispan_1_2000 <- fig02_data |> 
+  filter(RACE_ETH_bucket == "Hispanic" & year == "2000" & NUMPREC == 1) |> 
+  pull(freq)
+prop_hispan_1_2019 <- fig02_data |> 
+  filter(RACE_ETH_bucket == "Hispanic" & year == "2019" & NUMPREC == 1) |> 
+  pull(freq)
+prop_hispan_1_2000
+prop_hispan_1_2019
+prop_hispan_1_2019 - prop_hispan_1_2000
+# prop hispan living 2p hh 
+prop_hispan_2_2000 <- fig02_data |> 
+  filter(RACE_ETH_bucket == "Hispanic" & year == "2000" & NUMPREC == 2) |> 
+  pull(freq)
+prop_hispan_2_2019 <- fig02_data |> 
+  filter(RACE_ETH_bucket == "Hispanic" & year == "2019" & NUMPREC == 2) |> 
+  pull(freq)
+prop_hispan_2_2000
+prop_hispan_2_2019
+prop_hispan_2_2019 - prop_hispan_2_2000
+# prop living 1p hh in 2000
+fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC == 1) |> pull(freq)
