@@ -284,8 +284,58 @@ white <- plot_hhsize_histogram_double(
     per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
   ),
 )
+
+aapi <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "AAPI"),
+  title = "AAPI",
+  ymax = ymax,
+  ytitle = TRUE,
+  xtitle = TRUE,
+  bar_fills = list(
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
+  ),
+)
+
+aian <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "AIAN"),
+  title = "AIAN",
+  ymax = ymax,
+  ytitle = FALSE,
+  xtitle = TRUE,
+  bar_fills = list(
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
+  ),
+)
+
+multiracial <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Multiracial"),
+  title = "Multiracial",
+  ymax = ymax,
+  ytitle = TRUE,
+  xtitle = TRUE,
+  bar_fills = list(
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
+  ),
+)
+
+other <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Other"),
+  title = "Other",
+  ymax = ymax,
+  ytitle = FALSE,
+  xtitle = TRUE,
+  bar_fills = list(
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
+  ),
+)
+
 # Combine
 fig02 <- (all + black) / (hispanic + white) 
+fig02c <- (all + black) / (hispanic + white) / (aapi + aian) + (multiracial + other)
 
 # ... Figure 2B ... (alternate format)
 # 2019
@@ -381,5 +431,12 @@ ggsave(
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 
+ggsave(
+  "output/figures/fig02c-hhsize-race-hist-allraces.png",
+  plot = fig02c,
+  width = 3000, height = 6000, units = "px", dpi = 300
+)
+
 saveRDS(fig02_data, "output/figures/fig02-data.rds")
+
 
