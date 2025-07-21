@@ -1,4 +1,5 @@
 # kob/refactor/props00_2019.R
+# TODO: rename output to prop_2000 and adjust downstream kob scripts accordingly
 # The purpose of this script is to calculate population proportions in 2019.
 
 # ----- STEP 0: Config ----- #
@@ -11,7 +12,7 @@ library(furrr)
 
 # Read in the pre-subsetted survey
 tic("Read 2019 survey design as RDS")
-design_2019_survey <- readRDS("kob/throughput/design_2019_survey.rds")
+design_2019_survey <- readRDS("throughput/design_2019_survey.rds")
 toc()
 
 # Calculate proportions
@@ -40,6 +41,6 @@ toc()
 names(props00_2019) <- prop_vars
 
 # Save results in throughput
-tic("Save props00_2019 to kob/throughput")
-saveRDS(props00_2019, file = "kob/throughput/props00_2019.rds")
+tic("Save props00_2019 to throughput/reg00/")
+saveRDS(props00_2019, file = "throughput/reg00/props00_2019.rds")
 toc()

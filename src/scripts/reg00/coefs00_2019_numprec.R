@@ -1,4 +1,5 @@
 #kob/scripts/coefs00_2019_numprec.R
+# TODO: rename output to p_2019 and adjust downstream kob scripts accordingly
 cat("
 This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
 using the dataduck matrix-based regression backend and successive differences replication (SDR).
@@ -7,10 +8,10 @@ This is the main production pipeline.
 
 # ----- Step 0: User settings ----- #
 # Define output path for model summary
-out_path <- "throughput/model00_2019_numprec_summary.rds"
+out_path <- "throughput/reg00/model00_2019_numprec_summary.rds"
 # TODO: figure out why this bootstrap file isn't saving. or, if deprecated,
 # delete this functionality
-out_path_bootstrap <- "throughput/model00_2019_numprec-bootstrap.rds"
+out_path_bootstrap <- "throughput/reg00/model00_2019_numprec-bootstrap.rds"
 
 # Define regression formula
 formula <- NUMPREC ~ -1 + 

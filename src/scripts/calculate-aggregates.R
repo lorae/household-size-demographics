@@ -37,12 +37,32 @@ weighted_mean_ipums <- function(var, year) {
 # List of variables to compute
 vars <- c("NUMPREC", "bedroom", "room", "persons_per_bedroom", "persons_per_room")
 
+# Abbreviations for the variables we'll also add to the output for downstream use
+abbrev_map <- c(
+  NUMPREC = "p",
+  bedroom = "b",
+  room = "r",
+  persons_per_bedroom = "ppbr",
+  persons_per_room = "ppr"
+)
+name_map <- c(
+  NUMPREC = "Number of Persons",
+  bedroom = "Number of Bedrooms",
+  room = "Number of Rooms",
+  persons_per_bedroom = "Persons per Bedroom",
+  persons_per_room = "Persons per Room"
+)
+
 # Create tibble of results
 aggregates <- tibble(
   variable = vars,
   mean_2000 = sapply(vars, weighted_mean_ipums, year = 2000),
   mean_2019 = sapply(vars, weighted_mean_ipums, year = 2019)
-)
+) |>
+  mutate(abbrev_variable = recode(variable, !!!abbrev_map)) |>
+  mutate(name = recode(variable, !!!name_map)) |>
+  relocate(abbrev_variable, .after = variable) |>
+  relocate(name, .before = variable)
 
 # Save the results tibble
 saveRDS(aggregates, "throughput/aggregates.rds")

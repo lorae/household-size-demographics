@@ -1,4 +1,5 @@
 # kob/refactor/props00_2000
+# TODO: rename output to prop_2019 and adjust downstream kob scripts accordingly
 # This script runs the props for regression 00 in 2000.
 
 # TODO: explore whether I can generate a survey design without pulling data into
@@ -28,7 +29,7 @@ library(furrr)
 
 # Read in the pre-subsetted survey
 tic("Read 2000 survey design as RDS")
-design_2000_survey <- readRDS("kob/throughput/design_2000_survey.rds")
+design_2000_survey <- readRDS("throughput/design_2000_survey.rds")
 toc()
 
 # Calculate proportions
@@ -57,6 +58,6 @@ toc()
 names(props00_2000) <- prop_vars
 
 # Save results in throughput
-tic("Save props00_2000 to kob/throughput")
-saveRDS(props00_2000, file = "kob/throughput/props00_2000.rds")
+tic("Save props00_2000 to throughput/reg00/")
+saveRDS(props00_2000, file = "throughput/reg00/props00_2000.rds")
 toc()

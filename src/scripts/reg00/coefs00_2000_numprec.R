@@ -1,4 +1,5 @@
 #kob/scripts/coefs00_2000_numprec.R
+# TODO: rename output to p_2000 and adjust downstream kob scripts accordingly
 # This script runs regression 0 with NUMPREC as the outcome variable
 
 library(survey)

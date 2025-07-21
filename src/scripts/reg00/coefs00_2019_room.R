@@ -1,4 +1,5 @@
 # kob/throughput/coefs00_2019_room.R
+# TODO: rename output to r_2019 and adjust downstream kob scripts accordingly
 cat("
 This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
 using the dataduck matrix-based regression backend and successive differences replication (SDR).
@@ -7,8 +8,8 @@ This is the main production pipeline.
 
 # ----- Step 0: User settings ----- #
 # Define output path for model summary
-out_path <- "kob/throughput/model00_2019_room_summary-v5.rds"
-out_path_bootstrap <- "kob/throughput/model00_2019_bootstrap-room.rds"
+out_path <- "throughput/reg00/model00_2019_room_summary-v5.rds"
+out_path_bootstrap <- "throughput/reg00/model00_2019_bootstrap-room.rds"
 
 # Define regression formula
 formula <- room ~ -1 + 
@@ -42,7 +43,7 @@ plan(multicore, workers = 10)
 
 # ----- Step 2: Load data from saved ipums_2019_tb tibble ----- #
 tic("Collect 2019 ipums tibble")
-ipums_2019_tb <- readRDS("kob/throughput/ipums_2019_tb.rds")
+ipums_2019_tb <- readRDS("throughput/ipums_2019_tb.rds")
 toc()
 
 tic("Filter out group quarters residents")
