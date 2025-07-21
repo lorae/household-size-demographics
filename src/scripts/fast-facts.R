@@ -279,9 +279,35 @@ prop_hispan_2_2019 - prop_hispan_2_2000
 # prop living 1p hh in 2000
 fig02_data |> filter(RACE_ETH_bucket == "All" & year == "2000" & NUMPREC == 1) |> pull(freq)
 
-# More about race and hhsize increase/decrease
-# TODO: move this back to fig02 script, maybe add to appendix?
-# fig02_data_wide: show year frequencies side-by-side
+# Modal household size by race
+modes_by_race <- fig02_data |>
+  group_by(RACE_ETH_bucket, year) |>
+  slice_max(freq, n = 1, with_ties = FALSE) |>
+  select(RACE_ETH_bucket, year, modal_numprec = NUMPREC, modal_freq = freq)
+# Prop living in 1 p hh by race in 2019
+fig02_data |> filter(year == "2019" & NUMPREC == 1)
+# prop whites living in 2p hh in 2019
+fig02_data |> filter(RACE_ETH_bucket == "White" & year == "2019" & NUMPREC == 2) |> pull(freq)
+
+# Shifts in household composition varied by race and ethnicity, but an overarching 
+# decrease in household size was prevalent. With the exception of the multiracial 
+# group, all race/ethnicity groups had increases in the proportion of their population 
+# living in 1- and 2-person households. Black Americans saw the largest increase, 
+# with 29.0% of the population living in a 1 or 2-person household in 2000 and 36.6% 
+# of the population living in a 1 or 2-person household in 2019 (a 7.6 percentage 
+# point increase). The shift toward smaller households was sufficiently large to 
+# cause the modal household size among Black Americans to fall from 3 persons in 
+# 2000 to 2 persons in 2019. American Indians and Alaska Natives saw the second 
+# largest gain in their 1 to 2 person household share, with a 6.6 percentage point 
+# increase from 25.6% in 2000 to 32.1% in 2019. On the other end of the household 
+# size spectrum, all race/ethnicity groups, except for the white group, showed declines 
+# in the share of the population in 6+ person households. This decline was most 
+# dramatic among Hispanic individuals, who experienced a 9.2 percentage point drop 
+# in the share living in 6+ person households (from 20.1% in 2000 to 29.3% in 2019). 
+# Asian Americans and Pacific Islanders also showed a notable 5.1 percentage point 
+# drop (from 19.0% to 13.9%), and the share of Black Americans living in 6+ person 
+# households fell by 3.8 percentage points (from 20.1% to 17.7%).
+# TODO: move fig02_data_wide back to fig02 script, maybe add to appendix?
 fig02_data_wide <- fig02_data |>
   select(RACE_ETH_bucket, NUMPREC, year, freq) |>
   mutate(year = paste0("freq_", year)) |>
@@ -304,3 +330,47 @@ fig02_data_wide |> filter(RACE_ETH_bucket != "All" & NUMPREC >= 6) |>
     freq_2019 = sum(freq_2019),
   ) |>
   mutate(freq_diff = freq_2019 - freq_2000)
+
+# Between 2000 and 2019, American households not only grew smaller, they also became 
+# less crowded. The average American household in 2000 had 1.40 people per bedroom, 
+# and ___% exceeded a threshold of two people per bedroom. By 2019, this had fallen 
+# to an average of 1.20 people per bedroom—a decline of 14.1%—and ___% of households 
+# with more than two people per bedroom. As we demonstrate in Figure 5, this decrease 
+# in crowding held true for members of all racial/ethnic groups and for renters as 
+# well as homeowners, although renters consistently live in less-crowded housing 
+# than homeowners. The largest declines were among _____ individuals living in 
+# ______ homes.
+crosstab_count(
+  data = ipums_db |> filter(GQ %in% c(0,1,2)) |>
+    mutate(greater_than_2 = persons_per_bedroom > 2),
+  wt_col = "PERWT",
+  group_by = c("greater_than_2", "YEAR"),
+  every_combo = TRUE
+) |> collect()
+
+crosstab_percent(
+  data = ipums_db |> filter(GQ %in% c(0,1,2)) |>
+    mutate(greater_than_2 = persons_per_bedroom > 2),
+  wt_col = "PERWT",
+  group_by = c("greater_than_2", "YEAR"),
+  percent_group_by = c("YEAR")
+) |> collect()
+
+# To what extent are these decreases simply the mechanical byproduct of shrinking 
+# household sizes?
+crowding_2000 <- (aggregates |> filter(name == "Number of Persons") |> pull(mean_2000)) / 
+  (aggregates |> filter(name == "Number of Bedrooms") |> pull(mean_2000))
+crowding_2000
+
+crowding_2019 <- (aggregates |> filter(name == "Number of Persons") |> pull(mean_2019)) / 
+  (aggregates |> filter(name == "Number of Bedrooms") |> pull(mean_2019))
+crowding_2019
+
+crowding_2019_cf <- (aggregates |> filter(name == "Number of Persons") |> pull(mean_2019)) / 
+  (aggregates |> filter(name == "Number of Bedrooms") |> pull(mean_2000))
+crowding_2019_cf
+
+diff_crowding_bedroom <- crowding_2019_cf - crowding_2019
+diff_crowding_numprec <- crowding_2000 - crowding_2019_cf
+
+diff_crowding_numprec / (diff_crowding_numprec + diff_crowding_bedroom)
