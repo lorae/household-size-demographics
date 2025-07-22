@@ -10,6 +10,8 @@
 # ----- Step 0: Config ----- 
 library("patchwork")
 library("ggplot2")
+library("dplyr")
+library("tidyr")
 
 # ----- Step 1: Define functions -----
 # Data preparation function
@@ -163,6 +165,16 @@ pretty_labels <- c(
   Total = ""
 )
 
+varnames_dict <- c(
+  "RACE_ETH_bucket",
+  "AGE_bucket",
+  "EDUC_bucket",
+  "INCTOT_cpiu_2010_bucket",
+  "us_born",
+  "gender",
+  "tenure",
+  "cpuma"
+)
 # ----- Step 3: Make plots ----- #
 p    <- make_kob_plot(kob_output$p, "Number of Persons", hide_variable_labels = FALSE)
 r    <- make_kob_plot(kob_output$r, "Number of Rooms")
