@@ -37,7 +37,9 @@ source("src/utils/counterfactual-tools.R") # Includes function for counterfactua
 # ----- Step 2: Import and wrangle data ----- #
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
+ipums_db <- tbl(con, "ipums_processed") |>
+  # add an is_hoh column that is TRUE if the person is head of household, false otherwise
+  mutate(is_hoh =as.integer(PERNUM == 1))
 
 # TODO: eventually write a function in dataduck that when buckets are created,
 # the code automatically writes a list of vectors containing factor
@@ -77,6 +79,26 @@ scenarios <- list(
 nrow_pull <- 10000000
 p0_sample <- ipums_db |> filter(YEAR == 2000) |> filter(GQ %in% c(0,1,2)) # |> head(nrow_pull) |> collect()
 p1_sample <- ipums_db |> filter(YEAR == 2019) |> filter(GQ %in% c(0,1,2)) # |> head(nrow_pull) |> collect()
+
+# Try one counterfactual
+calculate_counterfactual(
+  cf_categories = c("RACE_ETH_bucket"),
+  p0 = 2000,
+  p1 = 2019,
+  p0_data = p0_sample,
+  p1_data = p1_sample,
+  outcome = "persons_per_bedroom"
+)$contributions -> x
+
+#Try headship counterfactual
+calculate_counterfactual(
+  cf_categories = c("RACE_ETH_bucket"),
+  p0 = 2000,
+  p1 = 2019,
+  p0_data = p0_sample,
+  p1_data = p1_sample,
+  outcome = "is_hoh"
+)$contributions -> y
 
 # Persons per bedroom
 bedroom_cf <- bind_rows(
