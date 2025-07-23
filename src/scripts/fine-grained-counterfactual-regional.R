@@ -78,19 +78,19 @@ test <- calculate_counterfactual(
 )
 
 x <- counterfactual_components(
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket"),
   p0 = 2000,
   p1 = 2019,
   p0_data = p0_sample, 
   p1_data = p1_sample,
   outcome = "NUMPREC"
-) |>
-  left_join(cpuma_state_cross, by = "CPUMA0010")
+) # |>
+  # left_join(cpuma_state_cross, by = "CPUMA0010")
   
 summarize_counterfactual(
   x,
-  counterfactual_by = "STATEFIP",
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  counterfactual_by = "RACE_ETH_bucket",
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket"),
   p0 = 2000,
   p1 = 2019
 )
