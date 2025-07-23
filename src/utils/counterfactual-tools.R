@@ -112,6 +112,37 @@ counterfactual_components <- function(
   return(crosstab_p0_p1)
 }
 
+summarize_counterfactual <- function(
+    cf_categories = c("AGE_bucket", "RACE_ETH_bucket"), # A vector of string names for the group_by variable 
+    counterfactual, # an object returned by counterfactual_components()
+    p0 = 2000,
+    p1 = 2019
+) {
+  # Calculate overall values
+  actual_outcome_p1 <- counterfactual |>
+    summarize(total = sum(.data[[paste0("weighted_mean_", p1)]] * .data[[paste0("percent_", p1)]] / 100)) |>
+    pull(total)
+  
+  cf_outcome_p1 <- counterfactual |>
+    summarize(total = sum(.data[[paste0("weighted_mean_", p0)]] * .data[[paste0("percent_", p1)]] / 100)) |>
+    pull(total)
+  
+  # TODO: Make this less brittle! Why are the varnames hard-coded in?
+  return(tibble(
+      RACE_ETH_bucket = ("RACE_ETH_bucket" %in% cf_categories),
+      AGE_bucket = ("AGE_bucket" %in% cf_categories),
+      SEX = ("SEX" %in% cf_categories),
+      us_born = ("us_born" %in% cf_categories),
+      EDUC_bucket = ("EDUC_bucket" %in% cf_categories),
+      INCTOT_cpiu_2010_bucket = ("INCTOT_cpiu_2010_bucket" %in% cf_categories),
+      OWNERSHP = ("OWNERSHP" %in% cf_categories),
+      CPUMA0010 = ("CPUMA0010" %in% cf_categories),
+      counterfactual = cf_outcome_p1,
+      actual = actual_outcome_p1,
+      diff = actual_outcome_p1 - cf_outcome_p1
+    ))
+}
+
 # This function takes data and metadata about desired counterfactual simulations
 # as an input. As an output, it produces a list with two elements. The first output
 # is a tibble with a single row summarizing the variables controlled for, the 
@@ -138,30 +169,5 @@ calculate_counterfactual <- function(
     outcome = outcome
   )
   
-  # Calculate overall values
-  actual_outcome_p1 <- crosstab_p0_p1 |>
-    summarize(total = sum(.data[[paste0("weighted_mean_", p1)]] * .data[[paste0("percent_", p1)]] / 100)) |>
-    pull(total)
-  
-  cf_outcome_p1 <- crosstab_p0_p1 |>
-    summarize(total = sum(.data[[paste0("weighted_mean_", p0)]] * .data[[paste0("percent_", p1)]] / 100)) |>
-    pull(total)
-  
-  # TODO: Make this less brittle! Why are the varnames hard-coded in?
-  return(list(
-    summary = tibble(
-      RACE_ETH_bucket = ("RACE_ETH_bucket" %in% cf_categories),
-      AGE_bucket = ("AGE_bucket" %in% cf_categories),
-      SEX = ("SEX" %in% cf_categories),
-      us_born = ("us_born" %in% cf_categories),
-      EDUC_bucket = ("EDUC_bucket" %in% cf_categories),
-      INCTOT_cpiu_2010_bucket = ("INCTOT_cpiu_2010_bucket" %in% cf_categories),
-      OWNERSHP = ("OWNERSHP" %in% cf_categories),
-      CPUMA0010 = ("CPUMA0010" %in% cf_categories),
-      counterfactual = cf_outcome_p1,
-      actual = actual_outcome_p1,
-      diff = actual_outcome_p1 - cf_outcome_p1
-    ),
-    contributions = crosstab_p0_p1
-  ))
+
 }

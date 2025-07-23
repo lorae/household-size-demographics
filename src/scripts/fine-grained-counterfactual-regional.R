@@ -77,13 +77,19 @@ test <- calculate_counterfactual(
   outcome = "NUMPREC"
 )
 
-counterfactual_components(
-  cf_categories = c("RACE_ETH_bucket"),
+x <- counterfactual_components(
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019,
   p0_data = p0_sample |> filter(STATEFIP == "06"), 
   p1_data = p1_sample |> filter(STATEFIP == "06"),
   outcome = "NUMPREC"
+)
+summarize_counterfactual(
+  x,
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  p0 = 2000,
+  p1 = 2019
 )
 
 test$contributions  |>
