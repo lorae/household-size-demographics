@@ -113,22 +113,20 @@ counterfactual_components <- function(
 }
 
 summarize_counterfactual <- function(
-    cf_categories = c("AGE_bucket", "RACE_ETH_bucket"), # A vector of string names for the group_by variable 
-    counterfactual, # an object returned by counterfactual_components()
+    cf_categories = c("AGE_bucket", "RACE_ETH_bucket"),
+    counterfactual,
     p0 = 2000,
-    p1 = 2019
+    p1 = 2019,
+    counterfactual_by = NULL
 ) {
-  # Calculate overall values
-  actual_outcome_p1 <- counterfactual |>
-    summarize(total = sum(.data[[paste0("weighted_mean_", p1)]] * .data[[paste0("percent_", p1)]] / 100)) |>
-    pull(total)
-  
-  cf_outcome_p1 <- counterfactual |>
-    summarize(total = sum(.data[[paste0("weighted_mean_", p0)]] * .data[[paste0("percent_", p1)]] / 100)) |>
-    pull(total)
-  
-  # TODO: Make this less brittle! Why are the varnames hard-coded in?
-  return(tibble(
+  # ---- Overall (full-sample) summary ----
+  summary_df_overall <- counterfactual |>
+    summarize(
+      actual = sum(.data[[paste0("weighted_mean_", p1)]] * .data[[paste0("percent_", p1)]] / 100),
+      counterfactual = sum(.data[[paste0("weighted_mean_", p0)]] * .data[[paste0("percent_", p1)]] / 100)
+    ) |>
+    mutate(
+      diff = actual - counterfactual,
       RACE_ETH_bucket = ("RACE_ETH_bucket" %in% cf_categories),
       AGE_bucket = ("AGE_bucket" %in% cf_categories),
       SEX = ("SEX" %in% cf_categories),
@@ -136,12 +134,33 @@ summarize_counterfactual <- function(
       EDUC_bucket = ("EDUC_bucket" %in% cf_categories),
       INCTOT_cpiu_2010_bucket = ("INCTOT_cpiu_2010_bucket" %in% cf_categories),
       OWNERSHP = ("OWNERSHP" %in% cf_categories),
-      CPUMA0010 = ("CPUMA0010" %in% cf_categories),
-      counterfactual = cf_outcome_p1,
-      actual = actual_outcome_p1,
-      diff = actual_outcome_p1 - cf_outcome_p1
+      CPUMA0010 = ("CPUMA0010" %in% cf_categories)
+    )
+  
+  # ---- Optional grouping summary ----
+  if (!is.null(counterfactual_by)) {
+    summary_df_by <- counterfactual |>
+      group_by(across(all_of(counterfactual_by))) |>
+      summarize(
+        contribution_diff = sum(contribution_diff, na.rm = TRUE),
+        prop_2019 = sum(percent_2019) / 100, .groups = "drop",
+        pop_2019 = sum(weighted_count_2019)
+      ) |>
+      mutate(diff = contribution_diff / prop_2019)
+    
+    return(list(
+      overall = summary_df_overall,
+      by = summary_df_by
     ))
+  }
+  
+  
+  # ---- Only overall summary ----
+  return(list(
+    overall = summary_df_overall
+  ))
 }
+
 
 # This function takes data and metadata about desired counterfactual simulations
 # as an input. As an output, it produces a list with two elements. The first output
