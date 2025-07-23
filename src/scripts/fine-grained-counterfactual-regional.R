@@ -66,13 +66,32 @@ p0_sample <- ipums_db |> filter(YEAR == 2000) |> filter(GQ %in% c(0,1,2))
 p1_sample <- ipums_db |> filter(YEAR == 2019) |> filter(GQ %in% c(0,1,2)) 
 
 
+# Do diffs aggregate properly?
+test <- calculate_counterfactual(
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  #cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC", "INCTOT_cpiu_2010_bucket", "CPUMA0010"),
+  p0 = 2000,
+  p1 = 2019,
+  p0_data = p0_sample |> filter(STATEFIP == "06"), 
+  p1_data = p1_sample |> filter(STATEFIP == "06"),
+  outcome = "NUMPREC"
+)
+
+test$contributions  |>
+  group_by(CPUMA0010) |>
+  summarize(contribution_diff = sum(contribution_diff, na.rm = TRUE),
+            prop_2019 = sum(percent_2019) / 100, .groups = "drop",
+            pop_2019 = sum(weighted_count_2019)) |>
+  mutate(diff = contribution_diff / prop_2019)
+
+
 # Calculate CPUMA-level fully-controlled diffs
 hhsize_contributions <- calculate_counterfactual(
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   #cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC", "INCTOT_cpiu_2010_bucket", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019,
-  p0_data = p0_sample |> filter(STATEFIP == 01), 
+  p0_data = p0_sample |> filter(STATEFIP == "01"), 
   p1_data = p1_sample,
   outcome = "NUMPREC"
 )$contributions  |>
