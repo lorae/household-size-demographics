@@ -140,13 +140,32 @@ summarize_counterfactual <- function(
   # ---- Optional grouping summary ----
   if (!is.null(counterfactual_by)) {
     summary_df_by <- counterfactual |>
+      mutate(
+        prop_2000 = percent_2000 / 100, 
+        prop_2019 = percent_2019 / 100, 
+        contrib_actual_2000 = weighted_mean_2000 * prop_2000,
+        contrib_actual_2019 = weighted_mean_2019 * prop_2019,
+        contrib_cf_2019 = weighted_mean_2000 * prop_2019
+        ) |>
       group_by(across(all_of(counterfactual_by))) |>
       summarize(
         contribution_diff = sum(contribution_diff, na.rm = TRUE),
-        prop_2019 = sum(percent_2019) / 100, .groups = "drop",
+        contrib_actual_2000 = sum(contrib_actual_2000),
+        contrib_actual_2019 = sum(contrib_actual_2019),
+        contrib_cf_2019 = sum(contrib_cf_2019),
+        prop_2000 = sum(percent_2000) / 100, 
+        prop_2019 = sum(percent_2019) / 100, 
+        test = sum(weighted_mean_2000),
+        .groups = "drop",
+        pop_2000 = sum(weighted_count_2000),
         pop_2019 = sum(weighted_count_2019)
       ) |>
-      mutate(diff = contribution_diff / prop_2019)
+      mutate(
+        diff = contribution_diff / prop_2019,
+        actual_2000 = contrib_actual_2000 / prop_2000,
+        actual_2019 = contrib_actual_2019 / prop_2019,
+        cf_2019 = contrib_cf_2019 / prop_2019
+      )
     
     return(list(
       overall = summary_df_overall,
