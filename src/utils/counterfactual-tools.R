@@ -33,6 +33,19 @@ counterfactual_components <- function(
   )
   print(glue("{p1} means done!"))
   
+  # Calculate the population composition in period 0
+  # Note: not strictly needed for counterfactual calculation, but useful context
+  print(glue("Calculating {p0} percents..."))
+  percent_p0 <- crosstab_percent(
+    data = p0_data,
+    wt_col = "PERWT",
+    group_by = cf_categories,
+    percent_group_by = c(),
+    every_combo = TRUE
+  ) |>
+    select(-weighted_count, -count)
+  print(glue("{p0} percents done!"))
+  
   # Calculate the population composition in period 1
   print(glue("Calculating {p1} percents..."))
   percent_p1 <- crosstab_percent(
@@ -54,8 +67,13 @@ counterfactual_components <- function(
       by = setNames(cf_categories, cf_categories)
     ) |>
     full_join(
-      # Join the p0 and p1 mean data frames with p1 percent data frame, appending _{year} suffixes
+      # Join with p1 percent data frame, appending _{year} suffixes
       percent_p1 |> rename_with(~paste0(., "_", p1), -all_of(cf_categories)),
+      by = setNames(cf_categories, cf_categories)
+    ) |>
+    full_join(
+      # Join with p0 percent data frame, appending _{year} suffixes
+      percent_p0 |> rename_with(~paste0(., "_", p0), -all_of(cf_categories)),
       by = setNames(cf_categories, cf_categories)
     ) |>
     mutate(
@@ -83,9 +101,9 @@ counterfactual_components <- function(
     select(any_of(c(
       # Reorder columns more intuitively
       cf_categories, 
-      paste0("count_", p0), paste0("count_", p1),
+      # paste0("count_", p0), paste0("count_", p1), # We don't need the counts. meh
       paste0("weighted_count_", p0), paste0("weighted_count_", p1),
-      paste0("percent_", p1), paste0("se_percent_", p1),
+      paste0("percent_", p0), paste0("percent_", p1),
       paste0("weighted_mean_", p0), paste0("weighted_mean_", p1),
       "diff", 
       "contribution_diff"

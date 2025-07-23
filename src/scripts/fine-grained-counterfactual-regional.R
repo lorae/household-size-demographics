@@ -77,12 +77,21 @@ test <- calculate_counterfactual(
   outcome = "NUMPREC"
 )
 
+counterfactual_components(
+  cf_categories = c("RACE_ETH_bucket"),
+  p0 = 2000,
+  p1 = 2019,
+  p0_data = p0_sample |> filter(STATEFIP == "06"), 
+  p1_data = p1_sample |> filter(STATEFIP == "06"),
+  outcome = "NUMPREC"
+)
+
 test$contributions  |>
   group_by(CPUMA0010) |>
   summarize(contribution_diff = sum(contribution_diff, na.rm = TRUE),
             prop_2019 = sum(percent_2019) / 100, .groups = "drop",
             pop_2019 = sum(weighted_count_2019)) |>
-  mutate(diff = contribution_diff / prop_2019)
+  mutate(diff = contribution_diff / prop_2019) -> test2
 
 
 # Calculate CPUMA-level fully-controlled diffs
