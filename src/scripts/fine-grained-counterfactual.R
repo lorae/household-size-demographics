@@ -82,17 +82,7 @@ p1_sample <- ipums_db |> filter(YEAR == 2019) |> filter(GQ %in% c(0,1,2)) # |> h
 
 # Try one counterfactual
 calculate_counterfactual(
-  cf_categories = c("RACE_ETH_bucket"),
-  p0 = 2000,
-  p1 = 2019,
-  p0_data = p0_sample,
-  p1_data = p1_sample,
-  outcome = "persons_per_bedroom"
-)$contributions -> x
-
-#Try headship counterfactual
-calculate_counterfactual(
-  cf_categories = c("RACE_ETH_bucket"),
+  cf_categories = c("AGE_bucket"),
   p0 = 2000,
   p1 = 2019,
   p0_data = p0_sample,
@@ -101,14 +91,14 @@ calculate_counterfactual(
 )$contributions -> y
 
 # Persons per bedroom
-bedroom_cf <- bind_rows(
+headship_cf <- bind_rows(
   lapply(scenarios, function(cf) calculate_counterfactual(
     cf_categories = cf, 
     p0 = 2000, 
     p1 = 2019,
     p0_data = p0_sample,
     p1_data = p1_sample,
-    outcome = "persons_per_bedroom"
+    outcome = "is_hoh"
     )$summary # Extract only the summary tibble
   )
 )
@@ -133,19 +123,19 @@ hhsize_cf <- bind_rows(
 ##############
 #GENERATE FIGUURE 3
 
-# Average household size in 2000
-hhsize_2000_observed <- crosstab_mean(
+# Average headship rate in 2000
+headship_2000_observed <- crosstab_mean(
   data = ipums_db |> filter(YEAR == 2000, GQ %in% c(0,1,2)),
-  value = "NUMPREC",
+  value = "is_hoh",
   wt_col = "PERWT",
   group_by = c(),
   every_combo = TRUE) |>
   pull(weighted_mean)
 
-# Average household size in 2019
-hhsize_2019_observed <- crosstab_mean(
+# Average headship rate in 2019
+headship_2019_observed <- crosstab_mean(
   data = ipums_db |> filter(YEAR == 2019, GQ %in% c(0,1,2)),
-  value = "NUMPREC",
+  value = "is_hoh",
   wt_col = "PERWT",
   group_by = c(),
   every_combo = TRUE) |>
