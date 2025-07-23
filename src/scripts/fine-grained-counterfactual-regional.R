@@ -4,26 +4,15 @@
 # factors - average person-level household size would be in 2019 compared to 2000 
 # values. This script takes on the counterfactual question with a geographic focus.
 # It calculates CPUMA0010-level and state-level counterfactuals.
-# 
-# The script is closely related to counterfactual-multiscenario.R. This script produces
-# the data underlying:
-# - Table 3.3
-# - Table 3.4
-# in the Shiny app, while counterfactual-multiscenario.R produces the data underlying
-# Tables 3.1 and 3.2 in the shiny app.
 #
-# This script will also hopefully eventually be used to create choloropleth maps.
+# This script will also hopefully eventually be used to create choropleth maps.
 #
 # Inputs:
 #   - data/db/ipums.duckdb
 #   - draws from function defined in src/utils/counterfactual-tools.R
+#   - TODO name the other througput files / helper files and also add those scripts
 # Outputs:
-#   - shiny-app/data/diffs-by-geography.rda
-# TODO: Do a shiny-app wide audit of data names: right now, the RDA files are
-# sillily named and it's basically the Wild West out here.
-# 
-# TODO: step 2, 2a, and 2b are identical between this script and counterfactual-regional.R.
-# Figure out how potentially to move this data wrangling upstream.
+#   - TBD
 
 # ----- Step 0: Load required packages ----- #
 library("dplyr")
@@ -34,7 +23,7 @@ library("purrr")
 library("glue")
 library("readxl")
 library("ggplot2")
-library(base64enc)
+library("base64enc")
 library("sf")
 options(scipen = 999)
 
@@ -42,13 +31,19 @@ options(scipen = 999)
 
 devtools::load_all("../dataduck")
 source("src/utils/counterfactual-tools.R") # Includes function for counterfactual calculation
+load("data/helpers/cpuma-state-cross.rda") # Crosswalks CPUMA0010 to state
+load("data/helpers/state-pop-growth.rda") # For Figure 3.2
 
 # ----- Step 2: Import and wrangle data ----- #
-
-load("data/helpers/state-pop-growth.rda") # For Figure 3.2
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
+ipums_db <- tbl(con, "ipums_processed") |>
+  # add an is_hoh column that is TRUE if the person is head of household, false otherwise
+  mutate(is_hoh =as.integer(PERNUM == 1)) |>
+  left_join(cpuma_state_cross, by = "CPUMA0010", copy = TRUE)
 
+# Check: did we match all the states to statefips?
+ipums_db |> pull(STATEFIP) |> is.na() |> sum() # yep it's 0
+  
 # TODO: eventually write a function in dataduck that when buckets are created,
 # the code automatically writes a list of vectors containing factor
 # labels. For now, I'm just generating factor labels directly from the lookup
@@ -60,9 +55,6 @@ age_factor_levels <- extract_factor_label(
 )
 
 # ----- Step 3: Create mappable diff data by CPUMA0010 ----- #
-
-# Crosswalks CPUMA0010 to state
-load("data/helpers/cpuma-state-cross.rda")
 
 # Create a list of states to loop through later
 list_of_states <- cpuma_state_cross |>
@@ -80,7 +72,7 @@ hhsize_contributions <- calculate_counterfactual(
   #cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC", "INCTOT_cpiu_2010_bucket", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019,
-  p0_data = p0_sample, 
+  p0_data = p0_sample |> filter(STATEFIP == 01), 
   p1_data = p1_sample,
   outcome = "NUMPREC"
 )$contributions  |>
