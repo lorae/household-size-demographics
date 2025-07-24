@@ -60,7 +60,7 @@ fig04b <- ggplot(state_sf_headship |> filter(State != "District of Columbia")) +
   geom_sf(aes(geometry = geometry, fill = diff), color = "black", size = 0.5) +
   scale_fill_gradient2(
     name = "Unexplained \nDifference, \nHeadship \nRate",
-    low = "blue", mid = "white", high = "#F94144", midpoint = 0,
+    low = "#F94144", mid = "white", high = "blue", midpoint = 0,
     breaks = seq(from = -0.04, to = 0.1, by = 0.01)
   ) +
   theme_void()
