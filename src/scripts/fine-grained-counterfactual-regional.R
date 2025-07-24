@@ -106,18 +106,20 @@ state_sf_hhsize <- state_sf |>
   left_join(hhsize_state_summary, by = "State")
 
 # Choropleth map (color version)
-fig04 <- ggplot(state_sf_hhsize) + 
-  geom_sf(aes(geometry = geometry, fill = weighted_mean), color = "black", size = 0.5) +
+fig04a <- ggplot(state_sf_hhsize) + 
+  geom_sf(aes(geometry = geometry, fill = diff), color = "black", size = 0.5) +
   scale_fill_gradient2(
-    name = "Change in \nHousehold \nSize",
+    name = "Unexplained \nDifference, \nPersons per \n Household",
     low = "#577590", mid = "white", high = "#F94144", midpoint = 0,
     breaks = seq(from = -0.1, to = 0.2, by = 0.05)
   ) +
   theme_void()
-fig04
+fig04a
 
 # Save the black and white plot as fig03a
-ggsave("results/fig04.png", plot = fig04, width = 6.5, height = 5, dpi = 300)
+# TODO: put regression based in their own folder called regression-based.
+# Then get rid of output folder and just call it figures
+ggsave("output/figures/fine-grained/fig04a-hhsize-diff-state-map.png", plot = fig04a, width = 6.5, height = 5, dpi = 300)
 
 ### FIG 4a: Unexplained diff by cpuma, nationally
 # Load shapefiles. Data is unzipped from WHERE? TODO: document
