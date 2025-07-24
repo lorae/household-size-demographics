@@ -92,7 +92,7 @@ hhsize_state_summary <- summarize_counterfactual(
   pop_2019,
   actual_2000,
   actual_2019,
-  cf_2019,
+  expected_2019,
   diff
 )
 
@@ -102,7 +102,7 @@ hhsize_summary <- summarize_counterfactual(
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019
-)$overall |>
+)$by |>
   mutate(
     name = "Number of Persons in Household"
   )
@@ -137,7 +137,7 @@ headship_state_summary <- summarize_counterfactual(
   pop_2019,
   actual_2000,
   actual_2019,
-  cf_2019,
+  expected_2019,
   diff
 )
 
@@ -147,7 +147,7 @@ headship_summary <- summarize_counterfactual(
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019
-)$overall |>
+)$by |>
   mutate(
     name = "Headship Rate"
   )
