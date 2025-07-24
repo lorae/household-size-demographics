@@ -157,14 +157,20 @@ fig04b <- ggplot(state_sf_headship |> filter(State != "District of Columbia")) +
   scale_fill_gradient2(
     name = "Unexplained \nDifference, \nHeadship \nRate",
     low = "blue", mid = "white", high = "#F94144", midpoint = 0,
-    breaks = seq(from = -0.04, to = 0.0, by = 0.01)
+    breaks = seq(from = -0.04, to = 0.1, by = 0.01)
   ) +
   theme_void()
 fig04b
 
 # ----- Step 5: Save figures ----- #
-ggsave("output/figures/fine-grained/fig04a-hhsize-diff-state-map.png", plot = fig04a, width = 6.5, height = 5, dpi = 300)
-ggsave("output/figures/fine-grained/fig04b-headship-diff-state-map.png", plot = fig04b, width = 6.5, height = 5, dpi = 300)
+ggsave("output/figures/fine-grained/fig04a-hhsize-diff-state-map.png", plot = fig04a, width = 6.5, height = 4, dpi = 300)
+ggsave("output/figures/fine-grained/fig04b-headship-diff-state-map.png", plot = fig04b, width = 6.5, height = 4, dpi = 300)
+
+
+
+##############################################
+#vvvvvvvvvvvvv ARCHIVE vvvvvvvvvvvvvvvvvvvvvv#
+##############################################
 
 ### FIG 4a: Unexplained diff by cpuma, nationally
 # Load shapefiles. Data is unzipped from WHERE? TODO: document
@@ -198,9 +204,6 @@ fig04a <- ggplot(cpuma_sf_hhsize) +
   ) +
   theme_void()
 fig04a
-##############################################
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#
-##############################################
 
 
 # A function that produces a dotplot by state
