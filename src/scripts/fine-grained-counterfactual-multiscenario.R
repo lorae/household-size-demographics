@@ -1,4 +1,4 @@
-# fine-grained-counterfactual.R
+# fine-grained-counterfactual-multiscenario.R
 #
 # The purpose of this script is to calculate what - after controlling for demographic 
 # factors - average person-level household size would be in 2019 compared to 2000 
@@ -19,6 +19,7 @@
 # 
 # TODO: step 2, 2a, and 2b are identical between this script and counterfactual-regional.R.
 # Figure out how potentially to move this data wrangling upstream.
+# TODO: this no longer works due to a refactored calculate counterfactual funciton. Fix.
 #
 # ----- Step 0: Load required packages ----- #
 library("dplyr")
