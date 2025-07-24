@@ -32,7 +32,8 @@ options(scipen = 999)
 devtools::load_all("../dataduck")
 source("src/utils/counterfactual-tools.R") # Includes function for counterfactual calculation
 load("data/helpers/cpuma-state-cross.rda") # Crosswalks CPUMA0010 to state
-load("data/helpers/state-pop-growth.rda") # For Figure 3.2
+state_sf <- readRDS("throughput/state_shapefiles.rds") # One shapefile row per state
+load("data/helpers/state-pop-growth.rda") # May be deprecated
 
 # ----- Step 2: Import and wrangle data ----- #
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
@@ -54,8 +55,6 @@ age_factor_levels <- extract_factor_label(
   colname = "bucket_name"
 )
 
-# ----- Step 3: Create mappable diff data by CPUMA0010 ----- #
-
 # Create a list of states to loop through later
 list_of_states <- cpuma_state_cross |>
   select(State) |>
@@ -66,7 +65,9 @@ p0_sample <- ipums_db |> filter(YEAR == 2000) |> filter(GQ %in% c(0,1,2))
 p1_sample <- ipums_db |> filter(YEAR == 2019) |> filter(GQ %in% c(0,1,2)) 
 
 
-# Heavy lifting computation on the counterfactual for NUMPREC outcome
+# ---- Step 3: Calculate counterfactuals ---- #
+# --- hhsize cf ---
+# Calculate the fine-grained counterfactual (2 minutes)
 cf_hhsize <- counterfactual_components(
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
@@ -78,15 +79,15 @@ cf_hhsize <- counterfactual_components(
   # TODO: rename "State" upstream to "state"
   left_join(cpuma_state_cross, by = "CPUMA0010") # Adds "State" as a col
   
-hhsize_state_cf <- summarize_counterfactual(
+# Summarize the results from the counterfactual to make results ready to be merged 
+# with state shapefiles for mapping
+hhsize_state_summary <- summarize_counterfactual(
   cf_hhsize,
   counterfactual_by = "State",
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019
-)
-
-hhsize_state_summary <- hhsize_state_cf$by |> select(
+)$by |> select(
   State, 
   prop_2000,
   prop_2019,
@@ -98,28 +99,72 @@ hhsize_state_summary <- hhsize_state_cf$by |> select(
   diff
 )
 
-# Do something to source src/utils/mapping-tools.R
-state_sf <- readRDS("throughput/state_shapefiles.rds")
+# --- headship cf ---
+# Calculate the fine-grained counterfactual (2 minutes)
+cf_headship <- counterfactual_components(
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  p0 = 2000,
+  p1 = 2019,
+  p0_data = p0_sample, 
+  p1_data = p1_sample,
+  outcome = "is_hoh"
+) |>
+  # TODO: rename "State" upstream to "state"
+  left_join(cpuma_state_cross, by = "CPUMA0010") # Adds "State" as a col
 
-# Join the state data with household size differences
+# Summarize the results from the counterfactual to make results ready to be merged 
+# with state shapefiles for mapping
+headship_state_summary <- summarize_counterfactual(
+  cf_headship,
+  counterfactual_by = "State",
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  p0 = 2000,
+  p1 = 2019
+)$by |> select(
+  State, 
+  prop_2000,
+  prop_2019,
+  pop_2000,
+  pop_2019,
+  actual_2000,
+  actual_2019,
+  cf_2019,
+  diff
+)
+
+# ----- Step 4: Map ----- #
+# --- Fig04a: hhsize diff by state ----
 state_sf_hhsize <- state_sf |>
   left_join(hhsize_state_summary, by = "State")
 
-# Choropleth map (color version)
 fig04a <- ggplot(state_sf_hhsize) + 
   geom_sf(aes(geometry = geometry, fill = diff), color = "black", size = 0.5) +
   scale_fill_gradient2(
-    name = "Unexplained \nDifference, \nPersons per \n Household",
-    low = "#577590", mid = "white", high = "#F94144", midpoint = 0,
-    breaks = seq(from = -0.1, to = 0.2, by = 0.05)
+    name = "Unexplained \nDifference, \nPersons per \nHousehold",
+    low = "blue", mid = "white", high = "#F94144", midpoint = 0,
+    breaks = seq(from = -0.5, to = 0.2, by = 0.05)
   ) +
   theme_void()
 fig04a
 
-# Save the black and white plot as fig03a
-# TODO: put regression based in their own folder called regression-based.
-# Then get rid of output folder and just call it figures
+# --- Fig04b: headship diff by state --- 
+state_sf_headship <- state_sf |>
+  left_join(headship_state_summary, by = "State")
+
+# Choropleth map (color version)
+fig04b <- ggplot(state_sf_headship |> filter(State != "District of Columbia")) + 
+  geom_sf(aes(geometry = geometry, fill = diff), color = "black", size = 0.5) +
+  scale_fill_gradient2(
+    name = "Unexplained \nDifference, \nHeadship \nRate",
+    low = "blue", mid = "white", high = "#F94144", midpoint = 0,
+    breaks = seq(from = -0.04, to = 0.0, by = 0.01)
+  ) +
+  theme_void()
+fig04b
+
+# ----- Step 5: Save figures ----- #
 ggsave("output/figures/fine-grained/fig04a-hhsize-diff-state-map.png", plot = fig04a, width = 6.5, height = 5, dpi = 300)
+ggsave("output/figures/fine-grained/fig04b-headship-diff-state-map.png", plot = fig04b, width = 6.5, height = 5, dpi = 300)
 
 ### FIG 4a: Unexplained diff by cpuma, nationally
 # Load shapefiles. Data is unzipped from WHERE? TODO: document
