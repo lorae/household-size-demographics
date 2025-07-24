@@ -64,11 +64,11 @@ fig06_data <- aggregates |>
 
 
 # ----- Step 3: Make plots ----- #
-p <- make_observed_cf_barplot("Number of Persons", fig06_data, yaxis_override = c(3, 3.5))
-b <- make_observed_cf_barplot("Number of Bedrooms", fig06_data, yaxis_override = c(2, 3.5))
-ppbr <- make_observed_cf_barplot("Persons per Bedroom", fig06_data, yaxis_override = c(1, 1.5))
-r <- make_observed_cf_barplot("Number of Rooms", fig06_data, yaxis_override = c(5.5, 6.5))
-ppr <- make_observed_cf_barplot("Persons per Room", fig06_data, yaxis_override = c(0, 1))
+p <- make_observed_cf_barplot(fig06_data |> filter(name == "Number of Persons"), yaxis_override = c(3, 3.5))
+b <- make_observed_cf_barplot(fig06_data |> filter(name == "Number of Bedrooms"), yaxis_override = c(2, 3.5))
+ppbr <- make_observed_cf_barplot(fig06_data |> filter(name == "Persons per Bedroom"), yaxis_override = c(1, 1.5))
+r <- make_observed_cf_barplot(fig06_data |> filter(name == "Number of Rooms"), yaxis_override = c(5.5, 6.5))
+ppr <- make_observed_cf_barplot(fig06_data |> filter(name == "Persons per Room"), yaxis_override = c(0, 1))
 
 # Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
 fig06 <- (p + b + ppbr) +

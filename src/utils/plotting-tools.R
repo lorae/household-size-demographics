@@ -73,11 +73,11 @@ plot_year_subgroup_bars <- function(
 
 # USed for fig06 and fg-fig03
 # Observed vs counterfactual bars
-make_observed_cf_barplot <- function(target_name, data, yaxis_override = NULL) {
-  # Get the relevant row including ymin/ymax
-  row <- data |> filter(name == target_name)
+# row argument must be a df with one row containing
+# name (will become plot title), observed_2000, observed_2019, expected_2019
+make_observed_cf_barplot <- function(row, yaxis_override = NULL) {
 
-  # Validate yaxis_override if provided
+    # Validate yaxis_override if provided
   if (!is.null(yaxis_override)) {
     if (!is.numeric(yaxis_override) || length(yaxis_override) != 2) {
       stop("yaxis_override must be a numeric vector of length 2.")
@@ -113,7 +113,7 @@ make_observed_cf_barplot <- function(target_name, data, yaxis_override = NULL) {
       "Expected" = "dotted"
     )) +
     labs(
-      title = target_name,
+      title = row$name,
       y = NULL, x = NULL
     ) +
     coord_cartesian(ylim = ylim_vals) +
