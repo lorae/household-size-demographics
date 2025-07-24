@@ -1,4 +1,4 @@
-# counterfactual-regional.R
+# src/figures/fine-grained-fig04-diff-state-map.R
 #
 # The purpose of this script is to calculate what - after controlling for demographic 
 # factors - average person-level household size would be in 2019 compared to 2000 
