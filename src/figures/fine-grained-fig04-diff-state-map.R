@@ -1,15 +1,11 @@
 # src/figures/fine-grained-fig04-diff-state-map.R
 #
-# The purpose of this script is to calculate what - after controlling for demographic 
-# factors - average person-level household size would be in 2019 compared to 2000 
-# values. This script takes on the counterfactual question with a geographic focus.
-# It calculates CPUMA0010-level and state-level counterfactuals.
-#
-# This script will also hopefully eventually be used to create choropleth maps.
+# This script produces choropleth maps of differences between actual and expected
+# household size and headship rates by state in 2019
 #
 # Inputs:
 #   - data/db/ipums.duckdb
-#   - draws from function defined in src/utils/counterfactual-tools.R
+#   - src/utils/counterfactual-tools.R
 #   - TODO name the other througput files / helper files and also add those scripts
 # Outputs:
 #   - TBD
@@ -162,10 +158,16 @@ fig04b <- ggplot(state_sf_headship |> filter(State != "District of Columbia")) +
   theme_void()
 fig04b
 
-# ----- Step 5: Save figures ----- #
+# ----- Step 5: Save output ----- #
+# Figures
 ggsave("output/figures/fine-grained/fig04a-hhsize-diff-state-map.png", plot = fig04a, width = 6.5, height = 4, dpi = 300)
 ggsave("output/figures/fine-grained/fig04b-headship-diff-state-map.png", plot = fig04b, width = 6.5, height = 4, dpi = 300)
 
+# Data underlying figures (minus shapefiles)
+saveRDS(hhsize_state_summary, "output/figures/fine-grained/fig04a-data-hhsize-diff-state.rds")
+saveRDS(headship_state_summary, "output/figures/fine-grained/fig04a-data-headship-diff-state.rds")
+write.csv(hhsize_state_summary, "output/figures/fine-grained/fig04a-data-hhsize-diff-state.csv", row.names = FALSE)
+write.csv(headship_state_summary, "output/figures/fine-grained/fig04a-data-headship-diff-state.csv", row.names = FALSE)
 
 
 ##############################################
