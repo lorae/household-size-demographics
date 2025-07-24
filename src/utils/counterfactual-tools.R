@@ -127,58 +127,50 @@ summarize_counterfactual <- function(
     ) |>
     mutate(
       diff = actual - counterfactual,
-      RACE_ETH_bucket = ("RACE_ETH_bucket" %in% cf_categories),
-      AGE_bucket = ("AGE_bucket" %in% cf_categories),
-      SEX = ("SEX" %in% cf_categories),
-      us_born = ("us_born" %in% cf_categories),
-      EDUC_bucket = ("EDUC_bucket" %in% cf_categories),
-      INCTOT_cpiu_2010_bucket = ("INCTOT_cpiu_2010_bucket" %in% cf_categories),
-      OWNERSHP = ("OWNERSHP" %in% cf_categories),
-      CPUMA0010 = ("CPUMA0010" %in% cf_categories)
+      RACE_ETH_bucket = "RACE_ETH_bucket" %in% cf_categories,
+      AGE_bucket = "AGE_bucket" %in% cf_categories,
+      SEX = "SEX" %in% cf_categories,
+      us_born = "us_born" %in% cf_categories,
+      EDUC_bucket = "EDUC_bucket" %in% cf_categories,
+      INCTOT_cpiu_2010_bucket = "INCTOT_cpiu_2010_bucket" %in% cf_categories,
+      OWNERSHP = "OWNERSHP" %in% cf_categories,
+      CPUMA0010 = "CPUMA0010" %in% cf_categories
     )
   
-  # ---- Optional grouping summary ----
-  if (!is.null(counterfactual_by)) {
-    summary_df_by <- counterfactual |>
-      mutate(
-        prop_2000 = percent_2000 / 100, 
-        prop_2019 = percent_2019 / 100, 
-        contrib_actual_2000 = weighted_mean_2000 * prop_2000,
-        contrib_actual_2019 = weighted_mean_2019 * prop_2019,
-        contrib_cf_2019 = weighted_mean_2000 * prop_2019
-        ) |>
-      group_by(across(all_of(counterfactual_by))) |>
-      summarize(
-        contribution_diff = sum(contribution_diff, na.rm = TRUE),
-        contrib_actual_2000 = sum(contrib_actual_2000),
-        contrib_actual_2019 = sum(contrib_actual_2019),
-        contrib_cf_2019 = sum(contrib_cf_2019),
-        prop_2000 = sum(percent_2000) / 100, 
-        prop_2019 = sum(percent_2019) / 100, 
-        test = sum(weighted_mean_2000),
-        .groups = "drop",
-        pop_2000 = sum(weighted_count_2000),
-        pop_2019 = sum(weighted_count_2019)
-      ) |>
-      mutate(
-        diff = contribution_diff / prop_2019,
-        actual_2000 = contrib_actual_2000 / prop_2000,
-        actual_2019 = contrib_actual_2019 / prop_2019,
-        cf_2019 = contrib_cf_2019 / prop_2019
-      )
-    
-    return(list(
-      overall = summary_df_overall,
-      by = summary_df_by
-    ))
-  }
+  # ---- Always perform grouped summary (NULL = one group) ----
+  summary_df_by <- counterfactual |>
+    mutate(
+      prop_2000 = percent_2000 / 100, 
+      prop_2019 = percent_2019 / 100, 
+      contrib_actual_2000 = weighted_mean_2000 * prop_2000,
+      contrib_actual_2019 = weighted_mean_2019 * prop_2019,
+      contrib_expected_2019 = weighted_mean_2000 * prop_2019
+    ) |>
+    group_by(across(all_of(counterfactual_by))) |>
+    summarize(
+      contribution_diff = sum(weighted_mean_2019 * prop_2019 - weighted_mean_2000 * prop_2019),
+      contrib_actual_2000 = sum(contrib_actual_2000),
+      contrib_actual_2019 = sum(contrib_actual_2019),
+      contrib_expected_2019 = sum(contrib_expected_2019),
+      prop_2000 = sum(percent_2000) / 100, 
+      prop_2019 = sum(percent_2019) / 100, 
+      pop_2000 = sum(weighted_count_2000),
+      pop_2019 = sum(weighted_count_2019),
+      .groups = "drop"
+    ) |>
+    mutate(
+      diff = contribution_diff / prop_2019,
+      actual_2000 = contrib_actual_2000 / prop_2000,
+      actual_2019 = contrib_actual_2019 / prop_2019,
+      expected_2019 = contrib_expected_2019 / prop_2019
+    )
   
-  
-  # ---- Only overall summary ----
   return(list(
-    overall = summary_df_overall
+    overall = summary_df_overall,
+    by = summary_df_by
   ))
 }
+
 
 
 # This function takes data and metadata about desired counterfactual simulations
