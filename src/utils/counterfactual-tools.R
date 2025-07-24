@@ -142,15 +142,15 @@ summarize_counterfactual <- function(
     mutate(
       prop_2000 = percent_2000 / 100, 
       prop_2019 = percent_2019 / 100, 
-      contrib_actual_2000 = weighted_mean_2000 * prop_2000,
-      contrib_actual_2019 = weighted_mean_2019 * prop_2019,
+      contrib_observed_2000 = weighted_mean_2000 * prop_2000,
+      contrib_observed_2019 = weighted_mean_2019 * prop_2019,
       contrib_expected_2019 = weighted_mean_2000 * prop_2019
     ) |>
     group_by(across(all_of(counterfactual_by))) |>
     summarize(
       contribution_diff = sum(weighted_mean_2019 * prop_2019 - weighted_mean_2000 * prop_2019),
-      contrib_actual_2000 = sum(contrib_actual_2000),
-      contrib_actual_2019 = sum(contrib_actual_2019),
+      contrib_observed_2000 = sum(contrib_observed_2000),
+      contrib_observed_2019 = sum(contrib_observed_2019),
       contrib_expected_2019 = sum(contrib_expected_2019),
       prop_2000 = sum(percent_2000) / 100, 
       prop_2019 = sum(percent_2019) / 100, 
@@ -160,8 +160,8 @@ summarize_counterfactual <- function(
     ) |>
     mutate(
       diff = contribution_diff / prop_2019,
-      actual_2000 = contrib_actual_2000 / prop_2000,
-      actual_2019 = contrib_actual_2019 / prop_2019,
+      observed_2000 = contrib_observed_2000 / prop_2000,
+      observed_2019 = contrib_observed_2019 / prop_2019,
       expected_2019 = contrib_expected_2019 / prop_2019
     )
   
