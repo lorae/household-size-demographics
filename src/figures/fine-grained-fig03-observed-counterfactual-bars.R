@@ -7,15 +7,11 @@
 
 # ----- Step 0: Load required packages ----- #
 library("dplyr")
-library("duckdb")
 library("stringr")
 library("tidyr")
-library("purrr")
-library("glue")
-library("readxl")
 library("ggplot2")
-library("base64enc")
-library("sf")
+library("patchwork")
+library("scales")
 options(scipen = 999)
 
 # ----- Step 1: Source helper functions ----- #
@@ -31,4 +27,29 @@ round_up_to <- function(x, base) base * ceiling(x / base)
 # ----- Step 2: Import data ----- #
 cf_summaries <- readRDS("throughput/fine-grained-cf-summaries.rds")
 
-#make_observed_cf_barplot(fig06_data |> filter(name == "Number of Persons"), yaxis_override = c(3, 3.5))
+# ----- Step 3: Make plots ----- #
+p <- make_observed_cf_barplot(cf_summaries |> filter(name == "Number of Persons"), yaxis_override = c(3, 3.5))
+p
+
+h <- make_observed_cf_barplot(
+    cf_summaries |> 
+      filter(name == "Headship Rate") |> 
+      mutate(
+        observed_2000 = 100 * observed_2000,
+        observed_2019 = 100 * observed_2019,
+        expected_2019 = 100 * expected_2019
+      ),
+    yaxis_override = c(30, 45),
+    label_format = "%.2f%%"
+) +
+  scale_y_continuous(labels = label_percent(scale = 1)) 
+h
+
+fig03 <- p + h
+# ----- Step 4: Save plots ----- #
+ggsave(
+  "output/figures/fine-grained/fig03-observed-expected-barshhsize.png",
+  plot = fig03,
+  width = 3000, height = 2000, units = "px", dpi = 300
+)
+

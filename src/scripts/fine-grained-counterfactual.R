@@ -90,8 +90,8 @@ hhsize_state_summary <- summarize_counterfactual(
   prop_2019,
   pop_2000,
   pop_2019,
-  actual_2000,
-  actual_2019,
+  observed_2000,
+  observed_2019,
   expected_2019,
   diff
 )
@@ -104,7 +104,7 @@ hhsize_summary <- summarize_counterfactual(
   p1 = 2019
 )$by |>
   mutate(
-    name = "Number of Persons in Household"
+    name = "Number of Persons"
   )
 
 
@@ -135,8 +135,8 @@ headship_state_summary <- summarize_counterfactual(
   prop_2019,
   pop_2000,
   pop_2019,
-  actual_2000,
-  actual_2019,
+  observed_2000,
+  observed_2019,
   expected_2019,
   diff
 )
