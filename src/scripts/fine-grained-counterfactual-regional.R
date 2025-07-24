@@ -66,18 +66,8 @@ p0_sample <- ipums_db |> filter(YEAR == 2000) |> filter(GQ %in% c(0,1,2))
 p1_sample <- ipums_db |> filter(YEAR == 2019) |> filter(GQ %in% c(0,1,2)) 
 
 
-# Do diffs aggregate properly?
-test <- calculate_counterfactual(
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
-  #cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC", "INCTOT_cpiu_2010_bucket", "CPUMA0010"),
-  p0 = 2000,
-  p1 = 2019,
-  p0_data = p0_sample |> filter(STATEFIP == "06"), 
-  p1_data = p1_sample |> filter(STATEFIP == "06"),
-  outcome = "NUMPREC"
-)
-
-x <- counterfactual_components(
+# Heavy lifting computation on the counterfactual for NUMPREC outcome
+cf_hhsize <- counterfactual_components(
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019,
@@ -85,17 +75,17 @@ x <- counterfactual_components(
   p1_data = p1_sample,
   outcome = "NUMPREC"
 ) |>
-  left_join(cpuma_state_cross, by = "CPUMA0010")
+  left_join(cpuma_state_cross, by = "CPUMA0010") # Adds "State" as a col
   
-summarize_counterfactual(
-  x,
+hhsize_state_cf <- summarize_counterfactual(
+  cf_hhsize,
   counterfactual_by = "State",
   cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019
-) -> a
+)
 
-a$by |> select(
+hhsize_state_summary <- hhsize_state_cf$by |> select(
   State, 
   prop_2000,
   prop_2019,
@@ -105,76 +95,8 @@ a$by |> select(
   actual_2019,
   cf_2019,
   diff
-) -> b
-
-write.csv(b, "state_outputs.csv")
-
-# Calculate CPUMA-level fully-controlled diffs
-hhsize_contributions <- calculate_counterfactual(
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
-  #cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC", "INCTOT_cpiu_2010_bucket", "CPUMA0010"),
-  p0 = 2000,
-  p1 = 2019,
-  p0_data = p0_sample |> filter(STATEFIP == "01"), 
-  p1_data = p1_sample,
-  outcome = "NUMPREC"
-)$contributions  |>
-  group_by(CPUMA0010) |>
-  summarize(contribution_diff = sum(contribution_diff, na.rm = TRUE),
-            prop_2019 = sum(percent_2019) / 100, .groups = "drop",
-            pop_2019 = sum(weighted_count_2019)) |>
-  mutate(diff = contribution_diff / prop_2019)
-
-bedroom_contributions <- calculate_counterfactual(
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
-  p0 = 2000,
-  p1 = 2019,
-  p0_data = p0_sample, 
-  p1_data = p1_sample,
-  outcome = "persons_per_bedroom"
-)$contributions |>
-  group_by(CPUMA0010) |>
-  summarize(contribution_diff = sum(contribution_diff, na.rm = TRUE),
-            prop_2019 = sum(percent_2019) / 100, .groups = "drop",
-            pop_2019 = sum(weighted_count_2019)) |>
-  mutate(diff = contribution_diff / prop_2019)
-
-# Attach row specifying state to the CPUMA-level diffs
-hhsize_contributions_state <- merge(
-  cpuma_state_cross,
-  hhsize_contributions,
-  by = "CPUMA0010"
-)
-bedroom_contributions_state <- merge(
-  cpuma_state_cross,
-  bedroom_contributions,
-  by = "CPUMA0010"
 )
 
-# Data validity checks
-is.na(hhsize_contributions_state$State) |> sum() # No NA values! Great!
-is.na(bedroom_contributions_state$State) |> sum() # No NA values! Great!
-
-# Create summary tables (each row is one state) showing the median, weighted median,
-# and mean diffs. Used as a scaffolding for Shiny app tables 3.3 and 3.4
-# Table 3.3 (Persons per household)
-hhsize_state_summary <- hhsize_contributions_state |>
-  group_by(State, STATEFIP) |>
-  summarize(
-    median = median(diff, na.rm = TRUE),
-    weighted_median = rep(diff, times = pop_2019) |> median(),
-    weighted_mean = weighted.mean(diff, w = pop_2019, na.rm = TRUE),
-    .groups = "drop"
-  )
-# Table 3.4 (Persons per bedroom)
-bedroom_state_summary <- bedroom_contributions_state |>
-  group_by(State, STATEFIP) |>
-  summarize(
-    median = median(diff, na.rm = TRUE),
-    weighted_median = rep(diff, times = pop_2019) |> median(),
-    weighted_mean = weighted.mean(diff, w = pop_2019, na.rm = TRUE),
-    .groups = "drop"
-  )
 
 ##############################################
 #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv#
@@ -218,7 +140,6 @@ hawaii <- transform_state(state_sf, "15", -35, 1, c(5200000, -1400000))
 # Final map after transforming non-contiguous states
 state_sf_final <- state_sf %>%
   filter(!STATEFIP %in% c("02", "15")) |>
-  
   bind_rows(alaska, hawaii)
 
 # Join the state data with household size differences
