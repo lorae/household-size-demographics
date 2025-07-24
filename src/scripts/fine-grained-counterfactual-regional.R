@@ -78,30 +78,36 @@ test <- calculate_counterfactual(
 )
 
 x <- counterfactual_components(
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket"),
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019,
   p0_data = p0_sample, 
   p1_data = p1_sample,
   outcome = "NUMPREC"
-) # |>
-  # left_join(cpuma_state_cross, by = "CPUMA0010")
+) |>
+  left_join(cpuma_state_cross, by = "CPUMA0010")
   
 summarize_counterfactual(
   x,
-  counterfactual_by = "RACE_ETH_bucket",
-  cf_categories = c("RACE_ETH_bucket", "AGE_bucket"),
+  counterfactual_by = "State",
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
   p0 = 2000,
   p1 = 2019
-)
+) -> a
 
-test$contributions  |>
-  group_by(CPUMA0010) |>
-  summarize(contribution_diff = sum(contribution_diff, na.rm = TRUE),
-            prop_2019 = sum(percent_2019) / 100, .groups = "drop",
-            pop_2019 = sum(weighted_count_2019)) |>
-  mutate(diff = contribution_diff / prop_2019) -> test2
+a$by |> select(
+  State, 
+  prop_2000,
+  prop_2019,
+  pop_2000,
+  pop_2019,
+  actual_2000,
+  actual_2019,
+  cf_2019,
+  diff
+) -> b
 
+write.csv(b, "state_outputs.csv")
 
 # Calculate CPUMA-level fully-controlled diffs
 hhsize_contributions <- calculate_counterfactual(
