@@ -14,10 +14,10 @@ years <- c(2000, 2010, 2020)
 
 get_census_data <- function(year) {
   if (year == 2020) {
-    vars <- c(units = "H1_001N", occupied = "H1_002N")
+    vars <- c(units = "H1_001N", occ_units = "H1_002N")
     sumfile <- "pl"
   } else {
-    vars <- c(units = "H001001", occupied = "H003002")
+    vars <- c(units = "H001001", occ_units = "H003002")
     sumfile <- "sf1"
   }
   
@@ -30,10 +30,10 @@ get_census_data <- function(year) {
   ) |>
     mutate(
       year = year,
-      vacant = units - occupied,
-      vr = vacant / units
+      vac_units = units - occ_units,
+      vr = vac_units / units
     ) |>
-    select(year, units, occupied, vacant, vr)
+    select(year, units, occ_units, vac_units, vr)
 }
 
 # Fetch data and pivot
@@ -43,9 +43,12 @@ summary_table <- bind_rows(lapply(years, get_census_data)) |>
   select(column, value) |>
   pivot_wider(names_from = column, values_from = value) |>
   select(
-    units_2000, occupied_2000, vacant_2000, vr_2000,
-    units_2010, occupied_2010, vacant_2010, vr_2010,
-    units_2020, occupied_2020, vacant_2020, vr_2020
+    units_2000, occ_units_2000, vac_units_2000, vr_2000,
+    units_2010, occ_units_2010, vac_units_2010, vr_2010,
+    units_2020, occ_units_2020, vac_units_2020, vr_2020
+  ) |>
+  mutate(
+    
   )
 
-summary_table
+summary_table |> glimpse()
