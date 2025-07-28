@@ -100,6 +100,7 @@ make_dotplot <- function(
 make_dotplot_new <- function(
     dotplot_data, 
     x_title, 
+    x_as_percent = FALSE,
     limits = c(2.5, 4.5),
     show_legend = TRUE,
     show_y_labels = TRUE,
@@ -152,7 +153,12 @@ make_dotplot_new <- function(
       )
     ) +
     
-    scale_x_continuous(name = x_title, limits = limits, expand = c(0, 0)) +
+    scale_x_continuous(
+      name = x_title, 
+      limits = limits, 
+      expand = c(0, 0),
+      labels = if (x_as_percent) scales::label_percent(accuracy = 1) else waiver()
+      ) +
     theme_minimal(base_size = 12) +
     theme(
       legend.title = element_blank(),
@@ -247,6 +253,7 @@ p_new <- make_dotplot_new(
 h_new <- make_dotplot_new(
   dotplot_data = prep_dotplot_data(headship_state, state_order), 
   x_title = "Average Headship Rate", 
+  x_as_percent = TRUE,
   limits = c(0.3, 0.5),
   arrow_data = arrow_headship,
   show_legend = FALSE,
