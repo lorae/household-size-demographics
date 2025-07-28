@@ -266,7 +266,7 @@ fig02_new
 
 # ----- Step 3: Save plots ----- #
 ggsave(
-  "output/figures/fine-grained/fig02-connected-dots.png", 
-  plot = fig02, 
+  "output/figures/fine-grained/fig02-arrows.png", 
+  plot = fig02_new, 
   width = 3000, height = 3000, units = "px", dpi = 300
 )
