@@ -1,0 +1,19 @@
+# INSTRUCTIONS:
+#
+# 1. Request a free Census API key (if you don't already have one) at:
+#    https://api.census.gov/data/key_signup.html
+#
+# 2. Rename this file to `.Renviron` (remove the "example." prefix).
+#    This is important for two reasons:
+#      - If you leave it as `example.Renviron` and add your API key, then commit 
+#        and push, you may expose your secret on the internet. This file is NOT 
+#        ignored by Git.
+#      - R only loads files named `.Renviron` automatically at startup;
+#        any other name will be ignored.
+#
+# 3. Replace `your_api_key` below with your actual Census API key.
+#    Do NOT use quotation marks around the key.
+#
+# Note: `.Renviron` is included in `.gitignore`, so your real key will not be committed.
+
+CENSUS_API_KEY=your_api_key
