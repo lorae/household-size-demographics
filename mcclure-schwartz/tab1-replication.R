@@ -12,7 +12,8 @@ census_api_key(Sys.getenv("CENSUS_API_KEY"), install = FALSE)
 
 years <- c(2000, 2010, 2020)
 
-get_census_data <- function(year) {
+# Function to fetch state-level or national data
+get_census_data <- function(year, geography = "state") {
   if (year == 2020) {
     vars <- c(units = "H1_001N", occ_units = "H1_002N")
     sumfile <- "pl"
@@ -22,31 +23,33 @@ get_census_data <- function(year) {
   }
   
   get_decennial(
-    geography = "us",
+    geography = geography,
     variables = vars,
     year = year,
     sumfile = sumfile,
     output = "wide"
   ) |>
     mutate(
+      region = if (geography == "us") "United States" else NAME,
       year = year,
       vac_units = units - occ_units,
       vr = vac_units / units
     ) |>
-    select(year, units, occ_units, vac_units, vr)
+    select(region, year, units, occ_units, vac_units, vr)
 }
 
-# Fetch data and pivot
-summary_table <- bind_rows(lapply(years, get_census_data)) |>
-  pivot_longer(cols = -year, names_to = "metric", values_to = "value") |>
+# State-level data
+state_data <- bind_rows(lapply(years, get_census_data, geography = "state"))
+
+# National row
+national_data <- bind_rows(lapply(years, get_census_data, geography = "us"))
+
+# Combine and reshape
+summary_table <- bind_rows(state_data, national_data) |>
+  pivot_longer(cols = -c(region, year), names_to = "metric", values_to = "value") |>
   mutate(column = paste0(metric, "_", year)) |>
-  select(column, value) |>
+  select(region, column, value) |>
   pivot_wider(names_from = column, values_from = value) |>
-  select(
-    units_2000, occ_units_2000, vac_units_2000, vr_2000,
-    units_2010, occ_units_2010, vac_units_2010, vr_2010,
-    units_2020, occ_units_2020, vac_units_2020, vr_2020
-  ) |>
   mutate(
     grow_occ_2000_2010 = occ_units_2010 - occ_units_2000,
     grow_occ_2010_2020 = occ_units_2020 - occ_units_2010,
@@ -58,5 +61,3 @@ summary_table <- bind_rows(lapply(years, get_census_data)) |>
     unit_surplus_2010_2020 = grow_units_2010_2020 - grow_occ_2010_2020,
     unit_surplus_2000_2020 = grow_units_2000_2020 - grow_occ_2000_2020
   )
-
-summary_table |> glimpse()
