@@ -18,12 +18,7 @@ headship_state <- readRDS("throughput/fine-grained-headship-diff-state.rds")
 hhsize_state <- readRDS("throughput/fine-grained-hhsize-diff-state.rds")
 
 # Prep long-format data
-prep_dotplot_data <- function(data) {
-  
-  # Come up with order of states in chart
-  state_order <- data |>
-    arrange(observed_2000) |>
-    pull(State) 
+prep_dotplot_data <- function(data, state_order) {
   
   # Make the data long
   data_long <- data |>
@@ -51,7 +46,8 @@ make_dotplot <- function(
     dotplot_data, 
     title, 
     limits = c(2.5, 4.5),
-    show_legend = TRUE
+    show_legend = TRUE,
+    show_y_labels = TRUE
     ){
   ggplot() +
     # Grey background bands
@@ -80,15 +76,22 @@ make_dotplot <- function(
       panel.grid.major.y = element_blank(),
       panel.grid.minor = element_blank(),
       axis.title.y = element_blank(),
-      axis.text.y = element_text(size = 9),
+      axis.text.y = if (show_y_labels) element_text(size = 9) else element_blank(),
       axis.text.x = element_text(size = 10),
       plot.margin = margin(10, 20, 10, 10)
     )
 }
 
 # ----- Step 2: Make plots -----
+# Come up with order of states in chart. We use the order of the hhsizes
+# and we'll make the headship dotplot match this order
+
+state_order <- hhsize_state |>
+  arrange(observed_2000) |>
+  pull(State) 
+
 p <- make_dotplot(
-  dotplot_data = prep_dotplot_data(hhsize_state), 
+  dotplot_data = prep_dotplot_data(hhsize_state, state_order = state_order), 
   title = "Average Household Size", 
   limits = c(2.5, 4.5),
   show_legend = FALSE
@@ -96,10 +99,11 @@ p <- make_dotplot(
 p
 
 h <- make_dotplot(
-  dotplot_data = prep_dotplot_data(headship_state), 
+  dotplot_data = prep_dotplot_data(headship_state, state_order = state_order), 
   title = "Average Headship Rate", 
   limits = c(0.3, 0.5),
-  show_legend = FALSE
+  show_legend = FALSE,
+  show_y_labels = FALSE
 )
 h
 
