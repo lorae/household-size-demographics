@@ -5,6 +5,28 @@ This repository provides full replication code for analyzing the extent to which
 # `data` directory
 If you have cloned this repository from GitHub, it will include a `data` directory which contains an empty `ipums_microdata` directory. Because of the large file size, this data is not stored on GitHub. Either request the file directly from the authors or follow these instructions to download the data from IPUMS directly:
 
+## API Setup: Census Data Access
+
+Some scripts in this repository (e.g., for the McClure-Schwartz replication) use the `tidycensus` package, which requires a Census API key. To set this up:
+
+1. **Request a free Census API key**  
+   https://api.census.gov/data/key_signup.html
+
+2. **Copy the file** `sample.Renviron` to a new file named `.Renviron` in the project root directory.
+
+    On macOS/Linux:
+    ```bash
+    cp sample.Renviron .Renviron
+    ```
+    
+    Windows:
+    ```cmd
+    copy sample.Renviron .Renviron
+    ```
+3. **Open `.Renviron`** and replace `your_api_key` with your actual key.  Do not include quotation marks. R will automatically load `.Renviron` when you start a new session. This keeps your API key private and separate from the codebase.
+
+    🛑 Important: `.Renviron` is listed in `.gitignore`, so it will not be tracked or uploaded to GitHub — but `sample.Renviron` is tracked, so do not put your actual API key in the sample file.
+
 ## Download from IPUMS USA
 
 1. Navigate to the [IPUMS USA login page](https://uma.pop.umn.edu/usa/authentication/login). If you do not already have user credentials, you will need to set them up before proceeding. Log into the portal.
