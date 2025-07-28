@@ -11,6 +11,7 @@ library("tidyr")
 library("ggplot2")
 library("patchwork")
 library("forcats")
+library("grid")
 options(scipen = 999)
 
 # ----- Step 1: Import data ----- #
@@ -25,7 +26,8 @@ prep_dotplot_data <- function(data, state_order) {
     select(
       State, 
       observed_2000, 
-      observed_2019
+      observed_2019,
+      expected_2019
     ) |>
     pivot_longer(cols = starts_with("observed_"), names_to = "year", values_to = "observed") |>
     mutate(
@@ -33,13 +35,22 @@ prep_dotplot_data <- function(data, state_order) {
     ) |>
     mutate(State = factor(State, levels = state_order))
   
+  # Keep expected_2019 as a separate table (not long)
+  expected_data <- data |>
+    mutate(State = factor(State, levels = state_order)) |>
+    select(State, expected_2019)
+  
   band_data <- data_long |>
     distinct(State) |>
     mutate(row_id = row_number()) |>
     filter(row_id %% 2 == 0) |>
     mutate(ymin = row_id - 0.5, ymax = row_id + 0.5)
     
-  return(list(data_long = data_long, band_data = band_data))
+  return(list(
+    data_long = data_long, 
+    band_data = band_data,
+    expected_data = expected_data
+  ))
 }
 
 get_arrow_data <- function(data, state_order) {
@@ -135,7 +146,22 @@ make_dotplot_new <- function(
       aes(x = observed, y = State, color = direction),
       size = 1.2
     ) +
-    
+    # Green X at expected_2019 (optional)
+    {
+      if (!is.null(dotplot_data$expected_data)) {
+        geom_point(
+          data = dotplot_data$expected_data,
+          aes(x = expected_2019, y = State),
+          shape = 4,           # shape 4 is an X
+          color = "darkgreen",
+          alpha = 0.5,
+          stroke = 0.8,
+          size = 1.2
+        )
+      } else {
+        NULL
+      }
+    } +
     scale_color_manual(
       values = c("increase" = "darkblue", "decrease" = "darkred", "no_change" = "gray"),
     ) +
@@ -209,39 +235,57 @@ arrow_headship <- get_arrow_data(headship_state, state_order)
 # Arrow legend: make it manually
 
 legend_arrow_df <- tibble::tibble(
-  direction = c("decrease", "increase"),         # Decrease first
-  x_start   = c(1.2, 1.6),
-  x_end     = c(1.1, 1.7),                       # Left arrow for decrease, right arrow for increase
-  y         = c(1.0, 1.0),
-  label     = c("decrease", "increase"),
-  color     = c("darkred", "darkblue")
+  direction = c("decrease", "increase", "expected"),
+  x_start   = c(1.2, 1.6, 1.12),
+  x_end     = c(1.1, 1.7, NA),                       # Left arrow for decrease, right arrow for increase
+  y         = c(1.0, 1.0, 0.9),
+  label     = c("Decrease", "Increase", "2019 Counterfactual (expected) value"),
+  color     = c("darkred", "darkblue", "darkgreen")
 )
 
 # Manually build the arrow legend
-arrow_legend_plot <- ggplot(legend_arrow_df) +
-  # Arrows
+arrow_legend_plot <- ggplot() +
+  # Arrows for increase and decrease
   geom_segment(
+    data = filter(legend_arrow_df, direction %in% c("increase", "decrease")),
     aes(x = x_start, xend = x_end, y = y, yend = y, color = direction),
     arrow = arrow(length = unit(0.12, "cm")),
     linewidth = 0.6
   ) +
-  # Starting dots (representing 2000)
+  # Dots for 2000
   geom_point(
+    data = filter(legend_arrow_df, direction %in% c("increase", "decrease")),
     aes(x = x_start, y = y, color = direction),
     size = 1.2
   ) +
-  # Text labels placed to the right of arrow tips
+  # Green X for expected
+  geom_point(
+    data = filter(legend_arrow_df, direction == "expected"),
+    aes(x = x_start, y = y),
+    shape = 4,
+    size = 1.2,         # match plot
+    stroke = 0.8,
+    color = "darkgreen",
+    alpha = 0.5         # match plot
+  ) +
+  # Labels
   geom_text(
-    aes(x = x_end + ifelse(direction == "increase", 0.05, 0.35), 
-        y = y, 
-        label = label),
-    hjust = ifelse(legend_arrow_df$direction == "increase", 0, 1),
+    data = filter(legend_arrow_df, direction != "expected"),
+    aes(x = x_end + ifelse(direction == "increase", 0.05, 0.35), y = y, label = label),
+    hjust = ifelse(legend_arrow_df$direction[1:2] == "increase", 0, 1),
+    size = 3.5
+  ) +
+  geom_text(
+    data = filter(legend_arrow_df, direction == "expected"),
+    aes(x = x_start + 0.1, y = y, label = label),
+    hjust = 0,
     size = 3.5
   ) +
   scale_color_manual(values = c("increase" = "darkblue", "decrease" = "darkred")) +
   theme_void() +
-  theme(legend.position = "none") +
-  coord_cartesian(xlim = c(0.7, 2.4))
+  coord_cartesian(xlim = c(0.7, 2.4), ylim = c(0.85, 1.05)) +
+  theme(legend.position = "none")
+
 
 p_new <- make_dotplot_new(
   dotplot_data = prep_dotplot_data(hhsize_state, state_order),
@@ -254,19 +298,25 @@ h_new <- make_dotplot_new(
   dotplot_data = prep_dotplot_data(headship_state, state_order), 
   x_title = "Average Headship Rate", 
   x_as_percent = TRUE,
-  limits = c(0.3, 0.5),
+  limits = c(0.3, 0.51),
   arrow_data = arrow_headship,
   show_legend = FALSE,
   show_y_labels = FALSE
 )
 
-fig02_new <- (p_new + h_new) / arrow_legend_plot  +
+# Convert arrow_legend_plot to a grob with clipping off
+arrow_legend_grob <- ggplotGrob(arrow_legend_plot)
+arrow_legend_grob$layout$clip[arrow_legend_grob$layout$name == "panel"] <- "off"
+
+# Patch together the figure
+fig02_new <- (p_new + h_new) / wrap_elements(arrow_legend_grob) +
   plot_layout(heights = c(1, 0.1))
 fig02_new
 
+
 # ----- Step 3: Save plots ----- #
 ggsave(
-  "output/figures/fine-grained/fig02-connected-dots.png", 
-  plot = fig02, 
+  "output/figures/fine-grained/fig02-arrows.png", 
+  plot = fig02_new, 
   width = 3000, height = 3000, units = "px", dpi = 300
 )
