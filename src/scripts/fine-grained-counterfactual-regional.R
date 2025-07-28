@@ -1,4 +1,4 @@
-# src/scripts/fine-grained-counterfactual.R
+# src/scripts/fine-grained-counterfactual-regional.R
 #
 # The purpose of this script is to produce throughput data used in fine-grained
 # chart outputs: fine-grained-fig02, -fig03, -fig04

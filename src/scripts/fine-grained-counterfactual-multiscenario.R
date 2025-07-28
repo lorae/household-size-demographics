@@ -17,8 +17,6 @@
 # Outputs:
 #   - WHERE?
 # 
-# TODO: step 2, 2a, and 2b are identical between this script and counterfactual-regional.R.
-# Figure out how potentially to move this data wrangling upstream.
 # TODO: this no longer works due to a refactored calculate counterfactual funciton. Fix.
 #
 # ----- Step 0: Load required packages ----- #
@@ -40,7 +38,7 @@ source("src/utils/counterfactual-tools.R") # Includes function for counterfactua
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed") |>
   # add an is_hoh column that is TRUE if the person is head of household, false otherwise
-  mutate(is_hoh =as.integer(PERNUM == 1))
+  mutate(is_hoh = as.integer(PERNUM == 1))
 
 # TODO: eventually write a function in dataduck that when buckets are created,
 # the code automatically writes a list of vectors containing factor
@@ -120,9 +118,6 @@ hhsize_cf <- bind_rows(
     )$summary # Extract only the summary tibble
   )
 )
-
-##############
-#GENERATE FIGUURE 3
 
 # Average headship rate in 2000
 headship_2000_observed <- crosstab_mean(
