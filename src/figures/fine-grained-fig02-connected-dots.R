@@ -60,7 +60,7 @@ get_arrow_data <- function(data, state_order) {
 
 make_dotplot <- function(
     dotplot_data, 
-    title, 
+    x_title, 
     limits = c(2.5, 4.5),
     show_legend = TRUE,
     show_y_labels = TRUE
@@ -82,9 +82,8 @@ make_dotplot <- function(
     ) +
     
     scale_color_manual(values = c("2000" = "skyblue", "2019" = "forestgreen")) +
-    scale_x_continuous(name = title, limits = limits, expand = c(0, 0)) +
+    scale_x_continuous(name = x_title, limits = limits, expand = c(0, 0)) +
     
-    labs(title = title) +
     theme_minimal(base_size = 12) +
     theme(
       legend.title = element_blank(),
@@ -100,7 +99,7 @@ make_dotplot <- function(
 
 make_dotplot_new <- function(
     dotplot_data, 
-    title, 
+    x_title, 
     limits = c(2.5, 4.5),
     show_legend = TRUE,
     show_y_labels = TRUE,
@@ -141,8 +140,7 @@ make_dotplot_new <- function(
       guide = if (show_legend) guide_legend() else "none"
     ) +
     
-    scale_x_continuous(name = title, limits = limits, expand = c(0, 0)) +
-    labs(title = title) +
+    scale_x_continuous(name = x_title, limits = limits, expand = c(0, 0)) +
     theme_minimal(base_size = 12) +
     theme(
       legend.title = element_blank(),
@@ -170,14 +168,14 @@ arrow_headship <- get_arrow_data(headship_state, state_order)
   
 p <- make_dotplot(
   dotplot_data = prep_dotplot_data(hhsize_state, state_order = state_order), 
-  title = "Average Household Size", 
+  x_title = "Average Household Size", 
   limits = c(2.5, 4.5),
   show_legend = FALSE
   )
 p
 p_new <- make_dotplot_new(
   dotplot_data = prep_dotplot_data(hhsize_state, state_order),
-  title = "Average Household Size",
+  x_title = "Average Household Size",
   limits = c(2.5, 4.5),
   arrow_data = arrow_hhsize,
   show_legend = TRUE
@@ -186,7 +184,7 @@ p_new
 
 h <- make_dotplot(
   dotplot_data = prep_dotplot_data(headship_state, state_order = state_order), 
-  title = "Average Headship Rate", 
+  x_title = "Average Headship Rate", 
   limits = c(0.3, 0.5),
   show_legend = FALSE,
   show_y_labels = FALSE
@@ -194,7 +192,7 @@ h <- make_dotplot(
 h
 h_new <- make_dotplot_new(
   dotplot_data = prep_dotplot_data(headship_state, state_order), 
-  title = "Average Headship Rate", 
+  x_title = "Average Headship Rate", 
   limits = c(0.3, 0.5),
   arrow_data = arrow_headship,
   show_legend = FALSE,
