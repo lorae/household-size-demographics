@@ -158,7 +158,7 @@ make_dotplot_new <- function(
 # Come up with order of states in chart. We use the order of the hhsizes
 # and we'll make the headship dotplot match this order
 
-state_order <- hhsize_state |>
+state_order <- headship_state |>
   arrange(observed_2000) |>
   pull(State) 
 
