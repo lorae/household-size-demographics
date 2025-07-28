@@ -1,7 +1,7 @@
-# mcclure-schwartz/mcclure-schwartz-statewide.R
+# mcclure-schwartz/tab1-replication.R
 # 
 # The purpose of this script is to replicate the McClure-Schwartz housing shortage
-# analysis at a state level.
+# analysis at a national level in Figure 1 of their paper.
 
 library("tidycensus")
 library("dplyr")
@@ -48,7 +48,15 @@ summary_table <- bind_rows(lapply(years, get_census_data)) |>
     units_2020, occ_units_2020, vac_units_2020, vr_2020
   ) |>
   mutate(
-    
+    grow_occ_2000_2010 = occ_units_2010 - occ_units_2000,
+    grow_occ_2010_2020 = occ_units_2020 - occ_units_2010,
+    grow_occ_2000_2020 = occ_units_2020 - occ_units_2000,
+    grow_units_2000_2010 = units_2010 - units_2000,
+    grow_units_2010_2020 = units_2020 - units_2010,
+    grow_units_2000_2020 = units_2020 - units_2000,
+    unit_surplus_2000_2010 = grow_units_2000_2010 - grow_occ_2000_2010,
+    unit_surplus_2010_2020 = grow_units_2010_2020 - grow_occ_2010_2020,
+    unit_surplus_2000_2020 = grow_units_2000_2020 - grow_occ_2000_2020
   )
 
 summary_table |> glimpse()
