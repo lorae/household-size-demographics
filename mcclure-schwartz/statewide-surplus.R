@@ -61,3 +61,5 @@ summary_table <- bind_rows(state_data, national_data) |>
     unit_surplus_2010_2020 = grow_units_2010_2020 - grow_occ_2010_2020,
     unit_surplus_2000_2020 = grow_units_2000_2020 - grow_occ_2000_2020
   )
+
+saveRDS(summary_table, "throughput/mcclure-schwartz-analysis-state.rds")
