@@ -31,7 +31,7 @@ setwd("/scratch/gpfs/ls4540/household-size-demographics")
 
 # ----- Step 1: Load and process IPUMS data ----- #
 
-ddi <- read_ipums_ddi("data/ipums-microdata/usa_00021.xml")
+ddi <- read_ipums_ddi("data/ipums-microdata/usa_00022.xml")
 ipums_tb <- read_ipums_micro(ddi, var_attrs = c()) 
 
 # ----- Step 2: Save to DuckDB ----- #
@@ -53,7 +53,6 @@ DBI::dbDisconnect(con)
 # VARNAME, for example, can be accessed through  the following
 # code:
 # `my_tibble <- value_labels_list$VARNAME`
-
 value_labels_list <- lapply(seq_len(nrow(ddi$var_info)), function(i) {
   val_labels <- ddi$var_info$val_labels[[i]]
   if (nrow(val_labels) > 0) {
