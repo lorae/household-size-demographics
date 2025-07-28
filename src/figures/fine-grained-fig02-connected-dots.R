@@ -137,7 +137,19 @@ make_dotplot_new <- function(
     
     scale_color_manual(
       values = c("increase" = "darkblue", "decrease" = "darkred", "no_change" = "gray"),
-      guide = if (show_legend) guide_legend() else "none"
+    ) +
+    guides(
+      color = guide_legend(
+        override.aes = list(
+          x = c(0.5, 0),         
+          xend = c(0, 0.5),      
+          y = c(0.5, 0.5), 
+          yend = c(0.5, 0.5),
+          arrow = list(arrow(length = unit(0.12, "cm"))),
+          linewidth = 0.5
+        ),
+        title = NULL
+      )
     ) +
     
     scale_x_continuous(name = x_title, limits = limits, expand = c(0, 0)) +
@@ -155,32 +167,21 @@ make_dotplot_new <- function(
 }
 
 # ----- Step 2: Make plots -----
+
+# ---- FIG02 OLD
 # Come up with order of states in chart. We use the order of the hhsizes
 # and we'll make the headship dotplot match this order
-
 state_order <- headship_state |>
   arrange(observed_2000) |>
   pull(State) 
 
-arrow_hhsize <- get_arrow_data(hhsize_state, state_order)
-arrow_headship <- get_arrow_data(headship_state, state_order)
-  
-  
+
 p <- make_dotplot(
   dotplot_data = prep_dotplot_data(hhsize_state, state_order = state_order), 
   x_title = "Average Household Size", 
   limits = c(2.5, 4.5),
   show_legend = FALSE
-  )
-p
-p_new <- make_dotplot_new(
-  dotplot_data = prep_dotplot_data(hhsize_state, state_order),
-  x_title = "Average Household Size",
-  limits = c(2.5, 4.5),
-  arrow_data = arrow_hhsize,
-  show_legend = TRUE
 )
-p_new
 
 h <- make_dotplot(
   dotplot_data = prep_dotplot_data(headship_state, state_order = state_order), 
@@ -189,7 +190,60 @@ h <- make_dotplot(
   show_legend = FALSE,
   show_y_labels = FALSE
 )
-h
+
+fig02 <- (p + h) + 
+  plot_layout(guides = "collect") & 
+  theme(legend.position = "bottom")
+
+# --- FIG02 NEW
+# Create arrow data
+arrow_hhsize <- get_arrow_data(hhsize_state, state_order)
+arrow_headship <- get_arrow_data(headship_state, state_order)
+
+# Arrow legend: make it manually
+
+legend_arrow_df <- tibble::tibble(
+  direction = c("decrease", "increase"),         # Decrease first
+  x_start   = c(1.2, 1.6),
+  x_end     = c(1.1, 1.7),                       # Left arrow for decrease, right arrow for increase
+  y         = c(1.0, 1.0),
+  label     = c("decrease", "increase"),
+  color     = c("darkred", "darkblue")
+)
+
+# Manually build the arrow legend
+arrow_legend_plot <- ggplot(legend_arrow_df) +
+  # Arrows
+  geom_segment(
+    aes(x = x_start, xend = x_end, y = y, yend = y, color = direction),
+    arrow = arrow(length = unit(0.12, "cm")),
+    linewidth = 0.6
+  ) +
+  # Starting dots (representing 2000)
+  geom_point(
+    aes(x = x_start, y = y, color = direction),
+    size = 1.2
+  ) +
+  # Text labels placed to the right of arrow tips
+  geom_text(
+    aes(x = x_end + ifelse(direction == "increase", 0.05, 0.35), 
+        y = y, 
+        label = label),
+    hjust = ifelse(legend_arrow_df$direction == "increase", 0, 1),
+    size = 3.5
+  ) +
+  scale_color_manual(values = c("increase" = "darkblue", "decrease" = "darkred")) +
+  theme_void() +
+  theme(legend.position = "none") +
+  coord_cartesian(xlim = c(0.7, 2.4))
+
+p_new <- make_dotplot_new(
+  dotplot_data = prep_dotplot_data(hhsize_state, state_order),
+  x_title = "Average Household Size",
+  limits = c(2.5, 4.5),
+  arrow_data = arrow_hhsize,
+  show_legend = FALSE
+)
 h_new <- make_dotplot_new(
   dotplot_data = prep_dotplot_data(headship_state, state_order), 
   x_title = "Average Headship Rate", 
@@ -198,15 +252,10 @@ h_new <- make_dotplot_new(
   show_legend = FALSE,
   show_y_labels = FALSE
 )
-h_new
 
-fig02 <- (p + h) + 
-  plot_layout(guides = "collect") & 
-  theme(legend.position = "bottom")
-
-fig02_new <- (p_new + h_new) +
-  plot_layout(guides = "collect") & 
-  theme(legend.position = "bottom")
+fig02_new <- (p_new + h_new) / arrow_legend_plot  +
+  plot_layout(heights = c(1, 0.1))
+fig02_new
 
 # ----- Step 3: Save plots ----- #
 ggsave(
