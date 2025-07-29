@@ -176,7 +176,7 @@ varnames_dict <- c(
   "cpuma"
 )
 # ----- Step 3: Make plots ----- #
-p    <- make_kob_plot(kob_output$p, "Number of Persons", hide_variable_labels = FALSE)
+p    <- make_kob_plot(kob_output$p, "Number of Persons", hide_variable_labels = FALSE, hide_facet_labels = FALSE)
 r    <- make_kob_plot(kob_output$r, "Number of Rooms")
 b    <- make_kob_plot(kob_output$b, "Number of Bedrooms")
 ppr  <- make_kob_plot(kob_output$ppr, "Persons per Room")

@@ -253,18 +253,6 @@ black <- plot_hhsize_histogram_double(
   title = "Black",
   ymax = ymax,
   ytitle = FALSE,
-  xtitle = FALSE,
-  bar_fills = list(
-    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
-    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
-  ),
-)
-
-hispanic <- plot_hhsize_histogram_double(
-  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
-  title = "Hispanic",
-  ymax = ymax,
-  ytitle = TRUE,
   xtitle = TRUE,
   bar_fills = list(
     per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
@@ -273,12 +261,25 @@ hispanic <- plot_hhsize_histogram_double(
   add_legend = TRUE
 )
 
+hispanic <- plot_hhsize_histogram_double(
+  data = fig02_data |> filter(RACE_ETH_bucket == "Hispanic"),
+  title = "Hispanic",
+  ymax = ymax,
+  ytitle = TRUE,
+  xtitle = FALSE,
+  bar_fills = list(
+    per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
+    per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
+  ),
+  add_legend = FALSE
+)
+
 white <- plot_hhsize_histogram_double(
   data = fig02_data |> filter(RACE_ETH_bucket == "White"),
   title = "White",
   ymax = ymax,
   ytitle = FALSE,
-  xtitle = TRUE,
+  xtitle = FALSE,
   bar_fills = list(
     per1 = list(color = theme_2000$color, alpha = theme_2000$alpha, line_color = theme_2000$color, line_type = theme_2000$line_type),
     per2 = list(color = theme_2019$color, alpha = theme_2019$alpha, line_color = theme_2019$color, line_type = theme_2019$line_type)
@@ -334,8 +335,10 @@ other <- plot_hhsize_histogram_double(
 )
 
 # Combine
-fig02 <- (all + black) / (hispanic + white) 
+fig02 <-  white / hispanic / black
 fig02c <- (all + black) / (hispanic + white) / (aapi + aian) + (multiracial + other)
+fig02d <- (all + black) / (hispanic + white) 
+
 
 # ... Figure 2B ... (alternate format)
 # 2019
@@ -422,7 +425,7 @@ fig02b <- (
 ggsave(
   "output/figures/fig02-hhsize-race-hist.png",
   plot = fig02,
-  width = 3000, height = 3000, units = "px", dpi = 300
+  width = 2000, height = 5000, units = "px", dpi = 400
 )
 
 ggsave(
@@ -432,9 +435,15 @@ ggsave(
 )
 
 ggsave(
-  "output/figures/fig02c-hhsize-race-hist-allraces.png",
+  "output/figures/fig02c-hhsize-race-hist.png",
   plot = fig02c,
   width = 3000, height = 6000, units = "px", dpi = 300
+)
+
+ggsave(
+  "output/figures/fig02d-hhsize-race-hist.png",
+  plot = fig02d,
+  width = 3000, height = 3000, units = "px", dpi = 300
 )
 
 saveRDS(fig02_data, "output/figures/fig02-data.rds")
