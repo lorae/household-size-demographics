@@ -25,6 +25,10 @@ load("data/helpers/state-pop-growth.rda") # May be deprecated
 # ----- Step 2: Import data ----- #
 hhsize_cpuma_summary <- readRDS("throughput/fine-grained-hhsize-diff-cpuma.rds")
 headship_cpuma_summary <- readRDS("throughput/fine-grained-headship-diff-cpuma.rds")
+
+hhsize_cpuma_race <- readRDS("throughput/fine-grained-hhsize-diff-cpuma-race.rds")
+headship_cpuma_race <- readRDS("throughput/fine-grained-headship-diff-cpuma-race.rds")
+
 cf_summaries <- readRDS("throughput/fine-grained-cf-summaries.rds")
 
 # ----- Housing shortage by CPUMA
@@ -108,3 +112,37 @@ act_hhsize_2019_overall <- population_aggregates_2019 |>
 act_hhsize_2019_overall
 
 (population_2019/act_hhsize_2019_overall) - (population_2019/white_hhsize_2019_overall) 
+
+# ----- New white counterfactual: use CPUMA level white hhsizes
+hhsize_cpuma_white <- hhsize_cpuma_race |>
+  filter(RACE_ETH_bucket == "White") |> 
+  select(CPUMA0010, observed_2019) |>
+  rename(observed_white_2019 = observed_2019)
+
+headship_cpuma_white <- headship_cpuma_race |>
+  filter(RACE_ETH_bucket == "White") |> 
+  select(CPUMA0010, observed_2019) |>
+  rename(observed_white_2019 = observed_2019)
+
+# How many more hhs would you need among the surfeit CPUMAs to reach white average
+# hhsize?
+hhsize_cpuma_summary |> left_join(hhsize_cpuma_white, by = "CPUMA0010") |>
+  mutate(white_diff = observed_2019 - observed_white_2019) |>
+  filter(white_diff > 0) |>
+  mutate(
+    housing_surplus_white = (pop_2019/observed_2019) - (pop_2019/observed_white_2019)
+  ) |>
+  pull(housing_surplus_white) |>
+  sum()
+
+
+# How many more hhs would you need among the surfeit CPUMAs to reach white average
+# headship?
+headship_cpuma_summary |> left_join(headship_cpuma_white, by = "CPUMA0010") |>
+  mutate(white_diff = observed_2019 - observed_white_2019) |>
+  filter(white_diff < 0) |> 
+  mutate(
+    housing_surplus = pop_2019 * white_diff
+  ) |> 
+  pull(housing_surplus) |> 
+  sum()
