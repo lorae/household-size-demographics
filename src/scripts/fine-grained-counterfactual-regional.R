@@ -96,6 +96,24 @@ hhsize_state_summary <- summarize_counterfactual(
   diff
 )
 
+hhsize_cpuma_summary <- summarize_counterfactual(
+  cf_hhsize,
+  counterfactual_by = "CPUMA0010",
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  p0 = 2000,
+  p1 = 2019
+)$by |> select(
+  CPUMA0010, 
+  prop_2000,
+  prop_2019,
+  pop_2000,
+  pop_2019,
+  observed_2000,
+  observed_2019,
+  expected_2019,
+  diff
+)
+
 # Top line summary
 hhsize_summary <- summarize_counterfactual(
   cf_hhsize,
@@ -141,6 +159,24 @@ headship_state_summary <- summarize_counterfactual(
   diff
 )
 
+headship_cpuma_summary <- summarize_counterfactual(
+  cf_headship,
+  counterfactual_by = "CPUMA0010",
+  cf_categories = c("RACE_ETH_bucket", "AGE_bucket", "SEX", "us_born", "EDUC_bucket", "INCTOT_cpiu_2010_bucket", "OWNERSHP", "CPUMA0010"),
+  p0 = 2000,
+  p1 = 2019
+)$by |> select(
+  CPUMA0010, 
+  prop_2000,
+  prop_2019,
+  pop_2000,
+  pop_2019,
+  observed_2000,
+  observed_2019,
+  expected_2019,
+  diff
+)
+
 # Top line summary
 headship_summary <- summarize_counterfactual(
   cf_headship,
@@ -153,7 +189,9 @@ headship_summary <- summarize_counterfactual(
   )
 
 # ----- Step 3: Save throughput ----- #
+saveRDS(hhsize_cpuma_summary, "throughput/fine-grained-hhsize-diff-cpuma.rds")
 saveRDS(hhsize_state_summary, "throughput/fine-grained-hhsize-diff-state.rds")
+saveRDS(headship_cpuma_summary, "throughput/fine-grained-headship-diff-cpuma.rds")
 saveRDS(headship_state_summary, "throughput/fine-grained-headship-diff-state.rds")
 write.csv(hhsize_state_summary, "throughput/fine-grained-hhsize-diff-state.csv", row.names = FALSE)
 write.csv(headship_state_summary, "throughput/fine-grained-headship-diff-state.csv", row.names = FALSE)
