@@ -374,3 +374,4 @@ diff_crowding_bedroom <- crowding_2019_cf - crowding_2019
 diff_crowding_numprec <- crowding_2000 - crowding_2019_cf
 
 diff_crowding_numprec / (diff_crowding_numprec + diff_crowding_bedroom)
+
