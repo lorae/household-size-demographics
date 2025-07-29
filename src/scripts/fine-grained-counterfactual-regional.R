@@ -177,6 +177,7 @@ headship_cpuma_summary <- summarize_counterfactual(
   diff
 )
 
+
 # Top line summary
 headship_summary <- summarize_counterfactual(
   cf_headship,
