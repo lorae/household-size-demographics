@@ -20,20 +20,20 @@ varnames_dict_test <- c(
 )
 
 # ----- Step 2: Run unit tests -----
-test_that("kob_tidy_output correctly splits variable and value", {
+test_that("split_term_column correctly splits variable and value", {
   test_input <- tibble(term = c("AGE_bucket10-14", "EDUC_bucketCollege", "(Intercept)"))
-  test_output <- kob_tidy_output(test_input, varnames = varnames_dict_test)
+  test_output <- split_term_column(test_input, varnames = varnames_dict_test)
   print(test_output)
   
   expect_equal(test_output$variable, c("AGE_bucket", "EDUC_bucket", "(Intercept)"))
   expect_equal(test_output$value, c("10-14", "College", "(Intercept)"))
 })
 
-test_that("kob_tidy_output warns when term doesn't match any varname", {
+test_that("split_term_column warns when term doesn't match any varname", {
   test_input <- tibble(term = c("Clown Car"))
   
   expect_warning(
-    kob_tidy_output(test_input, varnames = varnames_dict_test),
+    split_term_column(test_input, varnames = varnames_dict_test),
     regexp = "could not be matched to a variable prefix"
   )
 })

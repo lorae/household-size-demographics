@@ -8,7 +8,7 @@
 #
 #
 library(devtools)
-source("kob/scripts/kob-function.R") # The kob funciton is used within add-intercept()
+source("kob/scripts/kob-function.R") # The kob function is used within add-intercept()
 
 
 # ADD INTERCEPT
@@ -104,7 +104,7 @@ remove_intercept <- function(
 
 
 
-# Varnames fed into kob_tidy_output() function, below
+# Varnames fed into split_term_column() function, below
 varnames_dict <- c(
   "RACE_ETH_bucket",
   "AGE_bucket",
@@ -126,7 +126,7 @@ varnames_dict <- c(
 # RACE_ETH_bucketAAPI. This function uses the above varnames_dict to split up
 # this string into variable (e.g. RACE_ETH_bucket) and value (AAPI), and appends
 # to the kob_output data frame.
-kob_tidy_output <- function(kob_output, varnames = varnames_dict) {
+split_term_column <- function(kob_output, varnames = varnames_dict) {
   # Define a helper function to extract the variable prefix
   extract_variable <- function(term, varnames) {
     if (term == "(Intercept)") return("(Intercept)")  # explicitly handle intercept

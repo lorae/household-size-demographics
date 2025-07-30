@@ -18,7 +18,7 @@ library("glue")
 library("oaxaca")
 library("tibble")
 
-source("src/utils/regression-tools.R") # add_intercept & kob_tidy_output functions
+source("src/utils/regression-tools.R") # add_intercept & split_term_column functions
 
 # ----- Step 1: Load in data ----- #
 # Only run this if kob_input.rds doesn't already exist
@@ -33,7 +33,7 @@ kob_input <- readRDS("throughput/kob_input.rds")
 # For validation (kob_output_validate)
 aggregates <- readRDS("throughput/aggregates.rds")
 
-# For tidying (kob_tidy_output)
+# For tidying (split_term_column)
 varnames_dict <- c(
   "RACE_ETH_bucket",
   "AGE_bucket",
@@ -51,7 +51,7 @@ source("kob/scripts/kob-function.R")
 
 # --- Number of Persons (p) ---
 kob_p <- kob(kob_input$numprec) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
@@ -63,7 +63,7 @@ kob_output_validate(
 
 # --- Number of Bedrooms (b) ---
 kob_b <- kob(kob_input$bedroom) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
@@ -74,7 +74,7 @@ kob_output_validate(
 
 # --- Number of Rooms (r) ---
 kob_r <- kob(kob_input$room) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
@@ -85,7 +85,7 @@ kob_output_validate(
 
 # --- Persons per Room (ppr) ---
 kob_ppr <- kob(kob_input$ppr) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(
@@ -96,7 +96,7 @@ kob_output_validate(
 
 # --- Persons per Bedroom (ppbr) ---
 kob_ppbr <- kob(kob_input$ppbr) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
 
 kob_output_validate(

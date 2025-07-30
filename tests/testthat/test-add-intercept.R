@@ -15,7 +15,7 @@ setwd(root)
 
 # Load packages and helper functions
 load_all("../dataduck")
-source("src/utils/regression-tools.R") # Contains the function & kob_tidy_output
+source("src/utils/regression-tools.R") # Contains the function & split_term_column
 source("src/utils/create-benchmark-data.R") # Needed to grab sample raw data
 source("src/utils/regression-backends.R") # Needed to get regression function
 source("kob/scripts/kob-function.R") # Needed as a dependency of regression-tools.R
@@ -47,7 +47,7 @@ reg_int <- dataduck_reg_lm(
   wt_col = "PERWT",
   formula = formula_int
 ) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   rename(coef_2000 = estimate) |>
   mutate(
     # These extra cols are placeholders. Without them, add_intercept will refuse to run
@@ -72,7 +72,7 @@ reg_no_int <- dataduck_reg_lm(
   wt_col = "PERWT",
   formula = formula_no_int
 ) |>
-  kob_tidy_output() |>
+  split_term_column() |>
   rename(coef_2000 = estimate) |>
   mutate(
     # These extra cols are placeholders. Without them, add_intercept will refuse to run
