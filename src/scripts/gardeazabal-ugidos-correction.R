@@ -61,11 +61,27 @@ dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = f
 gu_adjust <- function(reg_output) {
   reg_output <- split_term_column(reg_output)
   
-  num <- reg_output |> filter(variable == "RACE_ETH_bucket") |> pull(estimate) |> sum()
-  denom <- reg_output |> filter(variable == "RACE_ETH_bucket") |> nrow() + 1
-  a <- num/denom
+  # Step 2: Compute Gardeazabal-Ugidos adjustment (α)
+  race_rows <- reg_output |> filter(variable == "RACE_ETH_bucket")
+  alpha <- sum(race_rows$estimate, na.rm = TRUE) / (nrow(race_rows) + 1)
   
-  return(a)
+  reg_output <- reg_output |>
+    mutate(
+      estimate = case_when(
+        term == "(Intercept)" ~ estimate + alpha,
+        variable == "RACE_ETH_bucket" ~ estimate - alpha,
+        TRUE ~ estimate
+      )
+    )
+  
+  return(reg_output)
 }
 x <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
 gu_adjust(x)
+
+# Now test regression with omitted variable = AAPI
+ipums_2019_sample_tb$RACE_ETH_bucket <- 
+  relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AIAN")
+
+y <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
+gu_adjust(y)
