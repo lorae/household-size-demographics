@@ -18,6 +18,7 @@ library(devtools)
 load_all("../dataduck")
 source("src/utils/create-benchmark-data.R")
 source("src/utils/regression-backends.R")
+source("src/utils/regression-tools.R") # for kob_tidy_output
 
 # ----- Step 1: Load and prepare sample ----- #
 create_benchmark_sample(
@@ -55,3 +56,12 @@ ipums_2019_sample_tb$RACE_ETH_bucket <-
   relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "Black")
 
 dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
+
+# Does kob_tidy_output work on results from this regression backend?
+x <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
+kob_tidy_output(x) # works beautifully
+# TODO: rename kob_tidy_output to something more universal
+
+gu_adjust <- function(reg_output) {
+  # Todo. First apply kob_tidy_output to determine which variables are in common.
+}

@@ -153,6 +153,12 @@ varnames_dict <- c(
   "cpuma"
 )
 
+# Function takes in any data frame with a "term" column and outputs the same
+# data frame but with new variable (e.g. RACE_ETH_bucket) and value (e.g. "White")
+# columns.
+# Used in tidying KOB output but can also be used in regression outputs, etc.
+# Necessitates a varnames_dict, which is defined globally above.
+#
 # The `term` column of the kob output takes the format variablevalue, e.g.
 # RACE_ETH_bucketAAPI. This function uses the above varnames_dict to split up
 # this string into variable (e.g. RACE_ETH_bucket) and value (AAPI), and appends
