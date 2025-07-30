@@ -57,11 +57,15 @@ ipums_2019_sample_tb$RACE_ETH_bucket <-
 
 dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
 
-# Does split_term_column work on results from this regression backend?
-x <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
-split_term_column(x) # works beautifully
-# TODO: rename split_term_column to something more universal
-
+# a rudimentary gu_adjust function
 gu_adjust <- function(reg_output) {
-  # Todo. First apply split_term_column to determine which variables are in common.
+  reg_output <- split_term_column(reg_output)
+  
+  num <- reg_output |> filter(variable == "RACE_ETH_bucket") |> pull(estimate) |> sum()
+  denom <- reg_output |> filter(variable == "RACE_ETH_bucket") |> nrow() + 1
+  a <- num/denom
+  
+  return(a)
 }
+x <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
+gu_adjust(x)
