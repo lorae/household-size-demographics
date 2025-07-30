@@ -18,7 +18,7 @@ library("glue")
 library("oaxaca")
 library("tibble")
 
-source("src/utils/regression-tools.R") # add_intercept function
+source("src/utils/regression-tools.R") # add_intercept & kob_tidy_output functions
 
 # ----- Step 1: Load in data ----- #
 # Only run this if kob_input.rds doesn't already exist

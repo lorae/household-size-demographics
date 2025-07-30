@@ -100,3 +100,58 @@ remove_intercept <- function(
   # not needed for now, but would be nice to have. Should reverse add_intercept 
   # perfectly. A good unit test would check if that's the case
 }
+
+
+
+
+# Varnames fed into kob_tidy_output() function, below
+varnames_dict <- c(
+  "RACE_ETH_bucket",
+  "AGE_bucket",
+  "EDUC_bucket",
+  "INCTOT_cpiu_2010_bucket",
+  "us_born",
+  "gender",
+  "tenure",
+  "cpuma"
+)
+
+# Function takes in any data frame with a "term" column and outputs the same
+# data frame but with new variable (e.g. RACE_ETH_bucket) and value (e.g. "White")
+# columns.
+# Used in tidying KOB output but can also be used in regression outputs, etc.
+# Necessitates a varnames_dict, which is defined globally above.
+#
+# The `term` column of the kob output takes the format variablevalue, e.g.
+# RACE_ETH_bucketAAPI. This function uses the above varnames_dict to split up
+# this string into variable (e.g. RACE_ETH_bucket) and value (AAPI), and appends
+# to the kob_output data frame.
+kob_tidy_output <- function(kob_output, varnames = varnames_dict) {
+  # Define a helper function to extract the variable prefix
+  extract_variable <- function(term, varnames) {
+    if (term == "(Intercept)") return("(Intercept)")  # explicitly handle intercept
+    matched <- varnames[str_detect(term, fixed(varnames))]
+    if (length(matched) > 0) return(matched[1])
+    return(NA_character_)
+  }
+  
+  kob_output <- kob_output |> 
+    mutate(
+      variable = map_chr(term, ~ extract_variable(.x, varnames)),
+      value = case_when(
+        term == "(Intercept)" ~ "(Intercept)",
+        !is.na(variable) ~ str_remove(term, fixed(variable)),
+        TRUE ~ term
+      )
+    ) |>
+    select(term, variable, value, everything())
+  
+  unmatched <- kob_output |> filter(is.na(variable)) |> pull(term)
+  if (length(unmatched) > 0) {
+    warning("Some terms could not be matched to a variable prefix: ", paste(unique(unmatched), collapse = ", "))
+  }
+  
+  return(kob_output)
+}
+
+# 

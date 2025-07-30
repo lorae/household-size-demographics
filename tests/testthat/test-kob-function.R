@@ -144,27 +144,3 @@ test_that("kob() skips e/c calculation for intercept row", {
   expect_true(is.na(intercept_row$e_se))
   expect_true(is.na(intercept_row$c_se))
 })
-
-# ----- Step 3: Test `kob_tidy_output` ----- 
-# Varnames fed into kob_tidy_output() function, below
-varnames_dict_test <- c(
-  "AGE_bucket",
-  "EDUC_bucket"
-)
-
-test_that("kob_tidy_output correctly splits variable and value", {
-  test_input <- tibble(term = c("AGE_bucket10-14", "EDUC_bucketCollege", "(Intercept)"))
-  test_output <- kob_tidy_output(test_input, varnames = varnames_dict_test)
-  
-  expect_equal(test_output$variable, c("AGE_bucket", "EDUC_bucket", NA))
-  expect_equal(test_output$value, c("10-14", "College", "(Intercept)"))
-})
-
-test_that("kob_tidy_output warns when term doesn't match any varname", {
-  test_input <- tibble(term = c("(Intercept)"))
-  
-  expect_warning(
-    kob_tidy_output(test_input, varnames = varnames_dict_test),
-    regexp = "could not be matched to a variable prefix"
-  )
-})
