@@ -1,4 +1,4 @@
-# kob/benchmark/create-benchmark-data.R
+# src/utils/create-benchmark-data.R
 #
 # The purpose of the script is to modularize the creation of a benchmark sample
 # for use in tests of jobs and other functions.

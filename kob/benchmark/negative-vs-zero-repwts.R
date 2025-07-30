@@ -42,7 +42,7 @@ library(devtools)
 
 # Load internal packages and helpers
 load_all("../dataduck")
-source("kob/benchmark/create-benchmark-data.R")
+source("src/utils/create-benchmark-data.R")
 source("kob/benchmark/regression-backends.R")
 
 # ----- Step 2: Load and prepare sample ----- #

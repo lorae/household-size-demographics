@@ -62,7 +62,7 @@ library(devtools)
 # dataduck internal package & helper scripts
 # TODO: will someday be added to dataduck
 load_all("../dataduck")
-source("kob/benchmark/create-benchmark-data.R")
+source("src/utils/create-benchmark-data.R")
 source("kob/benchmark/regression-backends.R")
 
 # ----- step 1: Load and prepare sample ----- #

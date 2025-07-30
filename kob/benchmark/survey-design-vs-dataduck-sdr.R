@@ -19,7 +19,7 @@ library(purrr)
 devtools::load_all("../dataduck")
 
 # Load the create-benchmark-data and helper functions
-source("kob/benchmark/create-benchmark-data.R")
+source("src/utils/create-benchmark-data.R")
 
 # ----- STEP 1: Load and Prepare Benchmark Sample -----
 # This section creates two variables:

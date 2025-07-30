@@ -8,7 +8,7 @@ root <- find_root(is_rstudio_project)
 setwd(root)
 
 # Source the functions we're testing
-source("kob/benchmark/create-benchmark-data.R")
+source("src/utils/create-benchmark-data.R")
 
 # ----- Step 1: Run the tests! -----
 test_that("create_benchmark_sample will create new dir if output_dir doesn't exist", {

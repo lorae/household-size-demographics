@@ -15,7 +15,7 @@ source("kob/utils/counterfactual-tools.R") # Includes function for counterfactua
 # so that the code runs more quickly locally.
 
 # Load the script for creating benchmark samples
-source("kob/benchmark/create-benchmark-data.R")
+source("src/utils/create-benchmark-data.R")
 
 # Ensure the benchmarks exist
 create_benchmark_sample(

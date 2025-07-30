@@ -16,7 +16,7 @@ setwd(root)
 # Load packages and helper functions
 load_all("../dataduck")
 source("src/utils/regression-tools.R") # Contains the function
-source("kob/benchmark/create-benchmark-data.R") # Needed to grab sample raw data
+source("src/utils/create-benchmark-data.R") # Needed to grab sample raw data
 source("kob/benchmark/regression-backends.R") # Needed to get regression function
 source("kob/scripts/kob-function.R") # Needed as a dependency of regression-tools.R
 
