@@ -36,3 +36,22 @@ filtered_tb <- ipums_2019_sample_tb |> filter(GQ %in% c(0, 1, 2))
 # have optional SEs, I might just keep the SEs in this pipeline even though they don't
 # serve a direct purpose
 
+# this the input I want to emulate
+kob_input <- readRDS("throughput/kob_input.rds") 
+
+formula <- NUMPREC ~ RACE_ETH_bucket
+
+# Test the regression with the default omitted variable (AIAN; first alphabetically)
+dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
+
+# Now test regression with omitted variable = AAPI
+ipums_2019_sample_tb$RACE_ETH_bucket <- 
+  relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AIAN")
+
+dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
+
+# Now test regression with omitted variable = Black
+ipums_2019_sample_tb$RACE_ETH_bucket <- 
+  relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "Black")
+
+dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
