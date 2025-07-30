@@ -18,7 +18,7 @@ library(devtools)
 load_all("../dataduck")
 source("src/utils/create-benchmark-data.R")
 source("src/utils/regression-backends.R")
-source("src/utils/regression-tools.R") # for split_term_column
+source("src/utils/regression-postprocess-tools.R") # for split_term_column
 
 # ----- Step 1: Load and prepare sample ----- #
 create_benchmark_sample(

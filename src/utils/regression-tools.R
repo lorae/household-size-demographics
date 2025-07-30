@@ -1,7 +1,4 @@
-# src/utils/regression-tools.R
-# TODO: rename to regression-postprocess-tools or something?
-# TODO: move the regression backends to this dir as well OR just rename this to
-#       regression-postprocess-tools
+# src/utils/regression-postprocess-tools.R
 #
 # The purpose of this script is to provide testable, modular functions for transforming
 # regression results
