@@ -156,7 +156,7 @@ reg00_2019_results <- summary(reg00_2019_results_se)$coefficients |>
   tidy_regression_v2()
 
 # Save it! 
-save(reg00_2019_results, file = "kob/cache/reg00_2019_results.rda")
+save(reg00_2019_results, file = "cache/reg00_2019_results.rda")
 
 # ----- STEP 5: Run the regression with STRATA and CLUSTER adjusted results in 2000----- #
 # Takes about 3 minutes to run
@@ -204,7 +204,7 @@ reg00_2000_results <- left_join(coefs, ses, by = "coef") |>
   select(coef, est_2000, est_2000_se, everything())
 
 # Save it! 
-save(reg00_2000_results, file = "kob/cache/reg00_2000_results.rda")
+save(reg00_2000_results, file = "cache/reg00_2000_results.rda")
 
 
 

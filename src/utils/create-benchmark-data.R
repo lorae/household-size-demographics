@@ -27,7 +27,7 @@ all_exist <- function(...) {
 #
 # Lightweight cache-aware execution:
 # Skips computation if output files exist and force == FALSE.
-# Saves benchmark data to `kob/cache/benchmark_sample_{year}_{n_strata}`,
+# Saves benchmark data to `cache/benchmark_sample_{year}_{n_strata}`,
 # with one .rds file for the tibble and one .duckdb file for the database.
 # Within the DB, the table name is always "ipums_sample".
 #
@@ -40,7 +40,7 @@ all_exist <- function(...) {
 #
 # output:
 # - It saves benchmark to a directory called
-# `kob/cache/benchmark_sample_{year}_{n_strata}`
+# `cache/benchmark_sample_{year}_{n_strata}`
 # - There will be one file in that folder with the db and one with the tb
 # - within the db, the table name will be "ipums_sample"
 # - returns an invisible NULL if any of the defensive validation checks are failed
@@ -49,7 +49,7 @@ create_benchmark_sample <- function(
     n_strata = 3,
     db_path = "data/db/ipums.duckdb", # The name of the DB with the source data
     db_table_name = "ipums_processed", # Name of the table within the DB of source data
-    output_dir = "kob/cache", # Optional parent dir where outputs are saved. Used for testing
+    output_dir = "cache", # Optional parent dir where outputs are saved. Used for testing
     force = FALSE # TRUE will recalculate benchmark sample, even if it already exists in cache
 ) {
   # Path to the cache where the output will be stored

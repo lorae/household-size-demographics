@@ -38,8 +38,8 @@ create_benchmark_sample(
 # TODO: make this step happen when create_benchmark_smaple is run. Perhaps rename
 # to load_benchmark_sample. Also, add in a message that says where the path is
 # to the file that was just loaded.
-ipums_2000 <- readRDS("kob/cache/benchmark_sample_2000_3/tb.rds")
-ipums_2019 <- readRDS("kob/cache/benchmark_sample_2019_3/tb.rds")
+ipums_2000 <- readRDS("cache/benchmark_sample_2000_3/tb.rds")
+ipums_2019 <- readRDS("cache/benchmark_sample_2019_3/tb.rds")
 
 ipums_tb <- bind_rows(ipums_2000, ipums_2019)
 

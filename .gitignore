@@ -2,15 +2,16 @@
 tests/testthat/test-create-benchmark-sample/*
 !tests/testthat/test-create-benchmark-sample/.gitkeep
 
-# KOB cache and throughput directories (very large regression results)
-kob/cache/*
-kob/throughput/*
+# Cache and throughput directories (very large regression results + survey design 
+# objects)
+cache/*
+throughput/*
 
 # Keep .gitkeep marker files in these folders to ensure the directory structure
 # is preserved for replication code, even though their contents are ignored (because
 # of very large file size)
-!kob/cache/.gitkeep
-!kob/throughput/.gitkeep
+!cache/.gitkeep
+!throughput/.gitkeep
 
 # R environment local files
 .Rprofile
@@ -71,9 +72,3 @@ slurm*
 
 # SLURM jobs - will commit once I'm ready to create templates
 jobs/
-
-# Survey design objects + large data files
-throughput/design_2000_survey.rds
-throughput/design_2019_survey.rds
-throughput/ipums_2019_tb.rds
-throughput/ipums_2000_tb.rds

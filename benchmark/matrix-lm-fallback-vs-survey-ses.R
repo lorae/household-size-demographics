@@ -17,7 +17,7 @@
 # so that the bootstrap standard error calculation is not corrupted.
 #
 # Sample reproducibility:
-# - The benchmark sample is cached locally in `kob/cache/` after creation.
+# - The benchmark sample is cached locally in `cache/` after creation.
 # - Set `force = TRUE` under Step 1 to regenerate a new random sample.
 #
 # Performance:
@@ -78,7 +78,7 @@ create_benchmark_sample(
   force = FALSE
 )
 
-ipums_2019_sample_tb <- readRDS(glue("kob/cache/benchmark_sample_2019_{n_strata}/tb.rds"))
+ipums_2019_sample_tb <- readRDS(glue("cache/benchmark_sample_2019_{n_strata}/tb.rds"))
 filtered_tb <- ipums_2019_sample_tb |> filter(GQ %in% c(0, 1, 2))
 
 # ----- step 2: Compute benchmark model using svyglm ----- #

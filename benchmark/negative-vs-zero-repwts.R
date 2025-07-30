@@ -54,7 +54,7 @@ create_benchmark_sample(
   force = FALSE
 )
 
-ipums_2019_sample_tb <- readRDS(glue("kob/cache/benchmark_sample_2019_{n_strata}/tb.rds"))
+ipums_2019_sample_tb <- readRDS(glue("cache/benchmark_sample_2019_{n_strata}/tb.rds"))
 filtered_tb <- ipums_2019_sample_tb |> filter(GQ %in% c(0, 1, 2))
 
 # Count negative replicate weights

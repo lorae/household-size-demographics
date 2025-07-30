@@ -46,7 +46,7 @@ create_benchmark_sample(
 )
 
 # Load the tibble. There's also a db available, but we ignore that for now.
-ipums_2019_sample_tb <- readRDS("kob/cache/benchmark_sample_2019_3/tb.rds")
+ipums_2019_sample_tb <- readRDS("cache/benchmark_sample_2019_3/tb.rds")
 
 # ----- Step 2: Create Survey Design and Benchmark Output ----- #
 # Build a survey design object using replicate weights

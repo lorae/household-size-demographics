@@ -31,7 +31,7 @@ The methods used to calculate standard errors vary based on the sample used. For
 
 For 2000 data, we use a Taylor series design using the [`CLUSTER`](https://usa.ipums.org/usa-action/variables/CLUSTER) and [`STRATA`](https://usa.ipums.org/usa-action/variables/STRATA) variables to account for survey design. For specifying design, we use the [`srvyr`](http://gdfe.co/srvyr/) R package. This package adds a `dplyr`-like syntax to the underlying [`survey`](https://cran.r-project.org/web/packages/survey/index.html) R package.
 
-Because the 2000 population proportions and regression results are particularly slow to calculate, we cache the results in `kob/cache`. 
+Because the 2000 population proportions and regression results are particularly slow to calculate, we cache the results in `cache`. 
 
 The functions used to calculate regressions and proportions and package them using these techniques are called `prop_sdr()`, `prop_taylor()`, `reg_sdr()`, and `reg_taylor()` in this repository.
 
