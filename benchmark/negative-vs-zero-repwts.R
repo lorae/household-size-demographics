@@ -1,4 +1,4 @@
-# kob/benchmark/negative-vs-zero-repwts.R
+# benchmark/negative-vs-zero-repwts.R
 cat("\nThis script benchmarks whether the `lm()` regression backend with zeroed-out
 negative replicate weights matches the point estimates and approximates standard errors
 from svyglm on 2019 data. Unlike the matrix-based solver, `lm()` requires that

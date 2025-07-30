@@ -1,4 +1,4 @@
-# kob/refactor/benchmark/survey-design-db-vs-tb.R
+# benchmark/survey-design-vs-dataduck-sdr.R
 # The purpose of this script is to test whether the output from my `bootstrap_replicates`
 # and `se_from_bootstrap` functions match the SEs from the widely accepted 
 # `survey` package

@@ -1,4 +1,4 @@
-# kob/refactor/benchmark/survey-vs-srvyr-speed-test.R
+# benchmark/survey-vs-srvyr-speed-test.R
 #
 # The purpose of this file is to test which of the two packages, survey or srvyr,
 # is faster at calculating means and regression coefficients on the same sample
@@ -14,8 +14,10 @@
 # It's clear that the survey package is way better.
 #
 # Outputs are found in 
-# kob/refactor/benchmark/benchmark-results/benchmark_results.csv (data)
-# kob/refactor/benchmark/benchmark-results/benchmark_plot.png (very intriguing plot)
+# benchmark/benchmark-results/benchmark_results.csv (data)
+# benchmark/benchmark-results/benchmark_plot.png (very intriguing plot)
+#
+# TODO: this script is broken. needs fixing as of 07/2025
 
 
 # ----- STEP 0: Config ----- #
@@ -143,8 +145,8 @@ benchmark_plot <- ggplot(benchmark_results, aes(x = nrow_sample)) +
   theme_minimal()
 
 # --- Step 2E: Save results
-write.csv(benchmark_results, "kob/refactor/benchmark/benchmark-results/benchmark_results.csv", row.names = FALSE)
-ggsave("kob/refactor/benchmark/benchmark-results/benchmark_plot.png", plot = benchmark_plot, width = 8, height = 6, dpi = 300)
+write.csv(benchmark_results, "benchmark/benchmark-results/benchmark_results.csv", row.names = FALSE)
+ggsave("benchmark/benchmark-results/benchmark_plot.png", plot = benchmark_plot, width = 8, height = 6, dpi = 300)
 
 # --- Appendix: Dummy-based srvyr benchmark (no group_by) --- #
 # This is a more fair apples-to-apples test. Still, survey wins by a long shot.
@@ -293,7 +295,7 @@ toc()
 
 
 # Collect data into memory
-# ipums_2000_tb <- ipums_db |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |> 
+# ipums_2000_tb <- ipums_db |> filter(YEAR == 2000, GQ %in% c(0, 1, 2)) |>
 #   collect()
 # 
 # ipums_2019_tb <- ipums_db |> filter(YEAR == 2019, GQ %in% c(0, 1, 2)) |>

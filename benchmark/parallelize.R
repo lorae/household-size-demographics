@@ -1,4 +1,4 @@
-# kob/refactor/benchmark/parallelize.R
+# benchmark/parallelize.R
 #
 # The purpose of this file is to test the extent to which parallelizing using furrr
 # can speed up computation

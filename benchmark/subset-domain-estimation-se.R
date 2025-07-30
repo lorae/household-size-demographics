@@ -1,4 +1,4 @@
-# kob/refactor/benchmark/subset-domain-estimation-se.R
+# benchmark/subset-domain-estimation-se.R
 #
 # The purpose of this file is to test whether prematurely filtering the data can 
 # distort standard errors in a Taylor series approximated SE calculation. Particularly,
