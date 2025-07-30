@@ -1,4 +1,4 @@
-# kob/benchmark/regression-backends.R
+# src/utils/regression-backends.R
 # This file defines regression backends used for benchmarking standard error methods.
 # Each backend must implement a function of the form f(data, wt_col, formula) and return
 # a tibble with columns: `term`, `estimate` (sorted by `term`).

@@ -5,7 +5,7 @@ library(tibble)
 library(dplyr)
 
 # ----- Load regression backend functions ----- #
-source("kob/benchmark/regression-backends.R")
+source("src/utils/regression-backends.R")
 
 # ----- Create synthetic test data ----- #
 test_data <- tibble::tibble(

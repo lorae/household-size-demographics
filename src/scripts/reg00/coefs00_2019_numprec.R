@@ -37,7 +37,7 @@ library(furrr)
 
 # dataduck internal package & helper scripts
 load_all("../dataduck")
-source("kob/benchmark/regression-backends.R")
+source("src/utils/regression-backends.R")
 
 # Plan parallel session
 options(future.globals.maxSize = 20 * 1024^3)  # 20 GiB
