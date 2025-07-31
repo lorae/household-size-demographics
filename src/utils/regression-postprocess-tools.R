@@ -151,4 +151,23 @@ split_term_column <- function(kob_output, varnames = varnames_dict) {
   return(kob_output)
 }
 
-# 
+
+# a rudimentary gu_adjust function
+gu_adjust <- function(reg_output) {
+  reg_output <- split_term_column(reg_output)
+  
+  # Step 2: Compute Gardeazabal-Ugidos adjustment (α)
+  race_rows <- reg_output |> filter(variable == "RACE_ETH_bucket")
+  alpha <- sum(race_rows$estimate, na.rm = TRUE) / (nrow(race_rows) + 1)
+  
+  reg_output <- reg_output |>
+    mutate(
+      estimate = case_when(
+        term == "(Intercept)" ~ estimate + alpha,
+        variable == "RACE_ETH_bucket" ~ estimate - alpha,
+        TRUE ~ estimate
+      )
+    )
+  
+  return(reg_output)
+}

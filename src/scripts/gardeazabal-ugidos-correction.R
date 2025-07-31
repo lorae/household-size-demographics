@@ -18,7 +18,7 @@ library(devtools)
 load_all("../dataduck")
 source("src/utils/create-benchmark-data.R")
 source("src/utils/regression-backends.R")
-source("src/utils/regression-postprocess-tools.R") # for split_term_column
+source("src/utils/regression-postprocess-tools.R") # for and gu_adjust
 
 # ----- Step 1: Load and prepare sample ----- #
 create_benchmark_sample(
@@ -57,25 +57,7 @@ ipums_2019_sample_tb$RACE_ETH_bucket <-
 
 dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
 
-# a rudimentary gu_adjust function
-gu_adjust <- function(reg_output) {
-  reg_output <- split_term_column(reg_output)
-  
-  # Step 2: Compute Gardeazabal-Ugidos adjustment (α)
-  race_rows <- reg_output |> filter(variable == "RACE_ETH_bucket")
-  alpha <- sum(race_rows$estimate, na.rm = TRUE) / (nrow(race_rows) + 1)
-  
-  reg_output <- reg_output |>
-    mutate(
-      estimate = case_when(
-        term == "(Intercept)" ~ estimate + alpha,
-        variable == "RACE_ETH_bucket" ~ estimate - alpha,
-        TRUE ~ estimate
-      )
-    )
-  
-  return(reg_output)
-}
+
 x <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
 gu_adjust(x)
 
