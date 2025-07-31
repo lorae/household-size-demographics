@@ -38,46 +38,66 @@ hhsize_cpuma <- tabulate_summary_2year(
 ) |>
   rename(CPUMA0010 = subgroup)
 
-
-# ----- Step 3: Map ----- #
 # Join the state data with household size differences
 cpuma_sf_hhsize <- cpuma_sf |>
   left_join(hhsize_cpuma, by = "CPUMA0010")
 
-
-# Choropleth map (color version) 2000
-fig04a <- ggplot(cpuma_sf_hhsize) + 
+# ----- Step 3: Map ----- #
+# Choose the center point of the color scale (white color on figs A02 and A03)
+center <- 3.3
+# Choropleth map 2000
+figA02 <- ggplot(cpuma_sf_hhsize) + 
   geom_sf(aes(geometry = geometry, fill = hhsize_2000), color = NA, size = 0) +
   geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
-    name = "Household size,\n2000",
-    low = "darkblue", mid = "white", high = "darkred", midpoint = 3.30,
+    name = "Household\nsize, 2000",
+    low = "darkblue", mid = "white", high = "darkred", midpoint = center,
     breaks = seq(from = 2.5, to = 5.0, by = 0.5)
   ) +
   theme_void()
-fig04a
+figA02
 
-# Choropleth map (color version) 2019
-fig04a <- ggplot(cpuma_sf_hhsize) + 
+# Choropleth map 2019
+figA03 <- ggplot(cpuma_sf_hhsize) + 
   geom_sf(aes(geometry = geometry, fill = hhsize_2019), color = NA, size = 0) +
   geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
-    name = "Household size,\n2000",
-    low = "darkblue", mid = "white", high = "darkred", midpoint = 3.30,
+    name = "Household\nsize, 2000",
+    low = "darkblue", mid = "white", high = "darkred", midpoint = center,
     breaks = seq(from = 2.5, to = 5.0, by = 0.5)
   ) +
   theme_void()
-fig04a
+figA03
 
-# Choropleth map (color version)
-fig04a <- ggplot(cpuma_sf_hhsize) + 
+# Choropleth map 2000 -> 2019 percentage change
+figA04 <- ggplot(cpuma_sf_hhsize) + 
   geom_sf(aes(geometry = geometry, fill = hhsize_pctchg_2000_2019), color = NA, size = 0) +
   geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
     name = "Change in \nHousehold \nSize",
     low = "darkblue", mid = "white", high = "darkred", midpoint = 0,
-    breaks = seq(from = -0.8, to = 0.6, by = 0.2)
+    breaks = seq(from = -20, to = 20, by = 10),
+    labels = function(x) paste0(x, "%")
   ) +
   theme_void()
-fig04a
+figA04
 
+# TODO: repeat this CPUMA mapping, but for individual cities. Create lists of the 
+# CPUMAs that fall in a certain MSA/CSA
+
+# ----- Step 4: Save maps ----- #
+ggsave(
+  "output/figures/figA02-hhsize-2000-cpuma.png", 
+  plot = figA02, 
+  width = 4000, height = 3000, units = "px", dpi = 300
+)
+ggsave(
+  "output/figures/figA03-hhsize-2019-cpuma.png", 
+  plot = figA03, 
+  width = 4000, height = 3000, units = "px", dpi = 300
+)
+ggsave(
+  "output/figures/figA04-hhsize-pct-change-cpuma.png", 
+  plot = figA04, 
+  width = 4000, height = 3000, units = "px", dpi = 300
+)
