@@ -14,9 +14,12 @@
 library("duckdb")
 library("dplyr")
 library("tidyr")
+library("sf")
+library("ggplot2")
 
 devtools::load_all("../dataduck")
 source("src/utils/aggregation-tools.R") # tabulate_summary_2year
+source("src/utils/mapping-tools.R") # transform_state
 
 # ----- Step 1: Load in data ----- #
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
@@ -30,7 +33,8 @@ hhsize_cpuma <- tabulate_summary_2year(
   value = "NUMPREC",
   group_by = "CPUMA0010",
   group_encoding = NULL
-)
+) |>
+  rename(CPUMA0010 = subgroup)
 
 
 # ----- Step 3: Map ----- #
@@ -52,12 +56,11 @@ cpuma_sf_final <- cpuma_sf |>
 
 # Join the state data with household size differences
 cpuma_sf_hhsize <- cpuma_sf_final |>
-  left_join(hhsize_cpuma, by = "CPUMA0010") |>
-  mutate(hhsize_unexplained = contribution_diff / prop_2019) 
+  left_join(hhsize_cpuma, by = "CPUMA0010")
 
 # Choropleth map (color version)
 fig04a <- ggplot(cpuma_sf_hhsize) + 
-  geom_sf(aes(geometry = geometry, fill = diff), color = NA, size = 0) +
+  geom_sf(aes(geometry = geometry, fill = hhsize_pctchg_2000_2019), color = NA, size = 0) +
   geom_sf(data = state_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
     name = "Change in \nHousehold \nSize",

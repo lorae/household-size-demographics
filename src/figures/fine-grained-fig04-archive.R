@@ -2,6 +2,40 @@
 ##############################################
 #vvvvvvvvvvvvv ARCHIVE vvvvvvvvvvvvvvvvvvvvvv#
 ##############################################
+# A function that produces a dotplot by state
+dotplot_by_state <- function(
+    state = "New Jersey",
+    data = hhsize_contributions_state, # or bedroom_contributions_state
+    x_min = -0.5, # Lowest x-value on dotplot
+    x_max = 0.5 # Highest x-value on dotplot
+) {
+  # Subset the data to just that state
+  boxplot_data <- subset(data, State == state)
+  
+  # Calculate median, weighted median, and weighted mean
+  median <- boxplot_data |>
+    pull(diff) |> 
+    median()
+  weighted_median <- rep(boxplot_data$diff, times = boxplot_data$pop_2019) |>
+    median()
+  weighted_mean <- weighted.mean(boxplot_data$diff, w = boxplot_data$pop_2019)
+  
+  # Create the horizontal boxplot with overlaid points
+  output_plot <- ggplot(boxplot_data, aes(x = diff, y = "")) +
+    geom_dotplot(stackdir = "center", dotsize = 0.5, alpha = 0.6, binwidth = 0.02) +
+    theme_minimal() +
+    labs(title = "",
+         x = "",
+         y = "") +
+    theme_void() +
+    geom_vline(xintercept = weighted_mean, linetype = "dotted", color = "red", size = 0.5) +
+    geom_vline(xintercept = weighted_median, linetype = "dotted", color = "blue", size = 0.5) +
+    geom_vline(xintercept = 0, linetype = "solid", color = "black", size = 1) +
+    xlim(x_min, x_max)
+  
+  
+  return(output_plot)
+}
 
 
 # Function to generate base64-encoded ggplot images
