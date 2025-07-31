@@ -9,7 +9,32 @@
 #   - TODO: list inputs
 
 # TODO: import data. This is helpful prior code I used to create this map.
-### FIG 4a: Unexplained diff by cpuma, nationally
+
+# ----- Step 0: Config ----- #
+library("duckdb")
+library("dplyr")
+library("tidyr")
+
+devtools::load_all("../dataduck")
+source("src/utils/aggregation-tools.R") # tabulate_summary_2year
+
+# ----- Step 1: Load in data ----- #
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums_processed")
+ipums_db_filtered <- ipums_db |> filter(GQ %in% c(0,1,2))
+
+# ----- Step 2: Wrangle data ----- #
+hhsize_cpuma <- tabulate_summary_2year(
+  data = ipums_db_filtered, 
+  years = c(2000, 2019),
+  value = "NUMPREC",
+  group_by = "CPUMA0010",
+  group_encoding = NULL
+)
+
+
+# ----- Step 3: Map ----- #
+
 # Load shapefiles. Data is unzipped from WHERE? TODO: document
 cpuma_sf <- st_read("data/ipums-cpuma0010-sf/ipums_cpuma0010.shp") |>
   filter(!STATEFIP %in% c('60', '64', '66', '68', '69', '70', '72', '78')) |># Remove excluded states, like Puerto Rico
@@ -27,7 +52,7 @@ cpuma_sf_final <- cpuma_sf |>
 
 # Join the state data with household size differences
 cpuma_sf_hhsize <- cpuma_sf_final |>
-  left_join(hhsize_contributions_state, by = "CPUMA0010") |>
+  left_join(hhsize_cpuma, by = "CPUMA0010") |>
   mutate(hhsize_unexplained = contribution_diff / prop_2019) 
 
 # Choropleth map (color version)
