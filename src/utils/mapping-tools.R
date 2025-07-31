@@ -11,6 +11,7 @@
 # - throughput/state_shapefiles.rds
 # 
 
+# ----- Step 1: Define helper functions ----- #
 # Creates a 2x2 matrix representing the rotation transformation relative to angle
 # a
 rot <- function(a) {
@@ -32,6 +33,7 @@ transform_state <- function(
   state %>% st_set_geometry(rotated_geom) %>% st_set_crs(st_crs(df))
 }
 
+# ----- Step 2: Create the state shapefile ----- #
 # Load shapefiles
 state_sf <- st_read("data/s_05mr24/s_05mr24.shp") |>
   rename(
@@ -43,7 +45,6 @@ state_sf <- st_read("data/s_05mr24/s_05mr24.shp") |>
   st_transform(crs = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs") |>
   mutate(geometry = st_simplify(geometry, dTolerance =  5000))  # Simplify shapes
 
-
 # Rotate and move Alaska and Hawaii to fit on map
 alaska <- transform_state(state_sf, "02", -39, 2.3, c(1000000, -5000000))
 hawaii <- transform_state(state_sf, "15", -35, 1, c(5200000, -1400000))
@@ -53,4 +54,23 @@ state_sf_final <- state_sf %>%
   filter(!STATEFIP %in% c("02", "15")) |>
   bind_rows(alaska, hawaii)
 
+# ----- Step 3: Create the CPUMA shapefile ----- #
+# TODO: figure out and document where this shapefile comes from
+# Load shapefiles. Data is unzipped from WHERE? TODO: document
+cpuma_sf <- st_read("data/ipums-cpuma0010-sf/ipums_cpuma0010.shp") |>
+  filter(!STATEFIP %in% c('60', '64', '66', '68', '69', '70', '72', '78')) |># Remove excluded states, like Puerto Rico
+  st_transform(crs = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs") |>
+  mutate(geometry = st_simplify(geometry, dTolerance =  5000))  # Simplify shapes
+
+# Rotate and move Alaska and Hawaii to fit on map
+alaska_cpuma <- transform_state(cpuma_sf, "02", -39, 2.3, c(1000000, -5000000))
+hawaii_cpuma <- transform_state(cpuma_sf, "15", -35, 1, c(5200000, -1400000))
+
+# Final map after transforming non-contiguous states
+cpuma_sf_final <- cpuma_sf |>
+  filter(!STATEFIP %in% c("02", "15")) |>
+  bind_rows(alaska_cpuma, hawaii_cpuma)
+
+# ----- Step 4: Save ----- #
+saveRDS(cpuma_sf_final, "throughput/cpuma_shapefiles.rds")
 saveRDS(state_sf_final, "throughput/state_shapefiles.rds")
