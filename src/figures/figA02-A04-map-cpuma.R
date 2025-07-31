@@ -58,10 +58,35 @@ cpuma_sf_final <- cpuma_sf |>
 cpuma_sf_hhsize <- cpuma_sf_final |>
   left_join(hhsize_cpuma, by = "CPUMA0010")
 
+
+# Choropleth map (color version) 2000
+fig04a <- ggplot(cpuma_sf_hhsize) + 
+  geom_sf(aes(geometry = geometry, fill = hhsize_2000), color = NA, size = 0) +
+  geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
+  scale_fill_gradient2(
+    name = "Household size,\n2000",
+    low = "darkblue", mid = "white", high = "darkred", midpoint = 3.30,
+    breaks = seq(from = 2.5, to = 5.0, by = 0.5)
+  ) +
+  theme_void()
+fig04a
+
+# Choropleth map (color version) 2019
+fig04a <- ggplot(cpuma_sf_hhsize) + 
+  geom_sf(aes(geometry = geometry, fill = hhsize_2019), color = NA, size = 0) +
+  geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
+  scale_fill_gradient2(
+    name = "Household size,\n2000",
+    low = "darkblue", mid = "white", high = "darkred", midpoint = 3.30,
+    breaks = seq(from = 2.5, to = 5.0, by = 0.5)
+  ) +
+  theme_void()
+fig04a
+
 # Choropleth map (color version)
 fig04a <- ggplot(cpuma_sf_hhsize) + 
   geom_sf(aes(geometry = geometry, fill = hhsize_pctchg_2000_2019), color = NA, size = 0) +
-  geom_sf(data = state_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
+  geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
     name = "Change in \nHousehold \nSize",
     low = "darkblue", mid = "white", high = "darkred", midpoint = 0,
@@ -70,38 +95,3 @@ fig04a <- ggplot(cpuma_sf_hhsize) +
   theme_void()
 fig04a
 
-
-# A function that produces a dotplot by state
-dotplot_by_state <- function(
-    state = "New Jersey",
-    data = hhsize_contributions_state, # or bedroom_contributions_state
-    x_min = -0.5, # Lowest x-value on dotplot
-    x_max = 0.5 # Highest x-value on dotplot
-) {
-  # Subset the data to just that state
-  boxplot_data <- subset(data, State == state)
-  
-  # Calculate median, weighted median, and weighted mean
-  median <- boxplot_data |>
-    pull(diff) |> 
-    median()
-  weighted_median <- rep(boxplot_data$diff, times = boxplot_data$pop_2019) |>
-    median()
-  weighted_mean <- weighted.mean(boxplot_data$diff, w = boxplot_data$pop_2019)
-  
-  # Create the horizontal boxplot with overlaid points
-  output_plot <- ggplot(boxplot_data, aes(x = diff, y = "")) +
-    geom_dotplot(stackdir = "center", dotsize = 0.5, alpha = 0.6, binwidth = 0.02) +
-    theme_minimal() +
-    labs(title = "",
-         x = "",
-         y = "") +
-    theme_void() +
-    geom_vline(xintercept = weighted_mean, linetype = "dotted", color = "red", size = 0.5) +
-    geom_vline(xintercept = weighted_median, linetype = "dotted", color = "blue", size = 0.5) +
-    geom_vline(xintercept = 0, linetype = "solid", color = "black", size = 1) +
-    xlim(x_min, x_max)
-  
-  
-  return(output_plot)
-}
