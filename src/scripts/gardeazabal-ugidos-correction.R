@@ -65,10 +65,15 @@ gu_adjust(x)
 ipums_2019_sample_tb$RACE_ETH_bucket <- 
   relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AIAN")
 
-y <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
-gu_adjust(y)
+y <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula) |>
+  complete_implicit_zeros(
+    adjust_by = list(RACE_ETH_bucket = levels(ipums_2019_sample_tb$RACE_ETH_bucket)),
+    coef_col = "estimate"
+  )
 
-gu_adjust(y, adjust_vars = c("RACE_ETH_bucket", "Peaches"))
+gu_adjust(y)
+gu_adjust(y) |> gu_adjust()
+
 
 # Interestingly, the G-U adjustment is NOT idempotent, but it does converge to 
 # a value after enough iterations. This is a fascinating property.

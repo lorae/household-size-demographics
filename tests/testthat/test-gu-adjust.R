@@ -76,28 +76,86 @@ test_that("gu_adjust produces consistent estimates for each pair of baselines", 
       RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White")
     ),
     coef_col = "estimate"
-  )
-  
+  ) |> arrange(term)
+
   r2 <- gu_adjust(
     reg_output = reg_AAPI,
     adjust_by = list(
       RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White")
     ),
     coef_col = "estimate"
-  )
-  
+  ) |> arrange(term)
+
   r3 <- gu_adjust(
     reg_output = reg_Black,
     adjust_by = list(
       RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White")
     ),
     coef_col = "estimate"
-  )
-  
+  ) |> arrange(term)
+
   expect_equal(r1, r2, tolerance = 1e-6)
   expect_equal(r2, r3, tolerance = 1e-6)
   expect_equal(r1, r3, tolerance = 1e-6)
 })
+
+
+test_that("gu_adjust produces consistent estimates across multivariate baselines", {
+  formula_multivar <- NUMPREC ~ RACE_ETH_bucket + AGE_bucket
+  
+  adjust_by <- list(
+    RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White"),
+    AGE_bucket = unique(ipums_2019_sample_tb$AGE_bucket)
+  )
+  
+  # Baseline: AAPI + 0–4
+  ipums_2019_sample_tb$RACE_ETH_bucket <- relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AAPI")
+  ipums_2019_sample_tb$AGE_bucket <- relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "0-4")
+  reg_a <- dataduck_reg_matrix_2(ipums_2019_sample_tb, "PERWT", formula_multivar) |>
+    complete_implicit_zeros(
+      adjust_by = adjust_by,
+      coef_col = "estimate"
+    )
+  a <- gu_adjust(
+    reg_output = reg_a,
+    adjust_by,
+    coef_col = "estimate"
+  ) |> arrange(term)
+  
+  # Baseline: White + 45–49
+  ipums_2019_sample_tb$RACE_ETH_bucket <- relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "White")
+  ipums_2019_sample_tb$AGE_bucket <- relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "45-49")
+  reg_b <- dataduck_reg_matrix_2(ipums_2019_sample_tb, "PERWT", formula_multivar) |>
+    complete_implicit_zeros(
+      adjust_by = adjust_by,
+      coef_col = "estimate"
+    )
+  b <- gu_adjust(
+    reg_output = reg_b,
+    adjust_by,
+    coef_col = "estimate"
+  ) |> arrange(term)
+  
+  # Baseline: Hispanic + 15–19
+  ipums_2019_sample_tb$RACE_ETH_bucket <- relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "Hispanic")
+  ipums_2019_sample_tb$AGE_bucket <- relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "15-19")
+  reg_c <- dataduck_reg_matrix_2(ipums_2019_sample_tb, "PERWT", formula_multivar) |>
+    complete_implicit_zeros(
+      adjust_by = adjust_by,
+      coef_col = "estimate"
+    )
+  c <- gu_adjust(
+    reg_output = reg_c,
+    adjust_by,
+    coef_col = "estimate"
+  ) |> arrange(term)
+  
+  # Full-object comparisons
+  expect_equal(a, b, tolerance = 1e-6)
+  expect_equal(b, c, tolerance = 1e-6)
+  expect_equal(a, c, tolerance = 1e-6)
+})
+
 
 test_that("gu_adjust warns if some adjust_vars are missing", {
   reg_valid <- dataduck_reg_matrix_2(data = data_AIAN, wt_col = "PERWT", formula = formula)
@@ -116,62 +174,24 @@ test_that("gu_adjust warns if some adjust_vars are missing", {
 test_that("gu_adjust errors if all adjust_vars are missing", {
   reg_valid <- dataduck_reg_matrix_2(data = data_AIAN, wt_col = "PERWT", formula = formula)
   
-  expect_warning(
-    expect_error(
-      gu_adjust(
-        reg_valid, 
-        adjust_by = list(
-          VEGETABLE = c("SweetPotato", "Artichoke", "Kale"),
-          FRUIT = c("Peaches", "Grapefruit", "Raspberries")
-        )
-      ),
-      regexp = "None of the adjust_vars were found in regression output"
+  expect_error(
+    gu_adjust(
+      reg_valid, 
+      adjust_by = list(
+        VEGETABLE = c("SweetPotato", "Artichoke", "Kale"),
+        FRUIT = c("Peaches", "Grapefruit", "Raspberries")
+      )
     ),
-    regexp = "Some terms could not be matched to a variable prefix"
+    regexp = "None of the adjust_vars were found in regression output"
   )
 })
-
-
-test_that("gu_adjust produces consistent estimates across multivariate baselines", {
-  formula_multivar <- NUMPREC ~ RACE_ETH_bucket + AGE_bucket
-  
-  adjust_by_levels <- list(
-    RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White"),
-    AGE_bucket = unique(ipums_2019_sample_tb$AGE_bucket)
-  )
-  
-  # Baseline: AAPI + 0–4
-  ipums_2019_sample_tb$RACE_ETH_bucket <- relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AAPI")
-  ipums_2019_sample_tb$AGE_bucket <- relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "0-4")
-  reg_a <- dataduck_reg_matrix_2(ipums_2019_sample_tb, "PERWT", formula_multivar) |>
-    gu_adjust(adjust_by = adjust_by_levels)
-  
-  # Baseline: White + 45–49
-  ipums_2019_sample_tb$RACE_ETH_bucket <- relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "White")
-  ipums_2019_sample_tb$AGE_bucket <- relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "45-49")
-  reg_b <- dataduck_reg_matrix_2(ipums_2019_sample_tb, "PERWT", formula_multivar) |>
-    gu_adjust(adjust_by = adjust_by_levels)
-  
-  # Baseline: Hispanic + 15–19
-  ipums_2019_sample_tb$RACE_ETH_bucket <- relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "Hispanic")
-  ipums_2019_sample_tb$AGE_bucket <- relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "15-19")
-  reg_c <- dataduck_reg_matrix_2(ipums_2019_sample_tb, "PERWT", formula_multivar) |>
-    gu_adjust(adjust_by = adjust_by_levels)
-  
-  # Full-object comparisons
-  expect_equal(reg_a, reg_b, tolerance = 1e-6)
-  expect_equal(reg_b, reg_c, tolerance = 1e-6)
-  expect_equal(reg_a, reg_c, tolerance = 1e-6)
-})
-
 
 test_that("gu_adjust is idempotent", {
-
+  
   gu_once <- reg_AIAN |> gu_adjust()
   
   gu_twice <- reg_AIAN |> gu_adjust() |> gu_adjust()
   
   expect_equal(gu_once, gu_twice, tolerance = 1e-10)
 })
-
 

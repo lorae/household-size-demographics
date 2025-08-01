@@ -169,7 +169,7 @@ gu_adjust <- function(
     ),
     coef_col = "estimate"
 ) {
-  # And add omitted variables
+  # Add variable and value columns
   reg_output <- split_term_column(reg_output)
   
   # Validate adjust_vars
@@ -187,7 +187,7 @@ gu_adjust <- function(
   alpha_df <- reg_output |>
     filter(variable %in% present_vars) |>
     group_by(variable) |>
-    summarize(alpha = sum(.data[[coef_col]], na.rm = TRUE) / (n() + 1), .groups = "drop")
+    summarize(alpha = sum(.data[[coef_col]], na.rm = TRUE) / n(), .groups = "drop")
   
   # Total adjustment to apply to intercept
   total_alpha <- sum(alpha_df$alpha, na.rm = TRUE)
