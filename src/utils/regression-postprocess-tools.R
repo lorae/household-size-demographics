@@ -205,19 +205,23 @@ gu_adjust <- function(
 }
 
 
-# The purpose of this function is to "complete" a regression by adding any implicit 
-# 0 coefficients.
-# For example, suppose we have a regression (with saddening results) of this type:
-# wages = 1 + 1(is_male)
-# That can equally be expressed as 
-# wages = 1 + 1(is_male) + 0(is_female)
-# Q: Isn't this overdetermined? Why would we want this?
-# A: so that we can more explicitly apply the gardeazabal-ugidos adjustment, and 
-# express all coefficients relative to the total mean. This allows us to decompose
-# the contribution of each component in a way that is invariable to the omitted
-# category.
-# e.g. after applying G-U, the equation above becomes, equivalently:
-# wages = 0.5 + 0.25(is_male) - 0.25(is_female)
+# Adds omitted levels with implicit zero coefficients to a regression output.
+#
+# In categorical regressions, one level of each factor is typically omitted to serve as 
+# the reference group. This function restores those omitted levels explicitly, assigning 
+# them a coefficient of 0. 
+#
+# For example, the model:
+#     wages = 1 + 1 * is_male
+# can be equivalently expressed as:
+#     wages = 1 + 1 * is_male + 0 * is_female
+#
+# While this may seem overdetermined, making the reference category explicit simplifies 
+# downstream processing and allows all group levels to be treated uniformly. This is 
+# especially useful for post-estimation adjustments like the Gardeazabal-Ugidos transform.
+#
+# Assumes that term names follow a standard format like "VARIABLELevel", and that a list 
+# of expected levels for each variable is provided via `adjust_by`.
 complete_implicit_zeros <- function(
     reg_output,
     adjust_by = list(
@@ -225,21 +229,21 @@ complete_implicit_zeros <- function(
     ),
     coef_col = "estimate"
 ) {
-  # get a varnames dict to use in split_term_column
-  varnames_dict = names(adjust_by)
+  # Extract variable name prefixes from adjust_by for use in term parsing
+  varnames_dict <- names(adjust_by)
   
-  # Step 1: Ensure 'variable' and 'value' columns exist
-  reg_output <- split_term_column(reg_output, varnames = varnames_dict)  # assumes this parses 'term' into 'variable' and 'value'
+  # Parse 'term' into 'variable' and 'value' using provided prefixes
+  reg_output <- split_term_column(reg_output, varnames = varnames_dict)
   
-  # Step 2: Get variables that are actually present in the regression output
+  # Limit attention to variables that are both in the regression and in adjust_by
   present_vars <- intersect(names(adjust_by), unique(reg_output$variable))
   
-  # Step 3: For each present var, check for exactly one missing value and build a row
+  # Identify and construct rows for omitted levels (i.e., levels not observed in reg_output)
   missing_rows <- purrr::map_dfr(present_vars, function(var) {
     observed_values <- reg_output |> filter(variable == var) |> pull(value)
     expected_values <- adjust_by[[var]]
     
-    # Error if there are extra observed levels not in adjust_by
+    # Throw error if regression contains levels not listed in adjust_by
     extra_values <- setdiff(observed_values, expected_values)
     if (length(extra_values) > 0) {
       stop(glue::glue(
@@ -247,21 +251,23 @@ complete_implicit_zeros <- function(
       ))
     }
     
-    # Now check for what's missing
+    # Identify missing level(s)
     missing_value <- setdiff(expected_values, observed_values)
     
+    # Warn if nothing is missing — this is valid but may indicate a no-op
     if (length(missing_value) == 0) {
       warning(glue::glue(
         "No levels were missing for variable '{var}' — nothing added."))
-      return(tibble::tibble())  # return empty tibble
+      return(tibble::tibble())
     }
     
+    # Error if more than one level is missing — invalid for G-U
     if (length(missing_value) > 1) {
       stop(glue::glue(
         "For variable '{var}', expected exactly one missing level, but found {length(missing_value)}: {paste(missing_value, collapse = ', ')}."))
     }
     
-    # Return the missing row with a 0 coefficient
+    # Return one row with a 0-valued coefficient for the missing category
     tibble::tibble(
       term = paste0(var, missing_value),
       variable = var,
@@ -270,7 +276,7 @@ complete_implicit_zeros <- function(
     )
   })
   
-  # Step 4: Add the missing rows to reg_output and return
+  # Append the missing rows to the original regression output
   reg_output_full <- bind_rows(reg_output, missing_rows)
   
   return(reg_output_full)
