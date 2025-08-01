@@ -4,6 +4,10 @@
 # regression results
 #
 #
+#
+# TODO: instaead of naming things "variable" and "value" across the priject after 
+# I split by term, they should instead be caleld "Variable" and "level"
+
 library(devtools)
 source("kob/scripts/kob-function.R") # The kob function is used within add-intercept()
 
@@ -234,6 +238,16 @@ complete_implicit_zeros <- function(
   missing_rows <- purrr::map_dfr(present_vars, function(var) {
     observed_values <- reg_output |> filter(variable == var) |> pull(value)
     expected_values <- adjust_by[[var]]
+    
+    # Error if there are extra observed levels not in adjust_by
+    extra_values <- setdiff(observed_values, expected_values)
+    if (length(extra_values) > 0) {
+      stop(glue::glue(
+        "For variable '{var}', regression output contains unexpected levels not listed in adjust_by: {paste(extra_values, collapse = ', ')}."
+      ))
+    }
+    
+    # Now check for what's missing
     missing_value <- setdiff(expected_values, observed_values)
     
     if (length(missing_value) == 0) {

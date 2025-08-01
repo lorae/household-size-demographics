@@ -5,6 +5,7 @@
 # 1. Correct behavior when one level is missing.
 # 2. Expected errors when 0 or >1 levels are missing.
 
+
 # ----- Step 0: Setup -----
 library(testthat)
 library(dplyr)
@@ -101,4 +102,44 @@ test_that("complete_implicit_zeros fills in one omitted row per variable", {
   expect_equal(nrow(result), nrow(input) + 2)
 })
 
+test_that("complete_implicit_zeros warns for one variable and fills only the missing row", {
+  input <- reg_stub_salad |> filter(term != "VEGETABLEKale")  # All fruits present, one vegetable missing
+  
+  expect_warning(
+    result <- complete_implicit_zeros(
+      input,
+      adjust_by = list(
+        FRUIT = c("Peach", "Apple", "Raspberry", "Grapefruit"),
+        VEGETABLE = c("SweetPotato", "Artichoke", "Kale")
+      ),
+      coef_col = "estimate"
+    ),
+    regexp = "No levels were missing for variable 'FRUIT'"
+  )
+  
+  # Only the missing vegetable should be added
+  expect_true("VEGETABLEKale" %in% result$term)
+  expect_false("FRUITApple" %in% (result |> filter(!(term %in% input$term)) |> pull(term)))
+  expect_equal(result$estimate[result$term == "VEGETABLEKale"], 0)
+  
+  # Should add exactly 1 new row
+  expect_equal(nrow(result), nrow(input) + 1)
+})
+
+test_that("complete_implicit_zeros errors if regression has more levels than adjust_by expects", {
+  # Add an unexpected fruit (e.g., 'Mango') that isn't in adjust_by
+  input <- tibble::tibble(
+    term = c("(Intercept)", "FRUITPeach", "FRUITApple", "FRUITRaspberry", "FRUITGrapefruit", "FRUITMango"),
+    estimate = c(1, 2, 3, 4, 5, 6)
+  )
+  
+  expect_error(
+    complete_implicit_zeros(
+      input,
+      adjust_by = list(FRUIT = c("Peach", "Apple", "Raspberry", "Grapefruit")),  # Mango not expected
+      coef_col = "estimate"
+    ),
+    regexp = "unexpected levels not listed in adjust_by"
+  )
+})
 
