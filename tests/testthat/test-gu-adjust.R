@@ -93,3 +93,57 @@ test_that("gu_adjust errors if all adjust_vars are missing", {
     regexp = "None of the adjust_vars were found in regression output"
   )
 })
+
+test_that("gu_adjust produces consistent estimates across multivariate baselines", {
+  # Multivariable formula
+  formula_multivar <- NUMPREC ~ RACE_ETH_bucket + AGE_bucket
+  
+  # --- Run regression with omitted vars: AAPI, 0-4
+  ipums_2019_sample_tb$RACE_ETH_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AAPI")
+  ipums_2019_sample_tb$AGE_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "0-4")
+  reg_a <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_multivar) |>
+    gu_adjust(adjust_vars = c("RACE_ETH_bucket", "AGE_bucket"))
+  
+  # --- Run regression with omitted vars: White, 45-49
+  ipums_2019_sample_tb$RACE_ETH_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "White")
+  ipums_2019_sample_tb$AGE_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "45-49")
+  reg_b <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_multivar) |>
+    gu_adjust(adjust_vars = c("RACE_ETH_bucket", "AGE_bucket"))
+  
+  # --- Run regression with omitted vars: Hispanic, 15-19
+  ipums_2019_sample_tb$RACE_ETH_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "Hispanic")
+  ipums_2019_sample_tb$AGE_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "15-19")
+  reg_c <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_multivar) |>
+    gu_adjust(adjust_vars = c("RACE_ETH_bucket", "AGE_bucket"))
+  
+  # Compare shared rows pairwise
+  keep_cols <- c("term", "variable", "value", "estimate")
+  a <- reg_a |> select(all_of(keep_cols))
+  b <- reg_b |> select(all_of(keep_cols))
+  c <- reg_c |> select(all_of(keep_cols))
+  
+  # a vs b
+  terms_ab <- intersect(a$term, b$term)
+  a_ab <- a |> filter(term %in% terms_ab) |> arrange(term)
+  b_ab <- b |> filter(term %in% terms_ab) |> arrange(term)
+  expect_equal(a_ab, b_ab, tolerance = 1e-6)
+  
+  # b vs c
+  terms_bc <- intersect(b$term, c$term)
+  b_bc <- b |> filter(term %in% terms_bc) |> arrange(term)
+  c_bc <- c |> filter(term %in% terms_bc) |> arrange(term)
+  expect_equal(b_bc, c_bc, tolerance = 1e-6)
+  
+  # a vs c
+  terms_ac <- intersect(a$term, c$term)
+  a_ac <- a |> filter(term %in% terms_ac) |> arrange(term)
+  c_ac <- c |> filter(term %in% terms_ac) |> arrange(term)
+  expect_equal(a_ac, c_ac, tolerance = 1e-6)
+})
+
