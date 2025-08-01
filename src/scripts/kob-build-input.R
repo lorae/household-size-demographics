@@ -11,8 +11,10 @@
 # ----- Step 0: Config & source helper functions ----- #
 library(purrr)
 library(dplyr)
+library(duckdb)
 
 devtools::load_all("../dataduck")
+source("src/utils/regression-postprocess-tools.R")
 
 # ----- Step 1: Define throughput file paths  ----- #
 # TODO: unify terms with abbrev_variable and other ways I refer to these 
@@ -45,6 +47,24 @@ missing_paths <- input_paths |> filter(!file.exists(path))
 if (nrow(missing_paths) > 0) {
   stop("❌ Missing file(s):\n", paste(missing_paths$path, collapse = "\n"))
 }
+
+# Initialize adjust_by
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums_processed") 
+
+adjust_by = list(
+  AGE_bucket = ipums_db |> pull(AGE_bucket) |> unique(),
+  EDUC_bucket = ipums_db |> pull(EDUC_bucket) |> unique(),
+  INCTOT_cpiu_2010_bucket = ipums_db |> pull(INCTOT_cpiu_2010_bucket) |> unique(),
+  us_born = ipums_db |> pull(us_born) |> unique(),
+  tenure = ipums_db |> pull(tenure) |> unique(),
+  gender = ipums_db |> pull(gender) |> unique(),
+  cpuma = ipums_db |> pull(cpuma) |> unique(),
+  RACE_ETH_bucket = ipums_db |> pull(RACE_ETH_bucket) |> unique()
+)
+
+dbDisconnect(con)
+
 
 # ----- Step 2: Read in proportion data ----- #
 # Helper function to combine two dataframes with identical terms (used for joining
@@ -126,7 +146,8 @@ read_coefs_2019 <- function(path) {
 
 
 standardize_coefs <- function(
-    reg_data
+    reg_data,
+    adjust_by = adjust_by
 ) {
   # Varnames fed into split_term_column() function, below
   varnames_dict <- c(
@@ -142,13 +163,20 @@ standardize_coefs <- function(
   
   output <- reg_data |>
     split_term_column(varnames = varnames_dict) |>
+    # TODO: add unit test
     add_intercept_v2(
       variable = "RACE_ETH_bucket", # Variable to draw intercept from
       reference_value = "White", # value of variable that will become intercept
       coef_col = "coef_2000",
       se_col = "coef_2000_se"
-    )
+    ) |>
+    complete_implicit_zeros(
+      adjust_by = adjust_by,
+      coef_col = "estimate",
+      se_col = NULL
+    ) 
   
+  # TODO: this is incomplete and doesn't work. resume work on it
   return(output)
 }
 

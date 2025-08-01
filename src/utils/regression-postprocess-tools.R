@@ -104,6 +104,9 @@ remove_intercept <- function(
 
 
 ## Streamlined add intercept function
+# TODO: eventually consolidate into one add_intercept function where pairs of 
+# colnames (colname, colname_se) are given, and any nuumber can be used
+#
 # Adds an intercept row by re-centering a reference category to zero.
 # Adjusts all rows for the given variable by subtracting the reference value.
 # Also propagates standard errors assuming independence (sum of squares rule).
