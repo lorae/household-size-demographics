@@ -152,15 +152,21 @@ split_term_column <- function(kob_output, varnames = varnames_dict) {
 }
 
 
-# a rudimentary gu_adjust function
+# This function implements the Gardeazabal-Ugidos adjustment on regression results.
+# Essentially, it makes regression coefficients insensitive to the choice of omitted
+# category.
+# References:
+# https://cran.r-project.org/web/packages/oaxaca/vignettes/oaxaca.pdf
+# TODO: add link to original G-U paper
 gu_adjust <- function(
     reg_output,
-    adjust_vars = c("RACE_ETH_bucket")
+    adjust_vars = c("RACE_ETH_bucket"),
+    coef_col = "estimate"
 ) {
-  # Add the "variable" and "value" columns
+  # Ensure 'variable' and 'value' columns exist (safe to reapply, idempotent)
   reg_output <- split_term_column(reg_output)
   
-  # Check which adjust_vars are present
+  # Validate adjust_vars
   present_vars <- intersect(adjust_vars, unique(reg_output$variable))
   missing_vars <- setdiff(adjust_vars, present_vars)
   
@@ -174,7 +180,7 @@ gu_adjust <- function(
   alpha_df <- reg_output |>
     filter(variable %in% present_vars) |>
     group_by(variable) |>
-    summarize(alpha = sum(estimate, na.rm = TRUE) / (n() + 1), .groups = "drop")
+    summarize(alpha = sum(.data[[coef_col]], na.rm = TRUE) / (n() + 1), .groups = "drop")
   
   # Total adjustment to apply to intercept
   total_alpha <- sum(alpha_df$alpha, na.rm = TRUE)
@@ -183,10 +189,10 @@ gu_adjust <- function(
   reg_output_adj <- reg_output |>
     left_join(alpha_df, by = "variable") |>
     mutate(
-      estimate = case_when(
-        term == "(Intercept)" ~ estimate + total_alpha,
-        variable %in% present_vars ~ estimate - alpha,
-        TRUE ~ estimate
+      !!coef_col := case_when(
+        term == "(Intercept)" ~ .data[[coef_col]] + total_alpha,
+        variable %in% present_vars ~ .data[[coef_col]] - alpha,
+        TRUE ~ .data[[coef_col]]
       )
     ) |>
     select(-alpha)  # Clean up

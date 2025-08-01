@@ -1,7 +1,9 @@
 # tests/testthat/test-gu-adjust.R
 
-# The purpose of this test is to verify that `gu_adjust()` produces consistent estimates
-# regardless of the omitted category for a factor variable like RACE_ETH_bucket.
+# The purpose of this set of unit tests is to verify that `gu_adjust()` produces 
+# consistent estimates regardless of the omitted category. 
+# Also, this script confirms that the function correctly stops / produces warnings
+# for faulty inputs.
 
 # ----- Step 0: Setup -----
 library(testthat)
@@ -18,8 +20,6 @@ load_all("../dataduck")
 source("src/utils/regression-backends.R")
 source("src/utils/create-benchmark-data.R")
 source("src/utils/regression-postprocess-tools.R")
-source("src/utils/regression-postprocess-tools.R") # gu_adjust()
-
 
 # Load benchmark sample
 n_strata <- 3
@@ -147,3 +147,33 @@ test_that("gu_adjust produces consistent estimates across multivariate baselines
   expect_equal(a_ac, c_ac, tolerance = 1e-6)
 })
 
+test_that("gu_adjust only modifies the specified coef_col", {
+  # Run NUMPREC and BEDROOMS regressions
+  formula_numprec  <- NUMPREC  ~ RACE_ETH_bucket
+  formula_bedrooms <- bedroom ~ RACE_ETH_bucket
+  
+  # Use same omitted category for both
+  ipums_2019_sample_tb$RACE_ETH_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AAPI")
+  
+  reg_numprec <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_numprec) |>
+    rename(numprec_estimate = estimate)
+  
+  reg_bedroom <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_bedrooms) |>
+    rename(bedroom_estimate = estimate)
+  
+  # Join both outputs
+  merged <- full_join(reg_numprec, reg_bedroom, by = c("term"))
+  
+  # Save original bedroom column
+  bedroom_before <- merged$bedroom_estimate
+  
+  # Apply GU adjustment only to the NUMPREC column
+  adjusted <- gu_adjust(merged, adjust_vars = c("RACE_ETH_bucket"), coef_col = "numprec_estimate")
+  
+  # Check that numprec_estimate has changed
+  expect_false(setequal(adjusted$numprec_estimate, merged$numprec_estimate))
+  
+  # Check that bedroom_estimate remains unchanged
+  expect_equal(adjusted$bedroom_estimate, bedroom_before)
+})
