@@ -70,25 +70,26 @@ gu_adjust(y)
 
 gu_adjust(y, adjust_vars = c("RACE_ETH_bucket", "Peaches"))
 
-# ----- Step 3: multivariate regression
-formula_multivar <- NUMPREC ~ RACE_ETH_bucket + AGE_bucket
+# Interestingly, the G-U adjustment is NOT idempotent, but it does converge to 
+# a value after enough iterations. This is a fascinating property.
+# A little bit of math shows that alpha will convernge to a value with successive 
+# differences between iterations i and i+1 decreasing in absolute magnitude at
+# a rate of alpha_i+1 = alpha_i / n (where n is the nubmer of categories)
+expect_equal(
+  y |> gu_adjust(), 
+  y |> gu_adjust() |> gu_adjust(), 
+  tolerance = 1e-10
+  )
 
-# Omitted vars: AAPI, 0-4
-ipums_2019_sample_tb$RACE_ETH_bucket <- 
-  relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AAPI")
-ipums_2019_sample_tb$AGE_bucket <- 
-  relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "0-4")
-a <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_multivar)
+expect_equal(
+  y |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust(), 
+  y |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust(), 
+  tolerance = 1e-10
+  )
 
-gu_adjust(reg_output = a, adjust_vars = c("RACE_ETH_bucket", "AGE_bucket"))
-
-# Omitted vars: White, 45-49
-ipums_2019_sample_tb$RACE_ETH_bucket <- 
-  relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "White")
-ipums_2019_sample_tb$AGE_bucket <- 
-  relevel(factor(ipums_2019_sample_tb$AGE_bucket), ref = "45-49")
-b <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula_multivar)
-
-gu_adjust(reg_output = b, adjust_vars = c("RACE_ETH_bucket", "AGE_bucket"))
-
-# uh oh.... things don't match!
+# equal within tolerance
+expect_equal(
+  y |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust(), 
+  y |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust() |> gu_adjust(), 
+  tolerance = 1e-10
+)

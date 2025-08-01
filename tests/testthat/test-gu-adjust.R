@@ -177,3 +177,22 @@ test_that("gu_adjust only modifies the specified coef_col", {
   # Check that bedroom_estimate remains unchanged
   expect_equal(adjusted$bedroom_estimate, bedroom_before)
 })
+
+test_that("gu_adjust is idempotent", {
+  # Run a basic regression
+  ipums_2019_sample_tb$RACE_ETH_bucket <- 
+    relevel(factor(ipums_2019_sample_tb$RACE_ETH_bucket), ref = "AAPI")
+  
+  formula <- NUMPREC ~ RACE_ETH_bucket
+  gu_once <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula) |>
+    gu_adjust(adjust_vars = "RACE_ETH_bucket", coef_col = "estimate")
+  print(gu_once)
+  
+  # Apply gu_adjust a second time
+  gu_twice <- gu_adjust(gu_once, adjust_vars = "RACE_ETH_bucket", coef_col = "estimate")
+  print(gu_twice)
+  
+  # Compare outputs — should be identical
+  expect_equal(gu_once, gu_twice, tolerance = 1e-10)
+})
+
