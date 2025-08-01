@@ -23,17 +23,16 @@ reg_stub <- tibble::tibble(
   estimate = c(1, 2, 3, 4, 5)
 )
 
-# Provide a fake version of split_term_column() for testing only
-split_term_column <- function(df) {
-  df |>
-    mutate(
-      variable = gsub("[^A-Z_]+", "", term),
-      value = gsub("^[A-Z_]+", "", term)
-    )
-}
+reg_stub_salad <- tibble::tibble(
+  term = c("(Intercept)", 
+           "FRUITPeach", "FRUITApple", "FRUITRaspberry", "FRUITGrapefruit",
+           "VEGETABLESweetPotato", "VEGETABLEArtichoke", "VEGETABLEKale"),
+  estimate = c(1, 2, 3, 4, 5, 6, 7, 8)
+)
 
 varnames_dict <- c(
-  "FRUIT"
+  "FRUIT",
+  "VEGETABLE"
 )
 
 # ----- Step 2: Unit tests -----
@@ -77,4 +76,29 @@ test_that("complete_implicit_zeros errors if more than one level is missing", {
     regexp = "expected exactly one missing level"
   )
 })
+
+test_that("complete_implicit_zeros fills in one omitted row per variable", {
+  input <- reg_stub_salad |> 
+    filter(term != "FRUITApple" & term != "VEGETABLEKale")  # Remove 1 fruit, 1 vegetable
+  
+  result <- complete_implicit_zeros(
+    input,
+    adjust_by = list(
+      FRUIT = c("Peach", "Apple", "Raspberry", "Grapefruit"),
+      VEGETABLE = c("SweetPotato", "Artichoke", "Kale")
+    ),
+    coef_col = "estimate"
+  )
+
+  # Expect both missing rows are re-added
+  expect_true("FRUITApple" %in% result$term)
+  expect_true("VEGETABLEKale" %in% result$term)
+  
+  expect_equal(result$estimate[result$term == "FRUITApple"], 0)
+  expect_equal(result$estimate[result$term == "VEGETABLEKale"], 0)
+  
+  # Two new rows should be added
+  expect_equal(nrow(result), nrow(input) + 2)
+})
+
 
