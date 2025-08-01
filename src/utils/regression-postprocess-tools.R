@@ -199,3 +199,65 @@ gu_adjust <- function(
   
   return(reg_output_adj)
 }
+
+
+# The purpose of this function is to "complete" a regression by adding any implicit 
+# 0 coefficients.
+# For example, suppose we have a regression (with saddening results) of this type:
+# wages = 1 + 1(is_male)
+# That can equally be expressed as 
+# wages = 1 + 1(is_male) + 0(is_female)
+# Q: Isn't this overdetermined? Why would we want this?
+# A: so that we can more explicitly apply the gardeazabal-ugidos adjustment, and 
+# express all coefficients relative to the total mean. This allows us to decompose
+# the contribution of each component in a way that is invariable to the omitted
+# category.
+# e.g. after applying G-U, the equation above becomes, equivalently:
+# wages = 0.5 + 0.25(is_male) - 0.25(is_female)
+complete_implicit_zeros <- function(
+    reg_output,
+    adjust_by = list(
+      RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White")
+    ),
+    coef_col = "estimate"
+) {
+  # get a varnames dict to use in split_term_column
+  varnames_dict = names(adjust_by)
+  
+  # Step 1: Ensure 'variable' and 'value' columns exist
+  reg_output <- split_term_column(reg_output, varnames = varnames_dict)  # assumes this parses 'term' into 'variable' and 'value'
+  
+  # Step 2: Get variables that are actually present in the regression output
+  present_vars <- intersect(names(adjust_by), unique(reg_output$variable))
+  
+  # Step 3: For each present var, check for exactly one missing value and build a row
+  missing_rows <- purrr::map_dfr(present_vars, function(var) {
+    observed_values <- reg_output |> filter(variable == var) |> pull(value)
+    expected_values <- adjust_by[[var]]
+    missing_value <- setdiff(expected_values, observed_values)
+    
+    if (length(missing_value) == 0) {
+      warning(glue::glue(
+        "No levels were missing for variable '{var}' — nothing added."))
+      return(tibble::tibble())  # return empty tibble
+    }
+    
+    if (length(missing_value) > 1) {
+      stop(glue::glue(
+        "For variable '{var}', expected exactly one missing level, but found {length(missing_value)}: {paste(missing_value, collapse = ', ')}."))
+    }
+    
+    # Return the missing row with a 0 coefficient
+    tibble::tibble(
+      term = paste0(var, missing_value),
+      variable = var,
+      value = missing_value,
+      !!coef_col := 0
+    )
+  })
+  
+  # Step 4: Add the missing rows to reg_output and return
+  reg_output_full <- bind_rows(reg_output, missing_rows)
+  
+  return(reg_output_full)
+}
