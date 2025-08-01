@@ -156,12 +156,11 @@ split_term_column <- function(kob_output, varnames = varnames_dict) {
 gu_adjust <- function(
     reg_output,
     adjust_vars = c("RACE_ETH_bucket")
-    ) {
-  
+) {
   # Add the "variable" and "value" columns
   reg_output <- split_term_column(reg_output)
   
-  # Check that all adjust_vars exist in 'variable'
+  # Check which adjust_vars are present
   present_vars <- intersect(adjust_vars, unique(reg_output$variable))
   missing_vars <- setdiff(adjust_vars, present_vars)
   
@@ -171,18 +170,26 @@ gu_adjust <- function(
     warning(glue::glue("Some adjust_vars were not found and will be ignored: {paste(missing_vars, collapse = ', ')}"))
   }
   
-  # Compute Gardeazabal-Ugidos adjustment (α)
-  race_rows <- reg_output |> filter(variable %in% adjust_vars)
-  alpha <- sum(race_rows$estimate, na.rm = TRUE) / (nrow(race_rows) + 1)
+  # Compute per-variable alpha values
+  alpha_df <- reg_output |>
+    filter(variable %in% present_vars) |>
+    group_by(variable) |>
+    summarize(alpha = sum(estimate, na.rm = TRUE) / (n() + 1), .groups = "drop")
   
-  reg_output <- reg_output |>
+  # Total adjustment to apply to intercept
+  total_alpha <- sum(alpha_df$alpha, na.rm = TRUE)
+  
+  # Join alpha values back to reg_output
+  reg_output_adj <- reg_output |>
+    left_join(alpha_df, by = "variable") |>
     mutate(
       estimate = case_when(
-        term == "(Intercept)" ~ estimate + alpha,
-        variable == "RACE_ETH_bucket" ~ estimate - alpha,
+        term == "(Intercept)" ~ estimate + total_alpha,
+        variable %in% present_vars ~ estimate - alpha,
         TRUE ~ estimate
       )
-    )
+    ) |>
+    select(-alpha)  # Clean up
   
-  return(reg_output)
+  return(reg_output_adj)
 }
