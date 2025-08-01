@@ -122,6 +122,36 @@ read_coefs_2019 <- function(path) {
   return(output)
 }
 
+# Define helper function to standardize regression coefficients
+
+
+standardize_coefs <- function(
+    reg_data
+) {
+  # Varnames fed into split_term_column() function, below
+  varnames_dict <- c(
+    "RACE_ETH_bucket",
+    "AGE_bucket",
+    "EDUC_bucket",
+    "INCTOT_cpiu_2010_bucket",
+    "us_born",
+    "gender",
+    "tenure",
+    "cpuma"
+  )
+  
+  output <- reg_data |>
+    split_term_column(varnames = varnames_dict) |>
+    add_intercept_v2(
+      variable = "RACE_ETH_bucket", # Variable to draw intercept from
+      reference_value = "White", # value of variable that will become intercept
+      coef_col = "coef_2000",
+      se_col = "coef_2000_se"
+    )
+  
+  return(output)
+}
+
 # Define function to pull coefficient data from both years and combine with props
 # data
 join_coefs_props <- function(coef_name) {

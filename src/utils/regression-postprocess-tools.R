@@ -103,6 +103,64 @@ remove_intercept <- function(
 }
 
 
+## Streamlined add intercept function
+# Adds an intercept row by re-centering a reference category to zero.
+# Adjusts all rows for the given variable by subtracting the reference value.
+# Also propagates standard errors assuming independence (sum of squares rule).
+add_intercept_v2 <- function(
+    reg_data,
+    variable,
+    reference_value,
+    coef_col,
+    se_col
+) {
+  # Validate input
+  if (!(variable %in% reg_data$variable)) {
+    stop(paste0("Variable '", variable, "' not found in reg_data$variable."))
+  }
+  if (!(reference_value %in% reg_data$value)) {
+    stop(paste0("Reference value '", reference_value, "' not found in reg_data$value."))
+  }
+  if (!(coef_col %in% colnames(reg_data))) {
+    stop(paste0("Column '", coef_col, "' not found in reg_data."))
+  }
+  if (!(se_col %in% colnames(reg_data))) {
+    stop(paste0("Column '", se_col, "' not found in reg_data."))
+  }
+  
+  # Extract relevant rows
+  reference_row <- reg_data |> filter(variable == !!variable, value == !!reference_value)
+  if (nrow(reference_row) != 1) {
+    stop("Reference row must exist uniquely.")
+  }
+  
+  affected_rows <- reg_data |> filter(variable == !!variable, value != !!reference_value)
+  other_rows <- reg_data |> filter(variable != !!variable)
+  
+  # Apply transformation to affected rows
+  adjusted_rows <- affected_rows |> 
+    mutate(
+      !!coef_col := .data[[coef_col]] - reference_row[[coef_col]],
+      !!se_col := sqrt(.data[[se_col]]^2 + reference_row[[se_col]]^2)
+    )
+  
+  # Create intercept row
+  intercept_row <- reference_row |> 
+    mutate(
+      term = "(Intercept)",
+      variable = "(Intercept)",
+      value = "(Intercept)"
+    )
+  
+  # Combine and return
+  bind_rows(other_rows, intercept_row, adjusted_rows)
+}
+
+
+
+
+
+
 
 # Varnames fed into split_term_column() function, below
 varnames_dict <- c(
