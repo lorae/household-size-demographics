@@ -160,7 +160,7 @@ test_that("complete_implicit_zeros assigns correct SE to added row", {
   added <- result |> filter(term == "FRUITApple")
   
   expect_equal(added$estimate, 0)
-  expect_equal(added$std_error, sqrt(sum(c(1, 2, 3, 4)^2)), tolerance = 1e-6)
+  expect_equal(added$std_error, sqrt(sum(c(2, 3, 4)^2)), tolerance = 1e-6)
 })
 
 

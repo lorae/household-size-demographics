@@ -243,7 +243,8 @@ complete_implicit_zeros <- function(
   
   # Identify and construct rows for omitted levels (i.e., levels not observed in reg_output)
   missing_rows <- purrr::map_dfr(present_vars, function(var) {
-    observed_values <- reg_output |> filter(variable == var) |> pull(value)
+    observed_rows <- reg_output |> filter(variable == var)
+    observed_values <- observed_rows |> pull(value)
     expected_values <- adjust_by[[var]]
     
     # Throw error if regression contains levels not listed in adjust_by
@@ -270,13 +271,21 @@ complete_implicit_zeros <- function(
         "For variable '{var}', expected exactly one missing level, but found {length(missing_value)}: {paste(missing_value, collapse = ', ')}."))
     }
     
-    # Return one row with a 0-valued coefficient for the missing category
-    tibble::tibble(
+    # Construct new row with zero coefficient
+    new_row <- tibble::tibble(
       term = paste0(var, missing_value),
       variable = var,
       value = missing_value,
       !!coef_col := 0
     )
+    
+    # If se_col is provided and exists in the data, compute the combined SE
+    if (!is.null(se_col) && se_col %in% names(reg_output)) {
+      se_value <- sqrt(sum(observed_rows[[se_col]]^2, na.rm = TRUE))
+      new_row[[se_col]] <- se_value
+    }
+    
+    return(new_row)
   })
   
   # Append the missing rows to the original regression output
