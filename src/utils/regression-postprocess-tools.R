@@ -160,17 +160,20 @@ split_term_column <- function(kob_output, varnames = varnames_dict) {
 # Essentially, it makes regression coefficients insensitive to the choice of omitted
 # category.
 # References:
+# https://ideas.repec.org/a/tpr/restat/v86y2004i4p1034-1036.html
 # https://cran.r-project.org/web/packages/oaxaca/vignettes/oaxaca.pdf
-# TODO: add link to original G-U paper
 gu_adjust <- function(
     reg_output,
-    adjust_vars = c("RACE_ETH_bucket"),
+    adjust_by = list(
+      RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White")
+    ),
     coef_col = "estimate"
 ) {
-  # Ensure 'variable' and 'value' columns exist (safe to reapply, idempotent)
+  # And add omitted variables
   reg_output <- split_term_column(reg_output)
   
   # Validate adjust_vars
+  adjust_vars <- names(adjust_by)
   present_vars <- intersect(adjust_vars, unique(reg_output$variable))
   missing_vars <- setdiff(adjust_vars, present_vars)
   
