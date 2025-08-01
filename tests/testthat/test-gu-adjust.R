@@ -75,3 +75,14 @@ test_that("gu_adjust produces consistent estimates for each pair of baselines", 
   r1_r3_2 <- r3 |> filter(term %in% terms_r1_r3) |> arrange(term)
   expect_equal(r1_r3_1, r1_r3_2, tolerance = 1e-6)
 })
+
+test_that("gu_adjust throws error if adjust_vars do not match any variables", {
+  # Run a valid regression first
+  reg_valid <- dataduck_reg_matrix_2(data = data_AIAN, wt_col = "PERWT", formula = formula)
+  
+  # Try gu_adjust with invalid adjust_vars
+  expect_error(
+    gu_adjust(reg_valid, adjust_vars = c("Peaches")),
+    regexp = "adjust_vars not found in regression output"
+  )
+})

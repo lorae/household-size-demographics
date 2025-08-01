@@ -153,11 +153,22 @@ split_term_column <- function(kob_output, varnames = varnames_dict) {
 
 
 # a rudimentary gu_adjust function
-gu_adjust <- function(reg_output) {
+gu_adjust <- function(
+    reg_output,
+    adjust_vars = c("RACE_ETH_bucket")
+    ) {
+  
+  # Add the "variable" and "value" columns
   reg_output <- split_term_column(reg_output)
   
-  # Step 2: Compute Gardeazabal-Ugidos adjustment (α)
-  race_rows <- reg_output |> filter(variable == "RACE_ETH_bucket")
+  # Check that all adjust_vars exist in 'variable'
+  missing_vars <- setdiff(adjust_vars, unique(reg_output$variable))
+  if (length(missing_vars) > 0) {
+    stop(glue::glue("adjust_vars not found in regression output: {paste(missing_vars, collapse = ', ')}"))
+  }
+  
+  # Compute Gardeazabal-Ugidos adjustment (α)
+  race_rows <- reg_output |> filter(variable %in% adjust_vars)
   alpha <- sum(race_rows$estimate, na.rm = TRUE) / (nrow(race_rows) + 1)
   
   reg_output <- reg_output |>
