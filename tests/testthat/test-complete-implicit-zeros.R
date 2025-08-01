@@ -143,3 +143,24 @@ test_that("complete_implicit_zeros errors if regression has more levels than adj
   )
 })
 
+test_that("complete_implicit_zeros assigns correct SE to added row", {
+  # Remove 'FRUITApple' and add SE column
+  input <- reg_stub |> 
+    filter(term != "FRUITApple") |> 
+    mutate(std_error = c(1, 2, 3, 4))  # arbitrary SEs for 4 remaining terms
+  
+  result <- complete_implicit_zeros(
+    input,
+    adjust_by = list(FRUIT = c("Peach", "Apple", "Raspberry", "Grapefruit")),
+    coef_col = "estimate",
+    se_col = "std_error"
+  )
+  
+  # Extract added row
+  added <- result |> filter(term == "FRUITApple")
+  
+  expect_equal(added$estimate, 0)
+  expect_equal(added$std_error, sqrt(sum(c(1, 2, 3, 4)^2)), tolerance = 1e-6)
+})
+
+

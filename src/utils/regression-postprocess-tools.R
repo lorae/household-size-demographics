@@ -104,7 +104,6 @@ remove_intercept <- function(
 
 
 
-
 # Varnames fed into split_term_column() function, below
 varnames_dict <- c(
   "RACE_ETH_bucket",
@@ -230,7 +229,8 @@ complete_implicit_zeros <- function(
     adjust_by = list(
       RACE_ETH_bucket = c("AAPI", "AIAN", "Black", "Hispanic", "Multiracial", "Other", "White")
     ),
-    coef_col = "estimate"
+    coef_col = "estimate",
+    se_col = NULL
 ) {
   # Extract variable name prefixes from adjust_by for use in term parsing
   varnames_dict <- names(adjust_by)
