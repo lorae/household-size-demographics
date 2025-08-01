@@ -162,9 +162,13 @@ gu_adjust <- function(
   reg_output <- split_term_column(reg_output)
   
   # Check that all adjust_vars exist in 'variable'
-  missing_vars <- setdiff(adjust_vars, unique(reg_output$variable))
-  if (length(missing_vars) > 0) {
-    stop(glue::glue("adjust_vars not found in regression output: {paste(missing_vars, collapse = ', ')}"))
+  present_vars <- intersect(adjust_vars, unique(reg_output$variable))
+  missing_vars <- setdiff(adjust_vars, present_vars)
+  
+  if (length(present_vars) == 0) {
+    stop(glue::glue("None of the adjust_vars were found in regression output: {paste(adjust_vars, collapse = ', ')}"))
+  } else if (length(missing_vars) > 0) {
+    warning(glue::glue("Some adjust_vars were not found and will be ignored: {paste(missing_vars, collapse = ', ')}"))
   }
   
   # Compute Gardeazabal-Ugidos adjustment (α)

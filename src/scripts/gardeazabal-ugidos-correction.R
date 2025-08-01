@@ -67,3 +67,6 @@ ipums_2019_sample_tb$RACE_ETH_bucket <-
 
 y <- dataduck_reg_matrix_2(data = ipums_2019_sample_tb, wt_col = "PERWT", formula = formula)
 gu_adjust(y)
+
+gu_adjust(y, adjust_vars = c("RACE_ETH_bucket", "Peaches"))
+
