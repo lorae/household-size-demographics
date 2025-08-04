@@ -68,8 +68,8 @@ join_data_by_term <- function(data1, data2) {
   }
   
   # Delete the variable and value cols
-  data1 <- data1 |> select(-variable, -value)
-  data2 <- data2 |> select(-variable, -value)
+  data1 <- data1 |> select(-any_of(c("variable", "value")))
+  data2 <- data2 |> select(-any_of(c("variable", "value")))
   
   # Safe left join
   joined <- dplyr::left_join(data1, data2, by = "term")
