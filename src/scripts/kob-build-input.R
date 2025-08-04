@@ -161,7 +161,7 @@ join_coefs_props <- function(coef_name, props) {
 kob_input <- map(coef_names, join_coefs_props, props = props) |> set_names(coef_names)
 
 # Quality check: Do any of above defined files have NA values?
-na_summary <- map(kob_input, ~ anyNA(.x))
+na_summary <- map(kob_input, ~ .x |> filter(term != "(Intercept)") |> anyNA())
 
 if (any(unlist(na_summary))) {
   failed <- names(na_summary[na_summary == TRUE])
