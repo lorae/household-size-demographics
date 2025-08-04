@@ -318,6 +318,7 @@ complete_implicit_zeros <- function(
     
     # Identify missing level(s)
     missing_value <- setdiff(expected_values, observed_values)
+    print(missing_value)
     
     # Warn if nothing is missing — this is valid but may indicate a no-op
     if (length(missing_value) == 0) {
@@ -336,9 +337,10 @@ complete_implicit_zeros <- function(
     new_row <- tibble::tibble(
       term = paste0(var, missing_value),
       variable = var,
-      value = missing_value,
+      value = as.character(missing_value), # Standardize type for row binding
       !!coef_col := 0
     )
+    print(new_row)
     
     # If se_col is provided and exists in the data, compute the combined SE
     if (!is.null(se_col) && se_col %in% names(reg_output)) {
@@ -390,10 +392,10 @@ standardize_coefs <- function(
       coef_col = coef_col,
       se_col = se_col
     ) # |>
-    # complete_implicit_zeros(
-    #   adjust_by = adjust_by,
-    #   coef_col = "estimate",
-    #   se_col = NULL
+    #   complete_implicit_zeros(
+    #     adjust_by = adjust_by,
+    #     coef_col = coef_col,
+    #     se_col = se_col
     # )
 
   # TODO: this is incomplete and doesn't work. resume work on it

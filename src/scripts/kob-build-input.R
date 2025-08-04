@@ -147,12 +147,14 @@ source("src/utils/regression-postprocess-tools.R")
 reg_2019_test <- read_coefs_2019("throughput/reg00/model00_2019_numprec_summary.rds")
 reg_2000_test <- read_coefs_2000("throughput/reg00/model00_2000_numprec_summary-v2.rds")
 
-standardize_coefs(
+x <- standardize_coefs(
   reg_data = reg_2000_test, 
   adjust_by = adjust_by,
   coef_col = "coef_2000",
   se_col = "coef_2000_se"
   )
+
+complete_implicit_zeros(x, adjust_by = adjust_by, coef_col = "coef_2000", se_col = "coef_2000_se")
 
 standardize_coefs(
   reg_data = reg_2019_test, 
