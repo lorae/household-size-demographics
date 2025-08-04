@@ -18,8 +18,6 @@ library("glue")
 library("oaxaca")
 library("tibble")
 
-# add_intercept, split_term_column, and gu_adjust functions
-source("src/utils/regression-postprocess-tools.R") 
 
 # ----- Step 1: Load in data ----- #
 # Only run this if kob_input.rds doesn't already exist
