@@ -285,6 +285,8 @@ gu_adjust <- function(
 #
 # Assumes that term names follow a standard format like "VARIABLELevel", and that a list 
 # of expected levels for each variable is provided via `adjust_by`.
+# 
+# TODO: the standard errors here are incorrect
 complete_implicit_zeros <- function(
     reg_output,
     adjust_by = list(
@@ -318,8 +320,7 @@ complete_implicit_zeros <- function(
     
     # Identify missing level(s)
     missing_value <- setdiff(expected_values, observed_values)
-    print(missing_value)
-    
+
     # Warn if nothing is missing — this is valid but may indicate a no-op
     if (length(missing_value) == 0) {
       warning(glue::glue(
@@ -340,8 +341,7 @@ complete_implicit_zeros <- function(
       value = as.character(missing_value), # Standardize type for row binding
       !!coef_col := 0
     )
-    print(new_row)
-    
+
     # If se_col is provided and exists in the data, compute the combined SE
     if (!is.null(se_col) && se_col %in% names(reg_output)) {
       se_value <- sqrt(sum(observed_rows[[se_col]]^2, na.rm = TRUE))
@@ -385,18 +385,22 @@ standardize_coefs <- function(
     # Use the RACE_ETH_bucket var to add an intercept
     # TODO: add unit test
     add_intercept_v2(
-      # Note: these top two variables are consistent across my regression computations
-      # at least in the initial version of reg00
       variable = "RACE_ETH_bucket", # Variable to draw intercept from
       reference_value = "White", # value of variable that will become intercept
       coef_col = coef_col,
       se_col = se_col
-    ) # |>
-    #   complete_implicit_zeros(
-    #     adjust_by = adjust_by,
-    #     coef_col = coef_col,
-    #     se_col = se_col
-    # )
+    ) |>
+    # Add the implicit zeros in each category for the omitted group
+      complete_implicit_zeros(
+        adjust_by = adjust_by,
+        coef_col = coef_col,
+        se_col = se_col
+    ) |>
+    gu_adjust(
+      adjust_by = adjust_by,
+      coef_col = coef_col
+    ) |>
+    arrange(variable, value)
 
   # TODO: this is incomplete and doesn't work. resume work on it
   return(output)

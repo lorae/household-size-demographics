@@ -154,8 +154,6 @@ x <- standardize_coefs(
   se_col = "coef_2000_se"
   )
 
-complete_implicit_zeros(x, adjust_by = adjust_by, coef_col = "coef_2000", se_col = "coef_2000_se")
-
 standardize_coefs(
   reg_data = reg_2019_test, 
   adjust_by = adjust_by,
