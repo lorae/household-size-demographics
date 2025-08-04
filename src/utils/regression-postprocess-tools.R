@@ -361,7 +361,9 @@ complete_implicit_zeros <- function(
 # function
 standardize_coefs <- function(
     reg_data,
-    adjust_by
+    adjust_by,
+    coef_col, # to pass into add_intercept_v2
+    se_col # to pass into add_intercept_v2
 ) {
   # Varnames fed into split_term_column() function, below
   varnames_dict <- c(
@@ -376,14 +378,18 @@ standardize_coefs <- function(
   )
   
   output <- reg_data |>
-    split_term_column(varnames = varnames_dict) # |>
-    # # TODO: add unit test
-    # add_intercept_v2(
-    #   variable = "RACE_ETH_bucket", # Variable to draw intercept from
-    #   reference_value = "White", # value of variable that will become intercept
-    #   coef_col = "coef_2000",
-    #   se_col = "coef_2000_se"
-    # ) |>
+    # Add "variable" and value columns
+    split_term_column(varnames = varnames_dict) |>
+    # Use the RACE_ETH_bucket var to add an intercept
+    # TODO: add unit test
+    add_intercept_v2(
+      # Note: these top two variables are consistent across my regression computations
+      # at least in the initial version of reg00
+      variable = "RACE_ETH_bucket", # Variable to draw intercept from
+      reference_value = "White", # value of variable that will become intercept
+      coef_col = coef_col,
+      se_col = se_col
+    ) # |>
     # complete_implicit_zeros(
     #   adjust_by = adjust_by,
     #   coef_col = "estimate",

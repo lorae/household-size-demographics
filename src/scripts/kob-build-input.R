@@ -141,12 +141,25 @@ adjust_by = list(
 )
 
 dbDisconnect(con)
+
 # Temp: for testing standardize_coefs
 source("src/utils/regression-postprocess-tools.R")
 reg_2019_test <- read_coefs_2019("throughput/reg00/model00_2019_numprec_summary.rds")
 reg_2000_test <- read_coefs_2000("throughput/reg00/model00_2000_numprec_summary-v2.rds")
 
-standardize_coefs(reg_data = reg_2000_test, adjust_by = adjust_by)
+standardize_coefs(
+  reg_data = reg_2000_test, 
+  adjust_by = adjust_by,
+  coef_col = "coef_2000",
+  se_col = "coef_2000_se"
+  )
+
+standardize_coefs(
+  reg_data = reg_2019_test, 
+  adjust_by = adjust_by,
+  coef_col = "coef_2019",
+  se_col = "coef_2019_se"
+)
 #### TESTING ^^^^
 
 # Define function to pull coefficient data from both years and combine with props
