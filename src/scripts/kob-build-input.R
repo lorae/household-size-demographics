@@ -48,24 +48,6 @@ if (nrow(missing_paths) > 0) {
   stop("❌ Missing file(s):\n", paste(missing_paths$path, collapse = "\n"))
 }
 
-# Initialize adjust_by
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_processed") 
-
-adjust_by = list(
-  AGE_bucket = ipums_db |> pull(AGE_bucket) |> unique(),
-  EDUC_bucket = ipums_db |> pull(EDUC_bucket) |> unique(),
-  INCTOT_cpiu_2010_bucket = ipums_db |> pull(INCTOT_cpiu_2010_bucket) |> unique(),
-  us_born = ipums_db |> pull(us_born) |> unique(),
-  tenure = ipums_db |> pull(tenure) |> unique(),
-  gender = ipums_db |> pull(gender) |> unique(),
-  cpuma = ipums_db |> pull(cpuma) |> unique(),
-  RACE_ETH_bucket = ipums_db |> pull(RACE_ETH_bucket) |> unique()
-)
-
-dbDisconnect(con)
-
-
 # ----- Step 2: Read in proportion data ----- #
 # Helper function to combine two dataframes with identical terms (used for joining
 # 2000 and 2019 data)
@@ -142,7 +124,30 @@ read_coefs_2019 <- function(path) {
   return(output)
 }
 
+#### TESTING : standardize_coefs vvvvvvvvv
+# Initialize adjust_by
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums_processed") 
 
+adjust_by = list(
+  AGE_bucket = ipums_db |> pull(AGE_bucket) |> unique(),
+  EDUC_bucket = ipums_db |> pull(EDUC_bucket) |> unique(),
+  INCTOT_cpiu_2010_bucket = ipums_db |> pull(INCTOT_cpiu_2010_bucket) |> unique(),
+  us_born = ipums_db |> pull(us_born) |> unique(),
+  tenure = ipums_db |> pull(tenure) |> unique(),
+  gender = ipums_db |> pull(gender) |> unique(),
+  cpuma = ipums_db |> pull(cpuma) |> unique(),
+  RACE_ETH_bucket = ipums_db |> pull(RACE_ETH_bucket) |> unique()
+)
+
+dbDisconnect(con)
+# Temp: for testing standardize_coefs
+source("src/utils/regression-postprocess-tools.R")
+reg_2019_test <- read_coefs_2019("throughput/reg00/model00_2019_numprec_summary.rds")
+reg_2000_test <- read_coefs_2000("throughput/reg00/model00_2000_numprec_summary-v2.rds")
+
+standardize_coefs(reg_data = reg_2000_test, adjust_by = adjust_by)
+#### TESTING ^^^^
 
 # Define function to pull coefficient data from both years and combine with props
 # data
