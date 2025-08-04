@@ -67,6 +67,10 @@ join_data_by_term <- function(data1, data2) {
     stop("Duplicate terms found. Cannot safely join.")
   }
   
+  # Delete the variable and value cols
+  data1 <- data1 |> select(-variable, -value)
+  data2 <- data2 |> select(-variable, -value)
+  
   # Safe left join
   joined <- dplyr::left_join(data1, data2, by = "term")
   
@@ -103,7 +107,7 @@ props <- join_data_by_term(prop_2000, prop_2019)
 coef_names <- c("numprec", "ppr", "ppbr", "room", "bedroom")
 
 # Define helper functions for reading in data from 2000, 2019
-read_coefs_2000 <- function(path) {
+read_coefs_2000 <- function(path, adjust_by) {
   output <- readRDS(path) |>
     select(term, estimate, std.error) |>
     rename(
@@ -111,73 +115,50 @@ read_coefs_2000 <- function(path) {
       coef_2000_se = std.error
     )
   
-  return(output)
+  processed_output <- standardize_coefs(
+    reg_data = output,
+    adjust_by = adjust_by,
+    coef_col = "coef_2000",
+    se_col = "coef_2000_se"
+  )
+  
+  return(processed_output)
 }
 
-read_coefs_2019 <- function(path) {
+read_coefs_2019 <- function(path, adjust_by) {
   output <- readRDS(path) |>
     rename(
       coef_2019 = estimate,
       coef_2019_se = se_estimate
     )
   
-  return(output)
-}
-
-#### TESTING : standardize_coefs vvvvvvvvv
-# Initialize adjust_by
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_processed") 
-
-adjust_by = list(
-  AGE_bucket = ipums_db |> pull(AGE_bucket) |> unique(),
-  EDUC_bucket = ipums_db |> pull(EDUC_bucket) |> unique(),
-  INCTOT_cpiu_2010_bucket = ipums_db |> pull(INCTOT_cpiu_2010_bucket) |> unique(),
-  us_born = ipums_db |> pull(us_born) |> unique(),
-  tenure = ipums_db |> pull(tenure) |> unique(),
-  gender = ipums_db |> pull(gender) |> unique(),
-  cpuma = ipums_db |> pull(cpuma) |> unique(),
-  RACE_ETH_bucket = ipums_db |> pull(RACE_ETH_bucket) |> unique()
-)
-
-dbDisconnect(con)
-
-# Temp: for testing standardize_coefs
-source("src/utils/regression-postprocess-tools.R")
-reg_2019_test <- read_coefs_2019("throughput/reg00/model00_2019_numprec_summary.rds")
-reg_2000_test <- read_coefs_2000("throughput/reg00/model00_2000_numprec_summary-v2.rds")
-
-x <- standardize_coefs(
-  reg_data = reg_2000_test, 
-  adjust_by = adjust_by,
-  coef_col = "coef_2000",
-  se_col = "coef_2000_se"
+  processed_output <- standardize_coefs(
+    reg_data = output,
+    adjust_by = adjust_by,
+    coef_col = "coef_2019",
+    se_col = "coef_2019_se"
   )
-
-standardize_coefs(
-  reg_data = reg_2019_test, 
-  adjust_by = adjust_by,
-  coef_col = "coef_2019",
-  se_col = "coef_2019_se"
-)
-#### TESTING ^^^^
+  
+  return(processed_output)
+}
 
 # Define function to pull coefficient data from both years and combine with props
 # data
-join_coefs_props <- function(coef_name) {
+# Relies on props being efined outside the function. A bit sloppy.
+join_coefs_props <- function(coef_name, props) {
   coefs <- join_data_by_term(
-    read_coefs_2000(get_path(coef_name, 2000)), 
-    read_coefs_2019(get_path(coef_name, 2019))
+    read_coefs_2000(get_path(coef_name, 2000), adjust_by), 
+    read_coefs_2019(get_path(coef_name, 2019), adjust_by)
   )
-  
+
   # Left join: keep only terms found in regression results; OK if some props are unused
   # Also, if regression results include an (Intercept) term, that will produce an NA
   # in the props columns, which is expected behavior
-  left_join(coefs, props, by = "term") 
+  left_join(coefs, props, by = c("term")) 
 }
 
 # Apply this function and save outcomes in a named list
-kob_input <- map(coef_names, join_coefs_props) |>  set_names(coef_names)
+kob_input <- map(coef_names, join_coefs_props, props = props) |> set_names(coef_names)
 
 # Quality check: Do any of above defined files have NA values?
 na_summary <- map(kob_input, ~ anyNA(.x))
