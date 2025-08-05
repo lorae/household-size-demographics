@@ -17,6 +17,22 @@ devtools::load_all("../dataduck")
 source("src/utils/regression-postprocess-tools.R")
 
 # ----- Step 1: Define throughput file paths  ----- #
+# Initialize adjust_by
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums_processed") 
+
+adjust_by = list(
+  AGE_bucket = ipums_db |> pull(AGE_bucket) |> unique(),
+  EDUC_bucket = ipums_db |> pull(EDUC_bucket) |> unique(),
+  INCTOT_cpiu_2010_bucket = ipums_db |> pull(INCTOT_cpiu_2010_bucket) |> unique(),
+  us_born = ipums_db |> pull(us_born) |> unique(),
+  tenure = ipums_db |> pull(tenure) |> unique(),
+  gender = ipums_db |> pull(gender) |> unique(),
+  cpuma = ipums_db |> pull(cpuma) |> unique(),
+  RACE_ETH_bucket = ipums_db |> pull(RACE_ETH_bucket) |> unique()
+)
+
+dbDisconnect(con)
 # TODO: unify terms with abbrev_variable and other ways I refer to these 
 # regression outcomes across the pipeline workflow
 input_paths <- tibble::tribble(
@@ -170,4 +186,3 @@ if (any(unlist(na_summary))) {
 
 # Save kob_input to throughput/
 saveRDS(kob_input, "throughput/kob_input.rds")
-  
