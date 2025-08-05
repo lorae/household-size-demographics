@@ -7,6 +7,8 @@
 # Input: throughput/kob_input.rds
 # Output: throughput/kob_output.rds
 #
+# TODO: this script can probably be refactored into kob-build-input since
+# the postprocess tools are alresyt mostly used in kob-build-input
 
 # ----- Step 0: Load required packages ----- #
 library("dplyr")
@@ -51,8 +53,7 @@ source("kob/scripts/kob-function.R")
 
 # --- Number of Persons (p) ---
 kob_p <- kob(kob_input$numprec) |>
-  split_term_column() |>
-  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+  split_term_column()
 
 kob_output_validate(
   kob_p,
@@ -63,8 +64,7 @@ kob_output_validate(
 
 # --- Number of Bedrooms (b) ---
 kob_b <- kob(kob_input$bedroom) |>
-  split_term_column() |>
-  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+  split_term_column()
 
 kob_output_validate(
   kob_b,
@@ -74,8 +74,7 @@ kob_output_validate(
 
 # --- Number of Rooms (r) ---
 kob_r <- kob(kob_input$room) |>
-  split_term_column() |>
-  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+  split_term_column()
 
 kob_output_validate(
   kob_r,
@@ -85,8 +84,7 @@ kob_output_validate(
 
 # --- Persons per Room (ppr) ---
 kob_ppr <- kob(kob_input$ppr) |>
-  split_term_column() |>
-  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+  split_term_column()
 
 kob_output_validate(
   kob_ppr,
@@ -96,8 +94,7 @@ kob_output_validate(
 
 # --- Persons per Bedroom (ppbr) ---
 kob_ppbr <- kob(kob_input$ppbr) |>
-  split_term_column() |>
-  add_intercept(variable = "RACE_ETH_bucket", reference_value = "White")
+  split_term_column()
 
 kob_output_validate(
   kob_ppbr,
