@@ -18,6 +18,7 @@ library("glue")
 library("oaxaca")
 library("tibble")
 
+source("src/utils/regression-postprocess-tools.R")
 
 # ----- Step 1: Load in data ----- #
 # Only run this if kob_input.rds doesn't already exist

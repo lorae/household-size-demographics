@@ -396,12 +396,12 @@ standardize_coefs <- function(
         coef_col = coef_col,
         se_col = se_col
     ) |>
+    # Adjust the coefficients according to Gardeazabal-Ugidos (2004)
     gu_adjust(
       adjust_by = adjust_by,
       coef_col = coef_col
     ) |>
     arrange(variable, value)
 
-  # TODO: this is incomplete and doesn't work. resume work on it
   return(output)
 }
