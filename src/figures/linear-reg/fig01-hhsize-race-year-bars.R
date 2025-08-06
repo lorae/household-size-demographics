@@ -46,7 +46,7 @@ fig01
 
 # ----- Step 4: Save plots ----- #
 ggsave(
-  "output/figures/fig01-hhsize-race-year-bars.png", 
+  "output/figures/linear-reg/fig01-hhsize-race-year-bars.png", 
   plot = fig01, 
   width = 3000, height = 2400, units = "px", dpi = 400
 )
