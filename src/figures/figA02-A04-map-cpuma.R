@@ -44,17 +44,18 @@ cpuma_sf_hhsize <- cpuma_sf |>
 
 # ----- Step 3: Map ----- #
 # Choose the center point of the color scale (white color on figs A02 and A03)
-center <- 3.3
+center <- 3.345
 # Choropleth map 2000
 figA02 <- ggplot(cpuma_sf_hhsize) + 
   geom_sf(aes(geometry = geometry, fill = hhsize_2000), color = NA, size = 0) +
   geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
-    name = "Household\nsize, 2000",
+    name = "Household size\n(number\nof persons)",
     low = "darkblue", mid = "white", high = "darkred", midpoint = center,
     breaks = seq(from = 2.5, to = 5.0, by = 0.5)
   ) +
-  theme_void()
+  theme_void() +
+  theme(plot.margin = margin(0, 20, 0, 0))  # top, right, bottom, left. Add space for legend.
 figA02
 
 # Choropleth map 2019
@@ -62,11 +63,12 @@ figA03 <- ggplot(cpuma_sf_hhsize) +
   geom_sf(aes(geometry = geometry, fill = hhsize_2019), color = NA, size = 0) +
   geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
-    name = "Household\nsize, 2000",
+    name = "Household size\n(number\nof persons)",
     low = "darkblue", mid = "white", high = "darkred", midpoint = center,
     breaks = seq(from = 2.5, to = 5.0, by = 0.5)
   ) +
-  theme_void()
+  theme_void() +
+  theme(plot.margin = margin(0, 20, 0, 0)) # top, right, bottom, left. Add space for legend.
 figA03
 
 # Choropleth map 2000 -> 2019 percentage change
@@ -74,12 +76,13 @@ figA04 <- ggplot(cpuma_sf_hhsize) +
   geom_sf(aes(geometry = geometry, fill = hhsize_pctchg_2000_2019), color = NA, size = 0) +
   geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
   scale_fill_gradient2(
-    name = "Change in \nHousehold \nSize",
+    name = "Percentage\nchange",
     low = "darkblue", mid = "white", high = "darkred", midpoint = 0,
     breaks = seq(from = -20, to = 20, by = 10),
     labels = function(x) paste0(x, "%")
   ) +
-  theme_void()
+  theme_void() +
+  theme(plot.margin = margin(0, 20, 0, 0)) # top, right, bottom, left. Add space for legend.
 figA04
 
 # TODO: repeat this CPUMA mapping, but for individual cities. Create lists of the 
@@ -87,17 +90,17 @@ figA04
 
 # ----- Step 4: Save maps ----- #
 ggsave(
-  "output/figures/figA02-hhsize-2000-cpuma.png", 
+  "output/figures/linear-reg/figA02-hhsize-2000-cpuma.png", 
   plot = figA02, 
   width = 4000, height = 3000, units = "px", dpi = 300
 )
 ggsave(
-  "output/figures/figA03-hhsize-2019-cpuma.png", 
+  "output/figures/linear-reg/figA03-hhsize-2019-cpuma.png", 
   plot = figA03, 
   width = 4000, height = 3000, units = "px", dpi = 300
 )
 ggsave(
-  "output/figures/figA04-hhsize-pct-change-cpuma.png", 
+  "output/figures/linear-reg/figA04-hhsize-pct-change-cpuma.png", 
   plot = figA04, 
   width = 4000, height = 3000, units = "px", dpi = 300
 )

@@ -956,3 +956,11 @@ crosstab_percent(
   group_by = c("RACE_ETH_bucket", "YEAR"),
   percent_group_by = c("YEAR")
 ) |> arrange(YEAR)
+
+##### Fast fact: median CPUMA-level hhsize in 2000
+tabulate_summary(
+  ipums_db,
+  year = 2000,
+  value = "NUMPREC",
+  group_by = "CPUMA0010"
+) |> pull(hhsize) |> median()
