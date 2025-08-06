@@ -194,12 +194,12 @@ fig07a <- (p + r + ppr) +
 
 # ----- Step 4: Save plots ----- #
 ggsave(
-  "output/figures/fig07-kob-decomp-bars.png", 
+  "output/figures/linear-reg/figA06-kob-decomp-bars-bedroom.png", 
   plot = fig07, 
   width = 3000, height = 2000, units = "px", dpi = 200
 )
 ggsave(
-  "output/figures/fig07a-kob-decomp-bars.png", 
+  "output/figures/linear-reg/figA07-kob-decomp-bars-room.png", 
   plot = fig07a, 
   width = 3000, height = 2000, units = "px", dpi = 200
 )
