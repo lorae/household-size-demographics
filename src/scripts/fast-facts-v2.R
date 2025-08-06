@@ -1,7 +1,10 @@
 # The purpose of this script is to produce fast facts that are used in the draft 
 # version of this paper. 
 # Last modified mid-March 2025.
-
+# 
+# TODO: clean up this script a bunch
+# e.g. the tabulate summar yand tabulate-summary-2year are already in 
+# aggregation-tools.R and should be sourced there.
 # ----- Step 0: Load required packages ----- #
 library("dplyr")
 library("duckdb")
@@ -941,3 +944,15 @@ cf_by_cpuma_summary_white
 
 # Percentage with a shortage
 pull(cf_by_cpuma_summary_white, count_negative) / pull(cf_by_cpuma_summary_white, count_total)
+
+######### Fast fact: nultiracial percentage
+# We define “multiracial” individuals as non-Hispanic persons whose race is encoded 
+# as “Two major races” or “Three or more major races” in the Census Bureau’s “RACE” 
+# variable. These individuals comprised __% of the non group-quartered population 
+# in 2000 and ___% in 2019.
+crosstab_percent(
+  data = ipums_db |> filter(GQ %in% c(0,1,2)), 
+  wt_col = "PERWT", 
+  group_by = c("RACE_ETH_bucket", "YEAR"),
+  percent_group_by = c("YEAR")
+) |> arrange(YEAR)
