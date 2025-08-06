@@ -16,6 +16,7 @@ library("dplyr")
 library("tidyr")
 library("sf")
 library("ggplot2")
+options(scipen = 999)
 
 devtools::load_all("../dataduck")
 source("src/utils/aggregation-tools.R") # tabulate_summary_2year
@@ -84,6 +85,30 @@ figA04 <- ggplot(cpuma_sf_hhsize) +
   theme_void() +
   theme(plot.margin = margin(0, 20, 0, 0)) # top, right, bottom, left. Add space for legend.
 figA04
+
+
+### EXPERIMENTAL PLOT: Plot the same CPUMA-level metric, but the CPUMA-level
+# counterfactual KOB results
+kob_output <- readRDS("throughput/kob_output.rds")
+cpuma_cf <- kob_output$p |> filter(variable == "cpuma") |> mutate(CPUMA0010 = as.numeric(value)) |>
+  mutate(diff_c = c / prop_2019)
+cpuma_cf_sf <- cpuma_cf |>
+  left_join(cpuma_sf, by = "CPUMA0010")
+  
+# Choropleth map 2000 -> 2019 c coeffcieints
+figAexp <- ggplot(cpuma_cf_sf) + 
+  geom_sf(aes(geometry = geometry, fill = diff_c), color = NA, size = 0) +
+  geom_sf(data = cpuma_sf_hhsize, aes(geometry = geometry), color = "grey50", fill = NA, size = 0.1) +  # Overlay state boundaries
+  scale_fill_gradient2(
+    name = "CPUMA-level diffs",
+    low = "darkblue", mid = "white", high = "darkred", midpoint = 0,
+    breaks = seq(from = -0.6, to = 0.6, by = 0.2),
+    labels = function(x) format(x, scientific = FALSE, digits = 3)
+  ) +
+  theme_void() +
+  theme(plot.margin = margin(0, 20, 0, 0)) # top, right, bottom, left. Add space for legend.
+figAexp
+
 
 # TODO: repeat this CPUMA mapping, but for individual cities. Create lists of the 
 # CPUMAs that fall in a certain MSA/CSA
