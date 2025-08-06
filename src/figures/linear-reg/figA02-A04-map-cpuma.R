@@ -131,6 +131,31 @@ figBexp <- ggplot(cpuma_cf_bed_sf) +
   theme(plot.margin = margin(0, 20, 0, 0)) # top, right, bottom, left. Add space for legend.
 figBexp
 
+
+# One more thing: scatter diff_c from cpuma_cf_bed with diff_c from cpuma_cf
+# Join the two datasets
+scatter_data <- cpuma_cf |> 
+  select(CPUMA0010, diff_c) |> 
+  rename(unexplained_hhsize_diff = diff_c) |>
+  left_join(
+    cpuma_cf_bed |> select(CPUMA0010, diff_c) |> rename(unexplained_bed_diff = diff_c),
+    by = "CPUMA0010"
+  )
+
+# Create scatter plot
+ggplot(scatter_data, aes(x = unexplained_hhsize_diff, y = unexplained_bed_diff)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +  # Add trend line
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +  # 45-degree reference line
+  labs(
+    x = "Unexplained household size difference",
+    y = "Unexplained bedroom difference",
+    title = "Comparison of unexplained differences by CPUMA"
+  ) +
+  xlim(-0.5, 0.5) +
+  ylim(-0.5, 0.5) +
+  theme_minimal()
+
 # TODO: repeat this CPUMA mapping, but for individual cities. Create lists of the 
 # CPUMAs that fall in a certain MSA/CSA
 
