@@ -1,9 +1,7 @@
 # This script produces Figure 2 
 # 
 # 
-# The purpose of this script is to produce fast facts that are used in the draft 
-# version of this paper. 
-# Last modified mid-March 2025.
+# TODO: remove unneeded code and imports and overall refactor for clarity
 
 # ----- Step 0: Load required packages ----- #
 library("dplyr")
@@ -26,6 +24,7 @@ devtools::load_all("../dataduck")
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed") |>
+  # Not necessary because tabulate_summary already filters by GQ
   filter(GQ %in% c(0,1,2))
 
 # ----- Step 3: Define functions for tabulating summaries ----- #
@@ -203,5 +202,10 @@ combined_plot <- left_plot + right_plot +
 
 # Display the combined plot
 print(combined_plot)
+
 # Save the combined plot
-#ggsave("results/fig02.png", plot = combined_plot, width = 6.5, height = 6.5, dpi = 500)
+ggsave(
+  "output/figures/linear-reg/fig02-pctchg-hhsize-age-race.png", 
+  plot = combined_plot, 
+  width = 6.5, height = 6.5, dpi = 500
+  )
