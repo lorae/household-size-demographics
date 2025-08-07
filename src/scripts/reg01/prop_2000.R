@@ -1,5 +1,5 @@
-# kob/refactor/props00_2000
-# TODO: rename output to prop_2019 and adjust downstream kob scripts accordingly
+# src/scripts/reg01/prop_2000.R
+#
 # This script runs the props for regression 00 in 2000.
 
 # TODO: explore whether I can generate a survey design without pulling data into
@@ -26,6 +26,9 @@ library(tictoc)
 library(duckdb)
 library(dplyr)
 library(furrr)
+
+# Initialize output path
+out_path <- "throughput/reg01/prop_2000.rds"
 
 # Read in the pre-subsetted survey
 tic("Read 2000 survey design as RDS")
@@ -58,6 +61,8 @@ toc()
 names(props00_2000) <- prop_vars
 
 # Save results in throughput
-tic("Save props00_2000 to throughput/reg00/")
-saveRDS(props00_2000, file = "throughput/reg00/props00_2000.rds")
+message(glue("Saving prop output. Output path: {out_path}"))
+
+tic(glue("Save results to {out_path}"))
+saveRDS(props00_2000, file = out_path)
 toc()

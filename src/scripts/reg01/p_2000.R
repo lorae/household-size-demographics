@@ -1,6 +1,7 @@
 # src/scripts/reg01/p_2000.R
 #
 # This script runs regression 1 with NUMPREC as the outcome variable
+# TODO: make `output_path` vs `out_path` consistent across scripts
 
 library(survey)
 library(tictoc)
