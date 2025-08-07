@@ -1,6 +1,6 @@
 # src/scripts/reg01/ppr_2000.R
 # 
-# This script runs regression 0 with `persons_per_room` as the outcome variable
+# This script runs regression 1 with `persons_per_room` as the outcome variable
 
 library(survey)
 library(tictoc)
