@@ -120,7 +120,6 @@ To keep sensitive or system-specific values (like an email address or scratch di
     Then open `.env` in your preferred IDE / text editor and fill in your information. For example:
   
     ```bash
-    # .env
     SLURM_MAIL_USER=me@nowhere.com
     PROJECT_WORKDIR=your/file/path/to/household-size-demographics
     ```
@@ -133,10 +132,10 @@ To keep sensitive or system-specific values (like an email address or scratch di
     source .env
     ```
     
-    Then submit the SLURM job as usual:
+    Then submit the SLURM job as usual. You can run this test script to confirm your `.env` is configured correctly. Assuming it is, logs should show up in the `slurm-logs` directory:
     
     ```bash
-    TODO
+    sbatch your/file/path/to/household-size-demographics/jobs/test-env.sh
     ```
     
     The job script references your environment variables, ensuring your email address and file paths are never hardcoded into the script itself.

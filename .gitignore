@@ -10,11 +10,20 @@ tests/testthat/test-create-benchmark-sample/*
 cache/*
 throughput/*
 
+# Current SLURM logs
+slurm-logs/*
+
+# old SLURM jobs regarding reg00 containing file patsh and email addresses, but kept
+# (as of Aug 2025) as reference until fully deprecated
+hidden-jobs/
+
+
 # Keep .gitkeep marker files in these folders to ensure the directory structure
 # is preserved for replication code, even though their contents are ignored (because
 # of very large file size)
 !cache/.gitkeep
 !throughput/.gitkeep
+!slurm-logs/.gitkeep
 
 # R environment local files
 .Rprofile
@@ -73,5 +82,4 @@ rsconnect/
 # SLURM logs
 slurm*
 
-# SLURM jobs - will commit once I'm ready to create templates
-jobs/
+
