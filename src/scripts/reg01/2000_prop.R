@@ -26,6 +26,7 @@ library(tictoc)
 library(duckdb)
 library(dplyr)
 library(furrr)
+library(glue)
 
 # Initialize output path
 out_path <- "throughput/reg01/2000_prop.rds"
