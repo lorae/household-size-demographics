@@ -7,7 +7,7 @@
 # The purpose of this script is to design the surveys and save that output so
 # it doesn't have to be re-run each time a new regression is run.
 # By my latest estimate, designing a survye takes about 3 minutes in 2000 and 
-# TODO: fill in for 2019
+# TODO: how long for 2019?
 
 # This script must be run before the kob/refactor/reg_*.R series of scripts, because
 # they load in the .rds file that is the output of this script.
@@ -70,22 +70,21 @@ tic("Save the 2019 raw tibble, unfiltered")
 saveRDS(ipums_2019_tb, file = "throughput/ipums_2019_tb.rds")
 toc()
 
-## NOTE! Commented out 7/10/2025 because we do not need the 2019 survey design object
-# # Design the 2019 survey
-# tic("Design the 2019 survey")
-# design_2019_survey <- svrepdesign(
-#   weights = ~PERWT,
-#   repweights = "REPWTP[0-9]+",  # regex pattern to match columns
-#   type = "Fay",
-#   rho = 0.5,
-#   mse = TRUE,
-#   data = ipums_2019_tb
-# )
-# design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
-# toc()
-# 
-# # Save the 2019 survey
-# # Note: this took 47 minutes last time
-# tic("Save 2019 survey design as RDS")
-# saveRDS(design_2019_survey, file = "throughput/design_2019_survey.rds")
-# toc()
+# Design the 2019 survey
+tic("Design the 2019 survey")
+design_2019_survey <- svrepdesign(
+  weights = ~PERWT,
+  repweights = "REPWTP[0-9]+",  # regex pattern to match columns
+  type = "Fay",
+  rho = 0.5,
+  mse = TRUE,
+  data = ipums_2019_tb
+)
+design_2019_survey <- subset(design_2019_survey, GQ %in% c(0, 1, 2))
+toc()
+
+# Save the 2019 survey
+# Note: this took 47 minutes last time
+tic("Save 2019 survey design as RDS")
+saveRDS(design_2019_survey, file = "throughput/design_2019_survey.rds")
+toc()
