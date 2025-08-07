@@ -1,6 +1,6 @@
-#kob/scripts/coefs00_2000_numprec.R
-# TODO: rename output to p_2000 and adjust downstream kob scripts accordingly
-# This script runs regression 0 with NUMPREC as the outcome variable
+# src/scripts/reg01/p_2000.R
+#
+# This script runs regression 1 with NUMPREC as the outcome variable
 
 library(survey)
 library(tictoc)
@@ -26,7 +26,7 @@ formula <- NUMPREC ~ -1 +
   cpuma
 
 # Initialize output path
-output_path <- glue("throughput/model00_{year}_numprec_summary-v3.rds")
+output_path <- glue("throughput/p_{year}.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")

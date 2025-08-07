@@ -1,6 +1,6 @@
-#kob/scripts/coefs00_2000_room.R
-# TODO: rename output to r_2000 and adjust downstream kob scripts accordingly
-# This script runs regression 0 with `room` as the outcome variable
+# src/scripts/reg01/b_2000.R
+# 
+# This script runs regression 1 with `bedroom` as the outcome variable
 
 library(survey)
 library(tictoc)
@@ -15,7 +15,7 @@ library(glue)
 year <- 2000
 
 # Initialize formula
-formula <- room ~ -1 + 
+formula <- bedroom ~ -1 + 
   RACE_ETH_bucket +
   AGE_bucket +
   EDUC_bucket +
@@ -26,7 +26,7 @@ formula <- room ~ -1 +
   cpuma
 
 # Initialize output path
-output_path <- glue("throughput/reg00/model00_{year}_room_summary.rds")
+output_path <- glue("throughput/reg01/b_{year}.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")
