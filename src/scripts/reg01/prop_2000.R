@@ -35,17 +35,9 @@ tic("Read 2000 survey design as RDS")
 design_2000_survey <- readRDS("throughput/design_2000_survey.rds")
 toc()
 
-# Calculate proportions
-prop_vars <- c(
-  "RACE_ETH_bucket", 
-  "AGE_bucket", 
-  "EDUC_bucket",
-  "INCTOT_cpiu_2010_bucket", 
-  "us_born", 
-  "tenure", 
-  "gender",
-  "cpuma"
-  )
+# Calculate proportions: Source script that defines reg01_predictors
+source("src/scripts/reg01/define_formula.R")
+prop_vars <- reg01_predictors # Defined in define_formula.R, sourced above
 
 # Convert to one-sided formulas: ~varname
 formulas <- lapply(prop_vars, function(var) as.formula(paste0("~", var)))
