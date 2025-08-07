@@ -1,5 +1,5 @@
-#kob/scripts/coefs00_2000_persons_per_bedroom.R
-# TODO: rename output to ppbr_2000 and adjust downstream kob scripts accordingly
+# src/scripts/reg01/ppbr_2000.R
+# 
 # This script runs regression 0 with `persons_per_bedroom` as the outcome variable
 
 library(survey)
@@ -26,7 +26,7 @@ formula <- persons_per_bedroom ~ -1 +
   cpuma
 
 # Initialize output path
-output_path <- glue("throughput/reg00/model00_{year}_persons_per_bedroom_summary.rds")
+output_path <- glue("throughput/reg01/ppbr_2000.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")
