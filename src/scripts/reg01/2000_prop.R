@@ -1,4 +1,4 @@
-# src/scripts/reg01/prop_2000.R
+# src/scripts/reg01/2000_prop.R
 #
 # This script runs the props for regression 00 in 2000.
 
@@ -28,7 +28,7 @@ library(dplyr)
 library(furrr)
 
 # Initialize output path
-out_path <- "throughput/reg01/prop_2000.rds"
+out_path <- "throughput/reg01/2000_prop.rds"
 
 # Read in the pre-subsetted survey
 tic("Read 2000 survey design as RDS")

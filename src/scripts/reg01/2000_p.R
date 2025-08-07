@@ -1,4 +1,4 @@
-# src/scripts/reg01/p_2000.R
+# src/scripts/reg01/2000_p.R
 #
 # This script runs regression 1 with NUMPREC as the outcome variable
 # TODO: make `output_path` vs `out_path` consistent across scripts
@@ -24,7 +24,7 @@ formula <- get_formula(
 )
 
 # Initialize output path
-output_path <- glue("throughput/p_{year}.rds")
+output_path <- glue("throughput/{year}_p.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")

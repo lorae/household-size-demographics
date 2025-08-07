@@ -1,4 +1,4 @@
-# src/scripts/reg01/p_2019.R
+# src/scripts/reg01/2019_ppr.R
 cat("
 This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
 using the dataduck matrix-based regression backend and successive differences replication (SDR).
@@ -7,12 +7,12 @@ This is the main production pipeline.
 
 # ----- Step 0: User settings ----- #
 # Define output path for model summary
-out_path <- "throughput/reg01/p_2019.rds"
+out_path <- "throughput/reg01/2019_ppr.rds"
 
 # Define regression formula
 source("src/scripts/reg01/define_formula.R")
 formula <- get_formula(
-  outcome_var = "NUMPREC", 
+  outcome_var = "persons_per_room", 
   predictors = reg01_predictors, 
   has_intercept = TRUE
 )
@@ -38,7 +38,7 @@ plan(multicore, workers = 10)
 
 # ----- Step 2: Load data from saved ipums_2019_tb tibble ----- #
 tic("Collect 2019 ipums tibble")
-ipums_2019_tb <- readRDS("throughput/ipums_2019_tb.rds")
+ipums_2019_tb <- readRDS("kob/throughput/ipums_2019_tb.rds")
 toc()
 
 tic("Filter out group quarters residents")
@@ -68,7 +68,6 @@ model_output <- se_from_bootstrap(
   se_cols = c("estimate")
 )
 toc()
-
 # ----- Step 4: Save results ----- #
 message(glue("Saving model output. Output path: {out_path}"))
 

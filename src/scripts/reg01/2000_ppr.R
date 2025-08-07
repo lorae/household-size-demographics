@@ -1,6 +1,6 @@
-# src/scripts/reg01/b_2000.R
+# src/scripts/reg01/2000_ppr.R
 # 
-# This script runs regression 1 with `bedroom` as the outcome variable
+# This script runs regression 1 with `persons_per_room` as the outcome variable
 
 library(survey)
 library(tictoc)
@@ -17,13 +17,13 @@ year <- 2000
 # Define regression formula
 source("src/scripts/reg01/define_formula.R")
 formula <- get_formula(
-  outcome_var = "bedroom", 
+  outcome_var = "persons_per_room", 
   predictors = reg01_predictors, 
   has_intercept = TRUE
 )
 
 # Initialize output path
-output_path <- glue("throughput/reg01/b_{year}.rds")
+output_path <- glue("throughput/reg01/{year}_ppr.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")

@@ -1,4 +1,4 @@
-# src/scripts/reg01/r_2000.R
+# src/scripts/reg01/2000_r.R
 # 
 # This script runs regression 1 with `room` as the outcome variable
 
@@ -23,7 +23,7 @@ formula <- get_formula(
   )
 
 # Initialize output path
-output_path <- glue("throughput/reg01/r_2000.rds")
+output_path <- glue("throughput/reg01/{year}_r.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")

@@ -1,4 +1,4 @@
-# src/scripts/reg01/r_2019.R
+# src/scripts/reg01/2019_r.R
 cat("
 This script estimates regression coefficients and standard errors for the 2019 IPUMS sample
 using the dataduck matrix-based regression backend and successive differences replication (SDR).
@@ -7,7 +7,7 @@ This is the main production pipeline.
 
 # ----- Step 0: User settings ----- #
 # Define output path for model summary
-out_path <- "throughput/reg01/r_2019.rds"
+out_path <- "throughput/reg01/2019_r.rds"
 # out_path_bootstrap <- "throughput/reg00/model00_2019_bootstrap-room.rds"
 
 # Define regression formula

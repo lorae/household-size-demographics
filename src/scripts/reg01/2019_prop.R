@@ -1,4 +1,4 @@
-# src/scripts/reg01/prop_2019.R
+# src/scripts/reg01/2019_prop.R
 # 
 # The purpose of this script is to calculate population proportions in 2019.
 
@@ -11,7 +11,7 @@ library(dplyr)
 library(furrr)
 
 # Initialize output path
-out_path <- "throughput/reg01/prop_2019.rds"
+out_path <- "throughput/reg01/2019_prop.rds"
 
 # Read in the pre-subsetted survey
 tic("Read 2019 survey design as RDS")
