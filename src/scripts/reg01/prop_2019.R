@@ -18,7 +18,7 @@ tic("Read 2019 survey design as RDS")
 design_2019_survey <- readRDS("throughput/design_2019_survey.rds")
 toc()
 
-# Calculate proportions: Source script that defines reg01_predictors
+# Source script that defines reg01_predictors
 source("src/scripts/reg01/define_formula.R")
 prop_vars <- reg01_predictors # Defined in define_formula.R, sourced above
 

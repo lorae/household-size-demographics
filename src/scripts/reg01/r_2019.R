@@ -11,15 +11,12 @@ out_path <- "throughput/reg01/r_2019.rds"
 # out_path_bootstrap <- "throughput/reg00/model00_2019_bootstrap-room.rds"
 
 # Define regression formula
-formula <- room ~ -1 + 
-  RACE_ETH_bucket +
-  AGE_bucket +
-  EDUC_bucket +
-  INCTOT_cpiu_2010_bucket +
-  us_born +
-  tenure +
-  gender +
-  cpuma
+source("src/scripts/reg01/define_formula.R")
+formula <- get_formula(
+  outcome_var = "room", 
+  predictors = reg01_predictors, 
+  has_intercept = TRUE
+)
 
 # ----- Step 1: Config ----- #
 

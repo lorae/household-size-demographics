@@ -14,16 +14,13 @@ library(glue)
 # Initialize year
 year <- 2000
 
-# Initialize formula
-formula <- persons_per_bedroom ~ -1 + 
-  RACE_ETH_bucket +
-  AGE_bucket +
-  EDUC_bucket +
-  INCTOT_cpiu_2010_bucket +
-  us_born +
-  tenure +
-  gender +
-  cpuma
+# Define regression formula
+source("src/scripts/reg01/define_formula.R")
+formula <- get_formula(
+  outcome_var = "persons_per_bedroom", 
+  predictors = reg01_predictors, 
+  has_intercept = TRUE
+)
 
 # Initialize output path
 output_path <- glue("throughput/reg01/ppbr_2000.rds")

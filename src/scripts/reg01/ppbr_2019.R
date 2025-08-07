@@ -8,18 +8,14 @@ This is the main production pipeline.
 # ----- Step 0: User settings ----- #
 # Define output path for model summary
 out_path <- "throughput/reg01/ppbr_2019.rds"
-# out_path_bootstrap <- "throughput/reg00/model00_2019_bootstrap-ppbr.rds"
 
 # Define regression formula
-formula <- persons_per_bedroom ~ -1 + 
-  RACE_ETH_bucket +
-  AGE_bucket +
-  EDUC_bucket +
-  INCTOT_cpiu_2010_bucket +
-  us_born +
-  tenure +
-  gender +
-  cpuma
+source("src/scripts/reg01/define_formula.R")
+formula <- get_formula(
+  outcome_var = "persons_per_bedroom", 
+  predictors = reg01_predictors, 
+  has_intercept = TRUE
+)
 
 # ----- Step 1: Config ----- #
 
@@ -76,6 +72,5 @@ toc()
 message(glue("Saving model output. Output path: {out_path}"))
 
 tic("Save model output")
-# saveRDS(bootstrap_results, file = out_path_bootstrap)
 saveRDS(model_output, file = out_path)
 toc()

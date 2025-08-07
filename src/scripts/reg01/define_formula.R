@@ -9,6 +9,6 @@ reg01_predictors <- c("RACE_ETH_bucket", "AGE_bucket", "EDUC_bucket",
                 "gender", "cpuma")
 
 # Function to produce the reg01 (or any other) formula
-get_formula <- function(outcome_var, predictors, is_intercept = TRUE) {
-  return(reformulate(predictors, response = outcome_var, intercept = is_intercept))
+get_formula <- function(outcome_var, predictors, has_intercept = TRUE) {
+  return(reformulate(predictors, response = outcome_var, intercept = has_intercept))
 }

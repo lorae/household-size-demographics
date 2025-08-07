@@ -10,15 +10,12 @@ This is the main production pipeline.
 out_path <- "throughput/reg01/p_2019.rds"
 
 # Define regression formula
-formula <- NUMPREC ~ -1 + 
-  RACE_ETH_bucket +
-  AGE_bucket +
-  EDUC_bucket +
-  INCTOT_cpiu_2010_bucket +
-  us_born +
-  tenure +
-  gender +
-  cpuma
+source("src/scripts/reg01/define_formula.R")
+formula <- get_formula(
+  outcome_var = "NUMPREC", 
+  predictors = reg01_predictors, 
+  has_intercept = TRUE
+)
 
 # ----- Step 1: Config ----- #
 
