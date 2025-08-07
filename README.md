@@ -2,6 +2,9 @@
 
 This repository provides full replication code for analyzing the extent to which American household sizes have changed over time, and by sociodemographic dimension. Detailed instructions for running the code follow.
 
+TODO: consolidate the .env (SLURM setup) and .Rproject instructions into one config section of this document
+
+
 # `data` directory
 If you have cloned this repository from GitHub, it will include a `data` directory which contains an empty `ipums_microdata` directory. Because of the large file size, this data is not stored on GitHub. Either request the file directly from the authors or follow these instructions to download the data from IPUMS directly:
 
@@ -103,6 +106,40 @@ The purpose of this script is to attach essential accessory columns to the raw m
 - `data/db/ipums.duckdb`: `ipums_processed` table
 
 Outputs are used downstream for all subsequent analysis.
+
+# Running SLURM jobs with environment variables
+To keep sensitive or system-specific values (like an email address or scratch directory path) outside of version control, we use a `.env` file to define environment variables, and reference them in the job scripts.
+
+1. **Create a .env file**
+    This repository includes a tracked example.env file which you can copy and fill with your information. To use it:
+  
+    ```bash
+    cp example.env .env
+    ```
+  
+    Then open `.env` in your preferred IDE / text editor and fill in your information. For example:
+  
+    ```bash
+    # .env
+    SLURM_MAIL_USER=me@nowhere.com
+    PROJECT_WORKDIR=your/file/path/to/household-size-demographics
+    ```
+    Do not commit your `.env` file. It should be automatically ignored, as it is listed in `.gitignore.` 
+
+2. **Source the environment before submitting jobs**
+    Before running a job, load the environment variables into your shell:
+    
+    ```bash
+    source .env
+    ```
+    
+    Then submit the SLURM job as usual:
+    
+    ```bash
+    TODO
+    ```
+    
+    The job script references your environment variables, ensuring your email address and file paths are never hardcoded into the script itself.
 
 ----
 # KOB decompsition

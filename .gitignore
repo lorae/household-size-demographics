@@ -1,3 +1,6 @@
+# Environment variables
+.env
+
 # Directory used for unit testing of create-benchmark-sample function
 tests/testthat/test-create-benchmark-sample/*
 !tests/testthat/test-create-benchmark-sample/.gitkeep
