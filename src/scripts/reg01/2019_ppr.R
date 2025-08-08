@@ -38,7 +38,7 @@ plan(multicore, workers = 10)
 
 # ----- Step 2: Load data from saved ipums_2019_tb tibble ----- #
 tic("Collect 2019 ipums tibble")
-ipums_2019_tb <- readRDS("kob/throughput/ipums_2019_tb.rds")
+ipums_2019_tb <- readRDS("throughput/ipums_2019_tb.rds")
 toc()
 
 tic("Filter out group quarters residents")

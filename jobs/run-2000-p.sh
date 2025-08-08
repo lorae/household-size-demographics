@@ -5,10 +5,10 @@
 #SBATCH --open-mode=append
 #SBATCH --nodes=1                           # node count
 #SBATCH --ntasks=1                          # total number of tasks across all nodes
-#SBATCH --cpus-per-task=10                  # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --cpus-per-task=7                   # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --array=1
-#SBATCH --mem=1200G                         # → 1200 GB total
-#SBATCH --time=6:00:00                      # total run time limit (HH:MM:SS)
+#SBATCH --mem=800G                          # → 800 GB total
+#SBATCH --time=16:00:00                     # total run time limit (HH:MM:SS)
 #SBATCH --mail-type=all                     # send email on start, end and fault
 #SBATCH --mail-user=${SLURM_MAIL_USER}      # using env variable
 # Load environment variables from .env file
