@@ -16,6 +16,7 @@ library("ggplot2")
 library("tidyr")
 library("purrr")
 library("patchwork")
+library("scales")
 
 devtools::load_all("../dataduck")
 
@@ -54,23 +55,29 @@ main_color <- "steelblue"
 ymin = 0
 ymax = 3
 
+bar_fills <- list(
+  per1 = list(color = "steelblue", line_type = "solid",  alpha = 1.0),  # 2000
+  per2 = list(color = "steelblue", line_type = "dashed", alpha = 0.5)   # 2019
+)
+
 # Generate the plot
 fig05_renter <- plot_year_subgroup_bars(
-  fig05_data |> filter(tenure == "renter"), 
+  fig05_data |> dplyr::filter(tenure == "renter"),
   yvar = ppbedroom,
-  main_color,
-  ymin, ymax,
+  bar_fills = bar_fills,
+  ymin = 0, ymax = 3,
   legend = FALSE,
   title = "Renter-Occupied"
-  )
+)
+
 fig05_homeowner <- plot_year_subgroup_bars(
-  fig05_data |> filter(tenure == "homeowner"), 
+  fig05_data |> dplyr::filter(tenure == "homeowner"),
   yvar = ppbedroom,
-  main_color,
-  ymin, ymax,
+  bar_fills = bar_fills,
+  ymin = 0, ymax = 3,
   legend = TRUE,
-  "Owner-Occupied"
-  )
+  title = "Owner-Occupied"
+)
 
 # Combine
 fig05 <- fig05_renter / fig05_homeowner +
