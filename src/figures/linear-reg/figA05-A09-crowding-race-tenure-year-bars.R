@@ -1,4 +1,4 @@
-# #src/figures/fig05-crowding-race-tenure-year-bars.R
+# #src/figures/linear-reg/figA05-A09-crowding-race-tenure-year-bars.R
 #
 # Produce bar charts showing people per bedroom (room) by tenure in two panels
 # (upper and lower) as well as by race/ethnicity (groups of two bars) and year
@@ -85,7 +85,7 @@ fig05 <- fig05_renter / fig05_homeowner +
 
 # ----- Step 4: Save plots ----- #
 ggsave(
-  "output/figures/fig05-crowding-race-tenure-year-bars.png",
+  "output/figures/linear-reg/figA05-crowding-race-tenure-year-bars.png",
   plot = fig05,
   width = 3000, height = 4000, units = "px", dpi = 400
 )
