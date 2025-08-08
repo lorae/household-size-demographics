@@ -33,6 +33,7 @@ adjust_by = list(
 )
 
 dbDisconnect(con)
+
 # TODO: unify terms with abbrev_variable and other ways I refer to these 
 # regression outcomes across the pipeline workflow
 input_paths <- tibble::tribble(
@@ -91,9 +92,8 @@ join_data_by_term <- function(data1, data2) {
   
   return(joined)
 }
+
 # ----- Step 2: Read in proportion data ----- #
-
-
 # Read proportions in as a svystat object
 props_2000_svystat <- readRDS(get_path("props", 2000))
 props_2019_svystat <- readRDS(get_path("props", 2019))
