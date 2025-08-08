@@ -96,6 +96,7 @@ prepare_kob_plot_data <- function(kob_output, varnames, pretty_labels = NULL) {
   
   collapsed <- collapsed |>
     mutate(variable = factor(variable, levels = order_levels))
+  
   collapsed
 }
 
@@ -161,7 +162,9 @@ plot_kob_decomposition <- function(
     ) +
     theme(
       panel.spacing.y = unit(1, "lines"),
-      legend.position = "none"
+      legend.position = "none",
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank()
     )
   
   if (hide_facet_labels) {
