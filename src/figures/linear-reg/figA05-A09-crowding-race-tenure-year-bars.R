@@ -56,12 +56,12 @@ ymin = 0
 ymax = 3
 
 bar_fills <- list(
-  per1 = list(color = "steelblue", line_type = "solid",  alpha = 1.0),  # 2000
-  per2 = list(color = "steelblue", line_type = "dashed", alpha = 0.5)   # 2019
+  per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"), # 2000
+  per2 = list(color = "forestgreen", alpha = 0.5, line_type = "solid") # 2019
 )
 
 # Generate the plot
-fig05_renter <- plot_year_subgroup_bars(
+figA05_renter <- plot_year_subgroup_bars(
   fig05_data |> dplyr::filter(tenure == "renter"),
   yvar = ppbedroom,
   bar_fills = bar_fills,
@@ -70,7 +70,7 @@ fig05_renter <- plot_year_subgroup_bars(
   title = "Renter-Occupied"
 )
 
-fig05_homeowner <- plot_year_subgroup_bars(
+figA05_homeowner <- plot_year_subgroup_bars(
   fig05_data |> dplyr::filter(tenure == "homeowner"),
   yvar = ppbedroom,
   bar_fills = bar_fills,
@@ -80,12 +80,12 @@ fig05_homeowner <- plot_year_subgroup_bars(
 )
 
 # Combine
-fig05 <- fig05_renter / fig05_homeowner +
+figA05 <- figA05_renter / figA05_homeowner +
   plot_layout(ncol = 1)
 
 # ----- Step 4: Save plots ----- #
 ggsave(
   "output/figures/linear-reg/figA05-crowding-race-tenure-year-bars.png",
-  plot = fig05,
+  plot = figA05,
   width = 3000, height = 4000, units = "px", dpi = 400
 )
