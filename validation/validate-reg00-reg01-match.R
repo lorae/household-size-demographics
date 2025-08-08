@@ -34,7 +34,7 @@ read_coefs_2000 <- function(path, adjust_by) {
       coef_2000_se = std.error
     )
 
-  return(processed_output)
+  return(output)
 }
 
 # Read in coefficient data from 2019
@@ -45,7 +45,7 @@ read_coefs_2019 <- function(path, adjust_by) {
       coef_2019_se = se_estimate
     )
 
-  return(processed_output)
+  return(output)
 }
 
 # Props 2000 ----
@@ -66,8 +66,45 @@ cat("Result:", all.equal(prop_2019_01, prop_2019_00, tolerance = 1e-6), "\n\n")
 
 # Bedroom 2000 ----
 cat("Comparing bedroom 2000:\n")
-bedroom_2000_00_raw <- readRDS("throughput/reg00/model00_2000_bedroom_summary.rds")
 bedroom_2000_00 <- read_coefs_2000("throughput/reg00/model00_2000_bedroom_summary.rds")
-bedroom_2000_01_raw <- readRDS("throughput/reg01/2000_b.rds")
-bedroom_2000_01 <- "todo"
-cat("Result:", all.equal(bedroom_2000_01, bedroom_2000_00, tolerance = 1e-6), "\n\n")
+bedroom_2000_01 <- read_coefs_2000("throughput/reg01/2000_b.rds")
+bedroom_2000_00_adj <- bedroom_2000_00 |>
+  split_term_column() |>
+  add_intercept_v2(
+    variable = "RACE_ETH_bucket",
+    reference_value = "AAPI",
+    coef_col = "coef_2000",
+    se_col = "coef_2000_se"
+  ) |>
+  arrange(term)
+bedroom_2000_01_adj <- bedroom_2000_01 |>
+  split_term_column() |>
+  arrange(term)
+
+bedroom_2000_00_adj |> filter(variable == "RACE_ETH_bucket" | variable == "(Intercept)") 
+bedroom_2000_01_adj |> filter(variable == "RACE_ETH_bucket" | variable == "(Intercept)") 
+
+cat("Result:", all.equal(bedroom_2000_01_adj, bedroom_2000_00_adj, tolerance = 1e-6), "\n\n")
+
+# Bedroom 2019 ----
+cat("Comparing bedroom 2019:\n")
+bedroom_2019_00 <- read_coefs_2019("throughput/reg00/model00_2019_bedroom_summary-v5.rds")
+bedroom_2019_01 <- read_coefs_2019("throughput/reg01/2019_b.rds")
+bedroom_2019_00_adj <- bedroom_2019_00 |>
+  split_term_column() |>
+  add_intercept_v2(
+    variable = "RACE_ETH_bucket",
+    reference_value = "AAPI",
+    coef_col = "coef_2019",
+    se_col = "coef_2019_se"
+  ) |>
+  arrange(term)
+bedroom_2019_01_adj <- bedroom_2019_01 |>
+  split_term_column() |>
+  arrange(term)
+
+bedroom_2019_00_adj |> filter(variable == "RACE_ETH_bucket" | variable == "(Intercept)") 
+bedroom_2019_01_adj |> filter(variable == "RACE_ETH_bucket" | variable == "(Intercept)") 
+
+cat("Result:", all.equal(bedroom_2019_01_adj, bedroom_2019_00_adj, tolerance = 1e-6), "\n\n")
+
