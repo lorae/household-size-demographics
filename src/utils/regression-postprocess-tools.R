@@ -382,19 +382,11 @@ standardize_coefs <- function(
   output <- reg_data |>
     # Add "variable" and value columns
     split_term_column(varnames = varnames_dict) |>
-    # Use the RACE_ETH_bucket var to add an intercept
-    # TODO: add unit test
-    add_intercept_v2(
-      variable = "RACE_ETH_bucket", # Variable to draw intercept from
-      reference_value = "White", # value of variable that will become intercept
+    # Add the implicit zeros in each category for the omitted group
+    complete_implicit_zeros(
+      adjust_by = adjust_by,
       coef_col = coef_col,
       se_col = se_col
-    ) |>
-    # Add the implicit zeros in each category for the omitted group
-      complete_implicit_zeros(
-        adjust_by = adjust_by,
-        coef_col = coef_col,
-        se_col = se_col
     ) |>
     # Adjust the coefficients according to Gardeazabal-Ugidos (2004)
     gu_adjust(

@@ -38,18 +38,18 @@ dbDisconnect(con)
 # regression outcomes across the pipeline workflow
 input_paths <- tibble::tribble(
   ~term,     ~year, ~path,
-  "props",   2000,  "throughput/reg00/props00_2000.rds",
-  "props",   2019,  "throughput/reg00/props00_2019.rds",
-  "numprec", 2000,  "throughput/reg00/model00_2000_numprec_summary-v2.rds",
-  "numprec", 2019,  "throughput/reg00/model00_2019_numprec_summary.rds", 
-  "ppr",     2000,  "throughput/reg00/model00_2000_persons_per_room_summary.rds",
-  "ppr",     2019,  "throughput/reg00/model00_2019_persons_per_room_summary-v5.rds",
-  "ppbr",    2000,  "throughput/reg00/model00_2000_persons_per_bedroom_summary.rds",
-  "ppbr",    2019,  "throughput/reg00/model00_2019_persons_per_bedroom_summary-v5.rds",
-  "room",    2000,  "throughput/reg00/model00_2000_room_summary.rds",
-  "room",    2019,  "throughput/reg00/model00_2019_room_summary-v5.rds",
-  "bedroom", 2000,  "throughput/reg00/model00_2000_bedroom_summary.rds",
-  "bedroom", 2019,  "throughput/reg00/model00_2019_bedroom_summary-v5.rds"
+  "props",   2000,  "throughput/reg01/2000_prop.rds",
+  "props",   2019,  "throughput/reg01/2019_prop.rds",
+  "numprec", 2000,  "throughput/reg01/2000_p.rds",
+  "numprec", 2019,  "throughput/reg01/2019_p.rds",
+  "ppr",     2000,  "throughput/reg01/2000_ppr.rds",
+  "ppr",     2019,  "throughput/reg01/2019_ppr.rds",
+  "ppbr",    2000,  "throughput/reg01/2000_ppbr.rds",
+  "ppbr",    2019,  "throughput/reg01/2019_ppbr.rds",
+  "room",    2000,  "throughput/reg01/2000_r.rds",
+  "room",    2019,  "throughput/reg01/2019_r.rds",
+  "bedroom", 2000,  "throughput/reg01/2000_b.rds",
+  "bedroom", 2019,  "throughput/reg01/2019_b.rds"
 )
 
 get_path <- function(term, year) {
@@ -183,6 +183,18 @@ na_summary <- map(kob_input, ~ .x |> filter(term != "(Intercept)") |> anyNA())
 if (any(unlist(na_summary))) {
   failed <- names(na_summary[na_summary == TRUE])
   stop("❌ NA values detected in the following `kob_input` entries: ", paste(failed, collapse = ", "))
+}
+
+# Quality check: validate row counts
+expected_len <- sum(lengths(adjust_by)) + 1  # +1 for intercept
+bad_len <- map_lgl(kob_input, ~ nrow(.x) != expected_len)
+
+if (any(bad_len)) {
+  stop(
+    "❌ Unexpected number of rows in: ",
+    paste(names(kob_input)[bad_len], collapse = ", "),
+    "\nExpected ", expected_len, " rows in each."
+  )
 }
 
 # Save kob_input to throughput/
