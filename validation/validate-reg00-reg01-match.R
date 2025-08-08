@@ -134,9 +134,11 @@ print(prop_results)
 
 # COEFS (bedroom now; add more measures later)
 coef_cfg <- tribble(
-  ~measure,   ~year, ~reg00_path,                                         ~reg01_path,                 ~intercept_var,     ~ref_level,
-  "bedroom",  2000,  "throughput/reg00/model00_2000_bedroom_summary.rds", "throughput/reg01/2000_b.rds", "RACE_ETH_bucket", "AAPI",
-  "bedroom",  2019,  "throughput/reg00/model00_2019_bedroom_summary-v5.rds","throughput/reg01/2019_b.rds","RACE_ETH_bucket", "AAPI"
+  ~measure,   ~year, ~reg00_path,                                                      ~reg01_path,                     ~intercept_var,     ~ref_level,
+  "bedroom",  2000,  "throughput/reg00/model00_2000_bedroom_summary.rds",              "throughput/reg01/2000_b.rds",   "RACE_ETH_bucket",  "AAPI",
+  "bedroom",  2019,  "throughput/reg00/model00_2019_bedroom_summary-v5.rds",           "throughput/reg01/2019_b.rds",   "RACE_ETH_bucket",  "AAPI",
+  "ppr",      2000,  "throughput/reg00/model00_2000_persons_per_room_summary.rds",     "throughput/reg01/2000_ppr.rds", "RACE_ETH_bucket",  "AAPI",
+  "ppr",      2019,  "throughput/reg00/model00_2019_persons_per_room_summary-v5.rds",  "throughput/reg01/2019_ppr.rds", "RACE_ETH_bucket",  "AAPI",  
   # add rows for "ppr", "ppbr", "persons", "rooms" w/ the correct paths
 )
 
