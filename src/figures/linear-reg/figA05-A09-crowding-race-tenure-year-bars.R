@@ -21,54 +21,37 @@ library("scales")
 devtools::load_all("../dataduck")
 
 # ----- Step 1: Define functions -----
-# Define `tabulate_summary()` and `tabulate_summary_2yr()`
-source("src/utils/aggregation-tools.R")
+source("src/utils/aggregation-tools.R")  # tabulate_summary()
+source("src/utils/plotting-tools.R")     # plot_year_subgroup_bars()
 
 # ----- Step 2: Import and wrangle data ----- #
-
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con, "ipums_processed")
 
 combos <- expand.grid(
   tenure = c("renter", "homeowner"),
-  year = c(2000, 2019),
+  year   = c(2000, 2019),
   stringsAsFactors = FALSE
 )
 
-# Apply tabulate_summary over all combinations
-figA05_data <- pmap_dfr(combos, function(tenure, year) {
-  tabulate_summary(
-    data = ipums_db |> filter(tenure == !!tenure),
-    value = "persons_per_bedroom",
-    year = year,
-    group_by = "RACE_ETH_bucket"
-  ) |> 
-    mutate(year = year, tenure = tenure)
-})
-
-figA09_data <- pmap_dfr(combos, function(tenure, year) {
-  tabulate_summary(
-    data = ipums_db |> filter(tenure == !!tenure),
-    value = "persons_per_room",
-    year = year,
-    group_by = "RACE_ETH_bucket"
-  ) |> 
-    mutate(year = year, tenure = tenure)
-})
-
-# ----- Step 3: Make plots ----- #
-# Define `plot_year_subgroup_bars()`
-source("src/utils/plotting-tools.R")
-
-ymin = 0
-ymax = 3
-
+# Common bar styling
 bar_fills <- list(
-  per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"), # 2000
-  per2 = list(color = "forestgreen", alpha = 0.5, line_type = "solid") # 2019
+  per1 = list(color = "skyblue",     alpha = 0.4, line_type = "dashed"), # 2000
+  per2 = list(color = "forestgreen", alpha = 0.5, line_type = "solid")   # 2019
 )
 
-#--- Generate the plot: Figure A05
+# =======================
+# A05 (persons per bedroom)
+# =======================
+figA05_data <- pmap_dfr(combos, function(tenure, year) {
+  tabulate_summary(
+    data     = ipums_db |> dplyr::filter(tenure == !!tenure),
+    value    = "persons_per_bedroom",
+    year     = year,
+    group_by = "RACE_ETH_bucket"
+  ) |> dplyr::mutate(year = year, tenure = tenure)
+})
+
 figA05_renter <- plot_year_subgroup_bars(
   figA05_data |> dplyr::filter(tenure == "renter"),
   yvar = ppbedroom,
@@ -87,11 +70,20 @@ figA05_homeowner <- plot_year_subgroup_bars(
   title = "Owner-Occupied"
 )
 
-# Combine
-figA05 <- figA05_renter / figA05_homeowner +
-  plot_layout(ncol = 1)
+figA05 <- figA05_renter / figA05_homeowner + plot_layout(ncol = 1)
 
-#--- Generate the plot: Figure A09
+# ===================
+# A09 (persons per room)
+# ===================
+figA09_data <- pmap_dfr(combos, function(tenure, year) {
+  tabulate_summary(
+    data     = ipums_db |> dplyr::filter(tenure == !!tenure),
+    value    = "persons_per_room",
+    year     = year,
+    group_by = "RACE_ETH_bucket"
+  ) |> dplyr::mutate(year = year, tenure = tenure)
+})
+
 figA09_renter <- plot_year_subgroup_bars(
   figA09_data |> dplyr::filter(tenure == "renter"),
   yvar = pproom,
@@ -110,11 +102,9 @@ figA09_homeowner <- plot_year_subgroup_bars(
   title = "Owner-Occupied"
 )
 
-# Combine
-figA09 <- figA09_renter / figA09_homeowner +
-  plot_layout(ncol = 1)
+figA09 <- figA09_renter / figA09_homeowner + plot_layout(ncol = 1)
 
-# ----- Step 4: Save plots ----- #
+# ----- Step 3: Save plots ----- #
 ggsave(
   "output/figures/linear-reg/figA05-crowding-race-tenure-year-bars-bedroom.png",
   plot = figA05,
