@@ -71,24 +71,24 @@ r <- make_observed_cf_barplot(fig06_data |> filter(name == "Number of Rooms"), y
 ppr <- make_observed_cf_barplot(fig06_data |> filter(name == "Persons per Room"), yaxis_override = c(0, 1))
 
 # Figure 6 shows # Persons, # Bedrooms, Persons per Bedroom
-fig06 <- (p + b + ppbr) +
+fig04 <- (p + b + ppbr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
 # Figure 6A (Appendix version) shows # Persons, # Rooms, Persons per Room
-fig06a <- (p + r + ppr) +
+figA09 <- (p + r + ppr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
 # ----- Step 4: Save plots ----- #
 ggsave(
-  "output/figures/fig06-observed-counterfactual-bars.png", 
-  plot = fig06, 
+  "output/figures/linear-reg/fig04-observed-counterfactual-bars-bedroom.png", 
+  plot = fig04, 
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 ggsave(
-  "output/figures/fig06-appendix-observed-counterfactual-bars.png", 
-  plot = fig06a, 
+  "output/figures/linear-reg/figA09-observed-counterfactual-bars-room.png", 
+  plot = figA09, 
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 
