@@ -24,7 +24,7 @@ formula <- get_formula(
 )
 
 # Initialize output path
-output_path <- glue("throughput/{year}_p.rds")
+output_path <- glue("throughput/reg01/{year}_p.rds")
 
 # Read in the pre-subsetted survey
 tic("Read survey design as RDS")
