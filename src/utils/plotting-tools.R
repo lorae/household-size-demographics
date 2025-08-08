@@ -5,6 +5,7 @@ plot_year_subgroup_bars <- function(
     bar_fills,   # named list: per1 (2000), per2 (2019)
     ymin = NULL,
     ymax = NULL,
+    ytitle = "Average Household Size",
     legend = TRUE,
     title = NULL
 ) {
@@ -49,7 +50,7 @@ plot_year_subgroup_bars <- function(
       guide = if (legend) "legend" else "none"
     ) +
     labs(
-      y = "Average Household Size",
+      y = ytitle,
       title = title,
       fill = NULL, color = NULL, linetype = NULL
     ) +

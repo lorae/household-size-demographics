@@ -43,6 +43,10 @@ bar_fills <- list(
 # =======================
 # A05 (persons per bedroom)
 # =======================
+ymin_A05 <- 0
+ymax_A05 <- 3
+ytitle_A05 <- "Persons per Bedroom"
+
 figA05_data <- pmap_dfr(combos, function(tenure, year) {
   tabulate_summary(
     data     = ipums_db |> dplyr::filter(tenure == !!tenure),
@@ -56,7 +60,8 @@ figA05_renter <- plot_year_subgroup_bars(
   figA05_data |> dplyr::filter(tenure == "renter"),
   yvar = ppbedroom,
   bar_fills = bar_fills,
-  ymin = 0, ymax = 3,
+  ymin = ymin_A05, ymax = ymax_A05,
+  ytitle = ytitle_A05,
   legend = FALSE,
   title = "Renter-Occupied"
 )
@@ -65,7 +70,8 @@ figA05_homeowner <- plot_year_subgroup_bars(
   figA05_data |> dplyr::filter(tenure == "homeowner"),
   yvar = ppbedroom,
   bar_fills = bar_fills,
-  ymin = 0, ymax = 3,
+  ymin = ymin_A05, ymax = ymax_A05,
+  ytitle = ytitle_A05,
   legend = TRUE,
   title = "Owner-Occupied"
 )
@@ -75,6 +81,10 @@ figA05 <- figA05_renter / figA05_homeowner + plot_layout(ncol = 1)
 # ===================
 # A09 (persons per room)
 # ===================
+ymin_A09 <- 0
+ymax_A09 <- 1.6
+ytitle_A09 <- "Persons per Room"
+
 figA09_data <- pmap_dfr(combos, function(tenure, year) {
   tabulate_summary(
     data     = ipums_db |> dplyr::filter(tenure == !!tenure),
@@ -88,7 +98,8 @@ figA09_renter <- plot_year_subgroup_bars(
   figA09_data |> dplyr::filter(tenure == "renter"),
   yvar = pproom,
   bar_fills = bar_fills,
-  ymin = 0, ymax = 1.6,
+  ymin = ymin_A09, ymax = ymax_A09,
+  ytitle = ytitle_A09,
   legend = FALSE,
   title = "Renter-Occupied"
 )
@@ -97,7 +108,8 @@ figA09_homeowner <- plot_year_subgroup_bars(
   figA09_data |> dplyr::filter(tenure == "homeowner"),
   yvar = pproom,
   bar_fills = bar_fills,
-  ymin = 0, ymax = 1.6,
+  ymin = ymin_A09, ymax = ymax_A09,
+  ytitle = ytitle_A09,
   legend = TRUE,
   title = "Owner-Occupied"
 )
