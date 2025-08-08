@@ -119,12 +119,14 @@ tabulate_summary <- function(
     result <- result |> rename(hhsize = weighted_mean)
   } else if (value == "persons_per_bedroom") {
     result <- result |> rename(ppbedroom = weighted_mean)
+  } else if (value == "persons_per_room") {
+    result <- result |> rename(pproom = weighted_mean)
   } else {
-    stop("`value` argument must either be \"NUMPREC\" or \"persons_per_bedroom\"")
+    stop("`value` argument must either be \"NUMPREC\" or \"persons_per_bedroom\" or \"persons_per_room\"")
   }
   
   # Keep only needed columns, drop the rest
-  result <- result |> select(any_of(c("subgroup", "hhsize", "ppbedroom")))
+  result <- result |> select(any_of(c("subgroup", "hhsize", "ppbedroom", "pproom")))
   
   return(result)
 }

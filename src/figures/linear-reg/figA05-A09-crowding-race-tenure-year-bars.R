@@ -36,10 +36,20 @@ combos <- expand.grid(
 )
 
 # Apply tabulate_summary over all combinations
-fig05_data <- pmap_dfr(combos, function(tenure, year) {
+figA05_data <- pmap_dfr(combos, function(tenure, year) {
   tabulate_summary(
     data = ipums_db |> filter(tenure == !!tenure),
     value = "persons_per_bedroom",
+    year = year,
+    group_by = "RACE_ETH_bucket"
+  ) |> 
+    mutate(year = year, tenure = tenure)
+})
+
+figA09_data <- pmap_dfr(combos, function(tenure, year) {
+  tabulate_summary(
+    data = ipums_db |> filter(tenure == !!tenure),
+    value = "persons_per_room",
     year = year,
     group_by = "RACE_ETH_bucket"
   ) |> 
@@ -50,8 +60,6 @@ fig05_data <- pmap_dfr(combos, function(tenure, year) {
 # Define `plot_year_subgroup_bars()`
 source("src/utils/plotting-tools.R")
 
-# Define a single main color for all bars
-main_color <- "steelblue"
 ymin = 0
 ymax = 3
 
@@ -60,9 +68,9 @@ bar_fills <- list(
   per2 = list(color = "forestgreen", alpha = 0.5, line_type = "solid") # 2019
 )
 
-# Generate the plot
+#--- Generate the plot: Figure A05
 figA05_renter <- plot_year_subgroup_bars(
-  fig05_data |> dplyr::filter(tenure == "renter"),
+  figA05_data |> dplyr::filter(tenure == "renter"),
   yvar = ppbedroom,
   bar_fills = bar_fills,
   ymin = 0, ymax = 3,
@@ -71,7 +79,7 @@ figA05_renter <- plot_year_subgroup_bars(
 )
 
 figA05_homeowner <- plot_year_subgroup_bars(
-  fig05_data |> dplyr::filter(tenure == "homeowner"),
+  figA05_data |> dplyr::filter(tenure == "homeowner"),
   yvar = ppbedroom,
   bar_fills = bar_fills,
   ymin = 0, ymax = 3,
@@ -83,9 +91,37 @@ figA05_homeowner <- plot_year_subgroup_bars(
 figA05 <- figA05_renter / figA05_homeowner +
   plot_layout(ncol = 1)
 
+#--- Generate the plot: Figure A09
+figA09_renter <- plot_year_subgroup_bars(
+  figA09_data |> dplyr::filter(tenure == "renter"),
+  yvar = pproom,
+  bar_fills = bar_fills,
+  ymin = 0, ymax = 1.6,
+  legend = FALSE,
+  title = "Renter-Occupied"
+)
+
+figA09_homeowner <- plot_year_subgroup_bars(
+  figA09_data |> dplyr::filter(tenure == "homeowner"),
+  yvar = pproom,
+  bar_fills = bar_fills,
+  ymin = 0, ymax = 1.6,
+  legend = TRUE,
+  title = "Owner-Occupied"
+)
+
+# Combine
+figA09 <- figA09_renter / figA09_homeowner +
+  plot_layout(ncol = 1)
+
 # ----- Step 4: Save plots ----- #
 ggsave(
-  "output/figures/linear-reg/figA05-crowding-race-tenure-year-bars.png",
+  "output/figures/linear-reg/figA05-crowding-race-tenure-year-bars-bedroom.png",
   plot = figA05,
+  width = 3000, height = 4000, units = "px", dpi = 400
+)
+ggsave(
+  "output/figures/linear-reg/figA09-crowding-race-tenure-year-bars-room.png",
+  plot = figA09,
   width = 3000, height = 4000, units = "px", dpi = 400
 )
