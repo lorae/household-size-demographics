@@ -1,10 +1,9 @@
-# #src/figures/fig06-observed-counterfactual-bars.R
+# #src/figures/linear-reg/fig04-A09-observed-counterfactual-bars.R
 # Produce bar charts showing 2000 observed, 2019 observed, and 2019 and expected 
 # (counterfactual) outcomes.
 #
 # Input: throughput/kob_output.rds
-# Output: output/figures/fig06-observed-counterfactual-bars.png, 
-#         output/figures/fig06-appendix-observed-counterfactual-bars.png
+# Output: TODO
 #
 # TODO: write unit tests for functions
 
@@ -76,7 +75,7 @@ fig04 <- (p + b + ppbr) +
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
 # Figure 6A (Appendix version) shows # Persons, # Rooms, Persons per Room
-figA09 <- (p + r + ppr) +
+figA08 <- (p + r + ppr) +
   plot_annotation() &
   theme(plot.margin = margin(10, 10, 20, 10))  # top, right, bottom, left
 
@@ -87,8 +86,8 @@ ggsave(
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 ggsave(
-  "output/figures/linear-reg/figA09-observed-counterfactual-bars-room.png", 
-  plot = figA09, 
+  "output/figures/linear-reg/figA08-observed-counterfactual-bars-room.png", 
+  plot = figA08, 
   width = 3000, height = 2400, units = "px", dpi = 300
 )
 
