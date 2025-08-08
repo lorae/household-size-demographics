@@ -134,11 +134,17 @@ print(prop_results)
 
 # COEFS (bedroom now; add more measures later)
 coef_cfg <- tribble(
-  ~measure,   ~year, ~reg00_path,                                                      ~reg01_path,                     ~intercept_var,     ~ref_level,
-  "bedroom",  2000,  "throughput/reg00/model00_2000_bedroom_summary.rds",              "throughput/reg01/2000_b.rds",   "RACE_ETH_bucket",  "AAPI",
-  "bedroom",  2019,  "throughput/reg00/model00_2019_bedroom_summary-v5.rds",           "throughput/reg01/2019_b.rds",   "RACE_ETH_bucket",  "AAPI",
-  "ppr",      2000,  "throughput/reg00/model00_2000_persons_per_room_summary.rds",     "throughput/reg01/2000_ppr.rds", "RACE_ETH_bucket",  "AAPI",
-  "ppr",      2019,  "throughput/reg00/model00_2019_persons_per_room_summary-v5.rds",  "throughput/reg01/2019_ppr.rds", "RACE_ETH_bucket",  "AAPI",  
+  ~measure,   ~year, ~reg00_path,                                                       ~reg01_path,                     ~intercept_var,     ~ref_level,
+  "bedroom",  2000,  "throughput/reg00/model00_2000_bedroom_summary.rds",               "throughput/reg01/2000_b.rds",   "RACE_ETH_bucket",  "AAPI",
+  "bedroom",  2019,  "throughput/reg00/model00_2019_bedroom_summary-v5.rds",            "throughput/reg01/2019_b.rds",   "RACE_ETH_bucket",  "AAPI",
+  "ppr",      2000,  "throughput/reg00/model00_2000_persons_per_room_summary.rds",      "throughput/reg01/2000_ppr.rds", "RACE_ETH_bucket",  "AAPI",
+  "ppr",      2019,  "throughput/reg00/model00_2019_persons_per_room_summary-v5.rds",   "throughput/reg01/2019_ppr.rds", "RACE_ETH_bucket",  "AAPI", 
+  "ppbr",     2000,  "throughput/reg00/model00_2000_persons_per_bedroom_summary.rds",   "throughput/reg01/2000_ppbr.rds","RACE_ETH_bucket",  "AAPI",
+  "ppbr",     2019,  "throughput/reg00/model00_2019_persons_per_bedroom_summary-v5.rds","throughput/reg01/2019_ppbr.rds","RACE_ETH_bucket",  "AAPI",
+  "room",     2000,  "throughput/reg00/model00_2000_room_summary.rds",                  "throughput/reg01/2000_r.rds",   "RACE_ETH_bucket",  "AAPI",
+  "room",     2019,  "throughput/reg00/model00_2019_room_summary-v5.rds",               "throughput/reg01/2019_r.rds",   "RACE_ETH_bucket",  "AAPI",
+  "persons",  2000,  "throughput/reg00/model00_2000_numprec_summary-v2.rds",            "throughput/reg01/2000_p.rds",   "RACE_ETH_bucket",  "AAPI",
+  "persons",  2019,  "throughput/reg00/model00_2019_numprec_summary.rds",            "throughput/reg01/2019_p.rds",   "RACE_ETH_bucket",  "AAPI",
   # add rows for "ppr", "ppbr", "persons", "rooms" w/ the correct paths
 )
 
