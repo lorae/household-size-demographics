@@ -73,11 +73,14 @@ read_coefs <- function(path, year) {
   } else stop("Unsupported year")
 }
 
-compare_coefs <- function(year, reg00_path, reg01_path, intercept_var, ref_level, tol = 1e-6) {
+compare_coefs <- function(year,
+                          reg00_path, reg01_path,
+                          intercept_var, ref_level,
+                          tol = 1e-6) {
   coef_col <- paste0("coef_", year)
   se_col   <- paste0("coef_", year, "_se")
   
-  r00 <- read_coefs(reg00_path, year) |>
+  r00_full <- read_coefs(reg00_path, year) |>
     split_term_column() |>
     add_intercept_v2(variable = intercept_var,
                      reference_value = ref_level,
@@ -85,18 +88,36 @@ compare_coefs <- function(year, reg00_path, reg01_path, intercept_var, ref_level
                      se_col   = se_col) |>
     dplyr::arrange(term)
   
-  r01 <- read_coefs(reg01_path, year) |>
+  r01_full <- read_coefs(reg01_path, year) |>
     split_term_column() |>
     dplyr::arrange(term)
   
-  res <- all.equal(r01, r00, tolerance = tol)
-  tibble::tibble(kind = "coefs",
-                 year = year,
-                 ok = isTRUE(res),
-                 detail = list(res),
-                 peek_r00 = list(r00 |> dplyr::filter(variable %in% c(intercept_var, "(Intercept)"))),
-                 peek_r01 = list(r01 |> dplyr::filter(variable %in% c(intercept_var, "(Intercept)"))))
+  # Compare COEFS ONLY
+  r00 <- r00_full |> dplyr::select(term, variable, value, !!coef_col)
+  r01 <- r01_full |> dplyr::select(term, variable, value, !!coef_col)
+  
+  eq <- all.equal(r01, r00, tolerance = tol)
+  
+  # handy diff metric for debugging (max absolute diff)
+  max_abs_diff <- r01 |>
+    dplyr::left_join(r00, by = c("term","variable","value"),
+                     suffix = c("_01","_00")) |>
+    dplyr::mutate(diff = abs(.data[[paste0(coef_col, "_01")]] -
+                               .data[[paste0(coef_col, "_00")]])) |>
+    dplyr::summarise(max_abs_diff = max(diff, na.rm = TRUE)) |>
+    dplyr::pull(max_abs_diff)
+  
+  tibble::tibble(
+    kind   = "coefs",
+    year   = year,
+    ok     = isTRUE(eq),
+    detail = list(eq),
+    max_abs_diff = max_abs_diff,
+    peek_r00 = list(r00_full |> dplyr::filter(variable %in% c(intercept_var, "(Intercept)"))),
+    peek_r01 = list(r01_full |> dplyr::filter(variable %in% c(intercept_var, "(Intercept)")))
+  )
 }
+
 
 
 # PROPS
