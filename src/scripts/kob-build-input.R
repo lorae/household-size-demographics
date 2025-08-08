@@ -64,7 +64,6 @@ if (nrow(missing_paths) > 0) {
   stop("❌ Missing file(s):\n", paste(missing_paths$path, collapse = "\n"))
 }
 
-# ----- Step 2: Read in proportion data ----- #
 # Helper function to combine two dataframes with identical terms (used for joining
 # 2000 and 2019 data)
 join_data_by_term <- function(data1, data2) {
@@ -92,6 +91,8 @@ join_data_by_term <- function(data1, data2) {
   
   return(joined)
 }
+# ----- Step 2: Read in proportion data ----- #
+
 
 # Read proportions in as a svystat object
 props_2000_svystat <- readRDS(get_path("props", 2000))
