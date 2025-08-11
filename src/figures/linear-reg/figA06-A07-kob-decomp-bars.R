@@ -120,10 +120,11 @@ bar_order <- c(
   ) |> rev()
 
 # (These must match the pretty labels produced by `prep_topline_panel`.)
+# TODO: resolve this with the pretty labels hard coded at the top of this script
 
 col_p    <- build_outcome_column(kob_output$p,    "Number of Persons",
                                  varnames_dict, pretty_labels,
-                                 show_xlab = TRUE,  show_ylab = TRUE,
+                                 show_xlab = FALSE,  show_ylab = TRUE,
                                  show_title = TRUE,
                                  show_bar_labels = TRUE,
                                  bar_label_order = bar_order)
@@ -137,7 +138,7 @@ col_b    <- build_outcome_column(kob_output$b,    "Number of Bedrooms",
 
 col_ppbr <- build_outcome_column(kob_output$ppbr, "Persons per Bedroom",
                                  varnames_dict, pretty_labels,
-                                 show_xlab = TRUE,  show_ylab = FALSE,
+                                 show_xlab = FALSE,  show_ylab = FALSE,
                                  show_title = TRUE,
                                  show_bar_labels = FALSE, 
                                  bar_label_order = bar_order)
@@ -152,7 +153,7 @@ col_r    <- build_outcome_column(kob_output$r,    "Number of Rooms",
 
 col_ppr <- build_outcome_column(kob_output$ppr, "Persons per Room",
                                  varnames_dict, pretty_labels,
-                                 show_xlab = TRUE,  show_ylab = FALSE,
+                                 show_xlab = FALSE,  show_ylab = FALSE,
                                  show_title = TRUE,
                                  show_bar_labels = FALSE, 
                                  bar_label_order = bar_order)
@@ -163,8 +164,8 @@ figA07 <- (col_p | col_r | col_ppr)
 
 
 ggsave("output/figures/linear-reg/figA06-kob-decomp-bars-bedroom.png",
-       plot = figA06, width = 3000, height = 4000, units = "px", dpi = 200)
+       plot = figA06, width = 3000, height = 4000, units = "px", dpi = 300)
 
 ggsave("output/figures/linear-reg/figA07-kob-decomp-bars-room.png",
-       plot = figA07, width = 3000, height = 4000, units = "px", dpi = 200)
+       plot = figA07, width = 3000, height = 4000, units = "px", dpi = 300)
 
