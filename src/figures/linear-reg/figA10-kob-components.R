@@ -70,6 +70,21 @@ label_tenure <- function(df) {
                 .default = term_val)
 }
 
+label_education <- function(df) {
+  if ("term" %in% names(df)) {
+    term_val <- df$term
+  } else {
+    term_val <- as.character(df$value)
+  }
+  
+  dplyr::recode(term_val,
+                "EDUC_bucketcollege_4yr+" = "College 4yr+",
+                "EDUC_bucketsome_college" = "Some College",
+                "EDUC_buckeths"          = "High School",
+                "EDUC_bucketless_than_hs" = "Less than HS",
+                .default = term_val)
+}
+
 # =========================
 # GENERIC BUILDER FUNCTION
 # =========================
@@ -97,6 +112,7 @@ build_decomp_column <- function(kob_df, variable_name, part_type, title,
     variable_name == "us_born" ~ "TOTAL: Birthplace",
     variable_name == "RACE_ETH_bucket" ~ "TOTAL: Race / Ethnicity", 
     variable_name == "tenure" ~ "TOTAL: Tenure",
+    variable_name == "EDUC_bucket" ~ "TOTAL: Education",
     TRUE ~ paste("TOTAL:", variable_name)
   )
   
@@ -158,6 +174,22 @@ figure_configs <- list(
     label_fun = label_tenure,
     filter_labels = NULL,
     label_order = c("TOTAL: Tenure", "Renter", "Homeowner")
+  ),
+  
+  race_ethnicity_endow = list(
+    variable = "RACE_ETH_bucket",
+    part = "endow",
+    label_fun = label_raceeth, 
+    filter_labels = c("White", "Hispanic", "Black"),
+    label_order = c("TOTAL: Race / Ethnicity", "Black", "Hispanic", "White")
+  ),
+  
+  education = list(
+    variable = "EDUC_bucket",
+    part = "endow",
+    label_fun = label_education,
+    filter_labels = NULL,  # Removed filtering to see if there's an NA
+    label_order = c("TOTAL: Education", "Less than HS", "High School", "Some College", "College 4yr+")
   )
   
   # Easy to add more configurations here:
@@ -222,6 +254,8 @@ create_figure_set <- function(config_name, config, suffix = "") {
 figA10A <- create_figure_set("birthplace", figure_configs$birthplace, "A10A")
 figA10B <- create_figure_set("race_ethnicity", figure_configs$race_ethnicity, "A10B") 
 figA10C <- create_figure_set("tenure", figure_configs$tenure, "A10C")
+figA10D <- create_figure_set("race_ethnicity_endow", figure_configs$race_ethnicity_endow, "A10D")
+figA10E <- create_figure_set("education", figure_configs$education, "A10E")
 
 # To add new figures, just add to figure_configs and call:
 # figA10D <- create_figure_set("new_variable", figure_configs$new_variable, "A10D")
