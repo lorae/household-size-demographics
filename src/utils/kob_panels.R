@@ -16,12 +16,24 @@ plot_kob_panel <- function(df, y_lab, fill_hex,
                            err_size = 0.5,
                            x_limits = NULL,
                            show_errorbars = TRUE,
-                           y_fontface = "plain") {
+                           y_fontface = "plain",
+                           show_ytext = TRUE,
+                           label_order = NULL) { 
   
   stopifnot(all(c("label","estimate","se","is_total") %in% names(df)))
   
-  ord <- df |> dplyr::arrange(is_total, label) |> dplyr::pull(label) |> unique()
-  df <- df |> dplyr::mutate(label = factor(label, levels = ord))
+  # ----- enforce order -----
+  if (!is.null(label_order)) {
+    # keep any "total-like" rows first (whatever has is_total = TRUE),
+    # then apply the provided order for the rest
+    totals_first  <- as.character(df$label[df$is_total])
+    other_levels  <- intersect(label_order, as.character(df$label))
+    lvl           <- unique(c(totals_first, other_levels))
+    df <- df |> dplyr::mutate(label = factor(label, levels = lvl))
+  } else {
+    ord <- df |> dplyr::arrange(is_total, label) |> dplyr::pull(label) |> unique()
+    df  <- df |> dplyr::mutate(label = factor(label, levels = ord))
+  }
   
   g <- ggplot() +
     geom_col(
@@ -35,14 +47,16 @@ plot_kob_panel <- function(df, y_lab, fill_hex,
       aes(x = estimate, y = label),
       width = bar_width, fill = fill_hex
     ) +
+    geom_vline(xintercept = 0, color = "black", size = 0.5) +
     theme_minimal(base_size = 13) +
     labs(x = if (show_xlab) x_lab else NULL,
          y = if (show_ylab) y_lab else NULL) +
     theme(
-      legend.position = "none",
-      panel.grid.major.y = element_blank(),
+      legend.position    = "none",
+      panel.grid.major.y = element_line(color = "grey85", size = 0.3),
       panel.grid.minor.y = element_blank(),
-      axis.text.y = element_text(face = y_fontface)
+      axis.text.y        = if (show_ytext) element_text(face = y_fontface) else element_blank(),
+      axis.ticks.y       = if (show_ytext) element_line() else element_blank()
     )
   
   if (show_errorbars && any(!is.na(df$se))) {
