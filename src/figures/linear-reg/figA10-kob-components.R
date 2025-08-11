@@ -225,5 +225,103 @@ ggsave("output/figures/linear-reg/figA10B-raceeth-coeffs-bedroom.png",
 ggsave("output/figures/linear-reg/figA10B-alt-raceeth-coeffs-room.png",
        plot = figA10B_alt, width = 3000, height = 600, units = "px", dpi = 250)
 
+# Add this to your existing code after the race/ethnicity section
+# =========================
+# TENURE LABEL HELPERS
+# =========================
 
+# --- Tenure level labels ---
+label_tenure <- function(df) {
+  if ("term" %in% names(df)) {
+    term_val <- df$term
+  } else {
+    term_val <- as.character(df$value)
+  }
+  
+  # Direct mapping for tenure terms based on your actual data
+  dplyr::recode(term_val,
+                "tenurehomeowner" = "Homeowner",
+                "tenurerenter"    = "Renter",
+                .default = term_val
+  )
+}
 
+# =========================
+# TENURE BUILDER
+# =========================
+
+# --- Tenure endowments-only column ---
+build_tenure_endow_column <- function(kob_df, title,
+                                      x_limits,
+                                      show_xlab = TRUE,
+                                      show_ylab = TRUE,
+                                      show_ytext = TRUE,
+                                      x_lab = "Contribution to Outcome Gap") {
+  lev <- prep_subgroup_panel(
+    kob_df, variable = "tenure", part = "endow",  # Changed to "tenure"
+    level_label_fun = label_tenure, level_order = NULL,
+    include_total = FALSE
+  )
+  
+  total_row <- lev |>
+    summarise(
+      label = "TOTAL: Tenure",
+      estimate = sum(estimate, na.rm = TRUE),
+      se = sqrt(sum(se^2, na.rm = TRUE)),
+      is_total = TRUE,
+      .groups = "drop"
+    )
+  
+  df <- bind_rows(total_row, lev)
+  
+  # Set specific order: Total, Homeowner, Renter
+  label_order <- c("TOTAL: Tenure", "Renter", "Homeowner")
+  
+  plot_kob_panel(
+    df = df, y_lab = "Endowments", fill_hex = kob_cols$endow,
+    show_xlab = show_xlab, show_ylab = show_ylab,
+    x_lab = x_lab, x_limits = x_limits,
+    show_ytext = show_ytext,
+    label_order = label_order
+  ) +
+    ggtitle(title) +
+    theme(plot.title = element_text(hjust = 0.5, size = 16, margin = margin(b = 2)))
+}
+
+# =========================
+# A10C — Tenure
+# =========================
+
+# Persons, Bedrooms, PPBR
+ten_p    <- build_tenure_endow_column(kob_output$p,    "Number of Persons",
+                                      x_limits = xlims$persons,
+                                      show_xlab = FALSE, show_ylab = TRUE,  show_ytext = TRUE)
+ten_b    <- build_tenure_endow_column(kob_output$b,    "Number of Bedrooms",
+                                      x_limits = xlims$bedrooms,
+                                      show_xlab = TRUE,  show_ylab = FALSE, show_ytext = FALSE)
+ten_ppbr <- build_tenure_endow_column(kob_output$ppbr, "Persons per Bedroom",
+                                      x_limits = xlims$ppbr,
+                                      show_xlab = FALSE, show_ylab = FALSE, show_ytext = FALSE)
+
+figA10C <- (ten_p | spacer | ten_b | spacer | ten_ppbr) +
+  plot_layout(widths = c(1, 0.08, 1, 0.08, 1))
+
+# Persons, Rooms, PPR
+ten_r   <- build_tenure_endow_column(kob_output$r,   "Number of Rooms",
+                                     x_limits = xlims$rooms,
+                                     show_xlab = TRUE,  show_ylab = FALSE, show_ytext = FALSE)
+ten_ppr <- build_tenure_endow_column(kob_output$ppr, "Persons per Room",
+                                     x_limits = xlims$persons_per_room,
+                                     show_xlab = FALSE, show_ylab = FALSE, show_ytext = FALSE)
+
+figA10C_alt <- (ten_p | spacer | ten_r | spacer | ten_ppr) +
+  plot_layout(widths = c(1, 0.08, 1, 0.08, 1))
+
+# =========================
+# Save Tenure Plots
+# =========================
+ggsave("output/figures/linear-reg/figA10C-tenure-endow-bedroom.png",
+       plot = figA10C, width = 3000, height = 500, units = "px", dpi = 250)
+
+ggsave("output/figures/linear-reg/figA10C-alt-tenure-endow-room.png",
+       plot = figA10C_alt, width = 3000, height = 500, units = "px", dpi = 250)
