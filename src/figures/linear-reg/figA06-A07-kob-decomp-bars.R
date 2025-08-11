@@ -32,7 +32,7 @@ varnames_dict <- c(
 )
 
 pretty_labels <- c(
-  "us_born"                   = "U.S. Born",
+  "us_born"                   = "Birthplace",
   "RACE_ETH_bucket"           = "Race / Ethnicity",
   "INCTOT_cpiu_2010_bucket"   = "Income",
   "cpuma"                     = "CPUMA",
@@ -109,7 +109,7 @@ build_outcome_column <- function(kob_df, title, varnames, pretty_labels,
 
 # Global desired order for the bars inside Coefficients/Endowments
 bar_order <- c(
-  "U.S. Born", 
+  "Birthplace", 
   "Race / Ethnicity", 
   "Income", 
   "CPUMA",

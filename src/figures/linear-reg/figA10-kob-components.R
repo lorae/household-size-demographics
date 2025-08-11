@@ -1,4 +1,4 @@
-# src/figures/figA08-usborn-coeff-only.R
+# src/figures/figA10-usborn-coeff-only.R
 # Coefficients-only breakdown for US-born (solid total + dotted components)
 # Uses manual x-axis limits per outcome.
 
@@ -17,7 +17,7 @@ xlims <- list(
   bedrooms          = c(-0.10, 0.40),
   ppbr              = c(-0.3, 0.15),
   rooms             = c(-0.10, 0.40),
-  persons_per_room  = c(-0.15, 0.05)
+  persons_per_room  = c(-0.15, 0.10)
 )
 
 # --- label helper: prefer VALUE over TERM ---
@@ -52,7 +52,7 @@ build_usborn_coeff_column <- function(kob_df, title,
   # solid total row (sum of the two levels)
   total_row <- lev |>
     summarise(
-      label = "Total birthplace",
+      label = "Total Birthplace",
       estimate = sum(estimate, na.rm = TRUE),
       se = sqrt(sum(se^2, na.rm = TRUE)),
       is_total = TRUE,
@@ -66,7 +66,7 @@ build_usborn_coeff_column <- function(kob_df, title,
     show_xlab = show_xlab, show_ylab = show_ylab,
     x_lab = x_lab, x_limits = x_limits,
     show_ytext = TRUE,
-    label_order = c("Total birthplace", usborn_order)
+    label_order = c("Total Birthplace", usborn_order)
   ) +
     ggtitle(title) +
     theme(plot.title = element_text(hjust = 0.5, size = 16, margin = margin(b = 2)))
