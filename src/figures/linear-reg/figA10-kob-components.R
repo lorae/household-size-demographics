@@ -1,6 +1,7 @@
 # src/figures/figA10-usborn-coeff-only.R
 # Coefficients-only breakdown for US-born (solid total + dotted components)
-# Uses manual x-axis limits per outcome.
+# Uses manual x-axis limits per outcome, hides y tick labels on middle/right panels,
+# and inserts small spacers between columns for legibility.
 
 library(patchwork)
 library(ggplot2)
@@ -15,9 +16,17 @@ kob_output <- readRDS("throughput/kob_output.rds")
 xlims <- list(
   persons           = c(-0.10, 0.10),
   bedrooms          = c(-0.10, 0.40),
-  ppbr              = c(-0.3, 0.15),
+  ppbr              = c(-0.30, 0.15),
   rooms             = c(-0.10, 0.40),
   persons_per_room  = c(-0.15, 0.10)
+)
+
+# Colors (needed here because builder calls kob_cols$coeff)
+kob_cols <- list(
+  coeff     = "#E69F00",
+  endow     = "#56B4E9",
+  intercept = "#805b87",
+  total     = "gray50"
 )
 
 # --- label helper: prefer VALUE over TERM ---
@@ -39,20 +48,19 @@ usborn_order <- c("U.S. Born","Foreign Born")
 # --- build one coefficients-only panel for an outcome ---
 build_usborn_coeff_column <- function(kob_df, title,
                                       x_limits,
-                                      show_xlab = TRUE, show_ylab = TRUE,
+                                      show_xlab = TRUE,
+                                      show_ylab = TRUE,   # axis title
+                                      show_ytext = TRUE,  # tick labels (U.S. Born, Foreign Born)
                                       x_lab = "Contribution to Outcome Gap") {
-  
-  # per-level rows (dotted)
   lev <- prep_subgroup_panel(
     kob_df, variable = "us_born", part = "coeff",
     level_label_fun = label_usborn, level_order = usborn_order,
     include_total = FALSE
   )
   
-  # solid total row (sum of the two levels)
   total_row <- lev |>
     summarise(
-      label = "Total Birthplace",
+      label = "TOTAL: Birthplace",
       estimate = sum(estimate, na.rm = TRUE),
       se = sqrt(sum(se^2, na.rm = TRUE)),
       is_total = TRUE,
@@ -65,35 +73,40 @@ build_usborn_coeff_column <- function(kob_df, title,
     df = df, y_lab = "Coefficients", fill_hex = kob_cols$coeff,
     show_xlab = show_xlab, show_ylab = show_ylab,
     x_lab = x_lab, x_limits = x_limits,
-    show_ytext = TRUE,
-    label_order = c("Total Birthplace", usborn_order)
+    show_ytext = show_ytext,
+    label_order = c("TOTAL: Birthplace", usborn_order)
   ) +
     ggtitle(title) +
     theme(plot.title = element_text(hjust = 0.5, size = 16, margin = margin(b = 2)))
 }
 
-# ----- figure A08: Persons, Bedrooms, PPBR -----
+# Small spacer to increase the gap between columns
+spacer <- patchwork::plot_spacer()
+
+# ----- figure A10A: Persons, Bedrooms, PPBR -----
 col_p    <- build_usborn_coeff_column(kob_output$p,    "Number of Persons",
                                       x_limits = xlims$persons,
-                                      show_xlab = FALSE, show_ylab = TRUE)
+                                      show_xlab = FALSE, show_ylab = TRUE,  show_ytext = TRUE)
 col_b    <- build_usborn_coeff_column(kob_output$b,    "Number of Bedrooms",
                                       x_limits = xlims$bedrooms,
-                                      show_xlab = TRUE,  show_ylab = FALSE)
+                                      show_xlab = TRUE,  show_ylab = FALSE, show_ytext = FALSE)
 col_ppbr <- build_usborn_coeff_column(kob_output$ppbr, "Persons per Bedroom",
                                       x_limits = xlims$ppbr,
-                                      show_xlab = FALSE, show_ylab = FALSE)
+                                      show_xlab = FALSE, show_ylab = FALSE, show_ytext = FALSE)
 
-figA10A <- (col_p | col_b | col_ppbr)
+figA10A <- (col_p | spacer | col_b | spacer | col_ppbr) +
+  plot_layout(widths = c(1, 0.08, 1, 0.08, 1))
 
-# ----- figure A09: Persons, Rooms, PPR -----
+# ----- figure A10A-alt: Persons, Rooms, PPR -----
 col_r    <- build_usborn_coeff_column(kob_output$r,    "Number of Rooms",
                                       x_limits = xlims$rooms,
-                                      show_xlab = TRUE,  show_ylab = FALSE)
+                                      show_xlab = TRUE,  show_ylab = FALSE, show_ytext = FALSE)
 col_ppr  <- build_usborn_coeff_column(kob_output$ppr,  "Persons per Room",
                                       x_limits = xlims$persons_per_room,
-                                      show_xlab = FALSE, show_ylab = FALSE)
+                                      show_xlab = FALSE, show_ylab = FALSE, show_ytext = FALSE)
 
-figA10A_alt <- (col_p | col_r | col_ppr)
+figA10A_alt <- (col_p | spacer | col_r | spacer | col_ppr) +
+  plot_layout(widths = c(1, 0.08, 1, 0.08, 1))
 
 # ----- save -----
 ggsave("output/figures/linear-reg/figA10A-usborn-coeffs-bedroom.png",
