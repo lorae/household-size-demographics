@@ -46,6 +46,26 @@ fig01 <- plot_year_subgroup_bars(
 )
 fig01
 
+
+
+sex_summary_crowd_2000 <- tabulate_summary(data = ipums_db, year = 2000, group_by = "gender", value = "persons_per_bedroom") |> mutate(year = 2000)
+sex_summary_crowd_2019 <- tabulate_summary(data = ipums_db, year = 2019, group_by = "gender", value = "persons_per_bedroom") |> mutate(year = 2019)
+sex_summary_crowd <- union_all(sex_summary_crowd_2000, sex_summary_crowd_2019) # Row bind the tables
+
+# ----- Step 3: Make plots ----- #
+source("src/utils/plotting-tools.R")
+bar_fills <- list(
+  per1 = list(color = "skyblue", alpha = 0.4, line_type = "dashed"), # 2000
+  per2 = list(color = "forestgreen", alpha = 0.5, line_type = "solid") # 2019
+)
+
+fig02 <- plot_year_subgroup_bars(
+  data = sex_summary_crowd,
+  yvar = ppbedroom,
+  bar_fills = bar_fills,
+  title = NULL
+)
+fig02
 # ----- Step 4: Save plots ----- #
 ggsave(
   "output/figures/linear-reg/fig01-hhsize-race-year-bars.png", 
