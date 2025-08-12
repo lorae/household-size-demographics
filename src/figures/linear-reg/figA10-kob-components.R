@@ -12,7 +12,7 @@ kob_output <- readRDS("throughput/kob_output.rds")
 
 # ----- Configuration -----
 xlims <- list(
-  persons           = c(-0.10, 0.12),
+  persons           = c(-0.13, 0.12),
   bedrooms          = c(-0.10, 0.40),
   ppbr              = c(-0.30, 0.15),
   rooms             = c(-0.10, 0.40),
@@ -85,6 +85,35 @@ label_education <- function(df) {
                 .default = term_val)
 }
 
+label_age <- function(df) {
+  if ("term" %in% names(df)) {
+    term_val <- df$term
+  } else {
+    term_val <- as.character(df$value)
+  }
+  
+  dplyr::recode(term_val,
+                "AGE_bucket0-4"    = "0-4",
+                "AGE_bucket5-9"    = "5-9", 
+                "AGE_bucket10-14"  = "10-14",
+                "AGE_bucket15-19"  = "15-19",
+                "AGE_bucket20-24"  = "20-24",
+                "AGE_bucket25-29"  = "25-29",
+                "AGE_bucket30-34"  = "30-34",
+                "AGE_bucket35-39"  = "35-39",
+                "AGE_bucket40-44"  = "40-44",
+                "AGE_bucket45-49"  = "45-49",
+                "AGE_bucket50-54"  = "50-54",
+                "AGE_bucket55-59"  = "55-59",
+                "AGE_bucket60-64"  = "60-64",
+                "AGE_bucket65-69"  = "65-69",
+                "AGE_bucket70-74"  = "70-74",
+                "AGE_bucket75-79"  = "75-79",
+                "AGE_bucket80-84"  = "80-84",
+                "AGE_bucket85plus" = "85+",
+                .default = term_val)
+}
+
 # =========================
 # GENERIC BUILDER FUNCTION
 # =========================
@@ -113,6 +142,7 @@ build_decomp_column <- function(kob_df, variable_name, part_type, title,
     variable_name == "RACE_ETH_bucket" ~ "TOTAL: Race / Ethnicity", 
     variable_name == "tenure" ~ "TOTAL: Tenure",
     variable_name == "EDUC_bucket" ~ "TOTAL: Education",
+    variable_name == "AGE_bucket" ~ "TOTAL: Age",
     TRUE ~ paste("TOTAL:", variable_name)
   )
   
@@ -190,6 +220,16 @@ figure_configs <- list(
     label_fun = label_education,
     filter_labels = NULL,  # Removed filtering to see if there's an NA
     label_order = c("TOTAL: Education", "Less than HS", "High School", "Some College", "College 4yr+")
+  ),
+  
+  age = list(
+    variable = "AGE_bucket",
+    part = "endow",
+    label_fun = label_age,
+    filter_labels = NULL,
+    label_order = c("TOTAL: Age", "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", 
+                    "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", 
+                    "75-79", "80-84", "85+")
   )
   
   # Easy to add more configurations here:
@@ -235,7 +275,13 @@ create_figure_set <- function(config_name, config, suffix = "") {
   fig_room <- (p1 | spacer | p4 | spacer | p5) + plot_layout(widths = c(1, 0.08, 1, 0.08, 1))
   
   # Save figures
-  height <- ifelse(config_name == "race_ethnicity", 600, 500)
+  height <- case_when(
+    config_name == "race_ethnicity" ~ 600,
+    config_name == "tenure" ~ 550,
+    config_name == "education" ~ 650,
+    config_name == "age" ~ 1500,  # Taller for age with many categories
+    TRUE ~ 500
+  )
   
   ggsave(paste0("output/figures/linear-reg/fig", suffix, "-", config_name, "-bedroom.png"),
          plot = fig_bedroom, width = 3000, height = height, units = "px", dpi = 250)
@@ -256,6 +302,5 @@ figA10B <- create_figure_set("race_ethnicity", figure_configs$race_ethnicity, "A
 figA10C <- create_figure_set("tenure", figure_configs$tenure, "A10C")
 figA10D <- create_figure_set("race_ethnicity_endow", figure_configs$race_ethnicity_endow, "A10D")
 figA10E <- create_figure_set("education", figure_configs$education, "A10E")
+figA10F <- create_figure_set("age", figure_configs$age, "A10F")
 
-# To add new figures, just add to figure_configs and call:
-# figA10D <- create_figure_set("new_variable", figure_configs$new_variable, "A10D")
