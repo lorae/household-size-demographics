@@ -14,24 +14,21 @@
 
 # ----- Step 0: Config ----- #
 
-library(duckdb)
-library(dplyr)
-library(tibble)
+# ----- Step 0b: Survey setup for SEs -----
+library(survey)
 
-# ----- Step 1: Load in survey data ----- #
-# TODO: If needed, read in survey data to make this run with standard errors.
-# If not, keep as-is. It is simple and fast.
+# Load survey designs (one per year)
+des2000 <- readRDS("throughput/design_2000_survey.rds")
+des2019 <- readRDS("throughput/design_2019_survey.rds")
 
-# Database API connection
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_processed")
-
-# Define the function from before
-weighted_mean_ipums <- function(var, year) {
-  ipums_db |>
-    filter(GQ %in% c(0, 1, 2), YEAR == year) |>
-    summarise(weighted_mean = sum(.data[[var]] * PERWT) / sum(PERWT)) |>
-    pull()
+# Helper: compute (mean, SE) for a variable within a design, with your GQ filter
+svy_mean_with_se <- function(design, var, gq_keep = c(0, 1, 2)) {
+  # If you truly want *non*-group quarters only, set gq_keep = 0.
+  dsub <- subset(design, GQ %in% gq_keep)
+  # Build a one-sided formula like ~NUMPREC
+  f <- as.formula(paste0("~", var))
+  est <- svymean(f, dsub, na.rm = TRUE)
+  c(mean = as.numeric(est), se = as.numeric(SE(est)))
 }
 
 # List of variables to compute
@@ -53,19 +50,28 @@ name_map <- c(
   persons_per_room = "Persons per Room"
 )
 
-# Create tibble of results
-aggregates <- tibble(
+# Compute for all variables for both years
+res2000 <- t(vapply(vars, function(v) svy_mean_with_se(des2000, v), numeric(2L)))
+res2019 <- t(vapply(vars, function(v) svy_mean_with_se(des2019, v), numeric(2L)))
+
+# Bind into a tibble and join onto your existing 'aggregates'
+se_tbl <- tibble(
   variable = vars,
-  mean_2000 = sapply(vars, weighted_mean_ipums, year = 2000),
-  mean_2019 = sapply(vars, weighted_mean_ipums, year = 2019)
+  mean_2000 = res2000[, "mean"],
+  mean_2000_se   = res2000[, "se"],
+  mean_2019 = res2019[, "mean"],
+  mean_2019_se   = res2019[, "se"]
+)
+
+# Construct output tibble
+aggregates <- tibble(
+  variable = vars
 ) |>
+  left_join(se_tbl, by = "variable") |>
   mutate(abbrev_variable = recode(variable, !!!abbrev_map)) |>
   mutate(name = recode(variable, !!!name_map)) |>
   relocate(abbrev_variable, .after = variable) |>
   relocate(name, .before = variable)
 
-# Save the results tibble
+# Save
 saveRDS(aggregates, "throughput/aggregates.rds")
-
-# Good database hygiene
-dbDisconnect(con, shutdown = TRUE)
