@@ -33,9 +33,45 @@ fmt_cell <- function(est, se, star) {
   paste0(sprintf("%.3f", est), star, "\n(", sprintf("%.4f", se), ")")
 }
 
-# returns ONE tidy table for an outcome (p, b, r, ppbr, ppr)
-build_table <- function(df) {
-  # Intercept (TOTAL CHANGE via u on intercept row)
+# Read aggregates
+aggregates <- readRDS("throughput/aggregates.rds")
+
+# Helper: map abbrev_variable to human name for join
+agg_lookup <- aggregates %>%
+  select(
+    abbrev_variable,
+    mean_2000,
+    mean_2000_se,
+    mean_2019,
+    mean_2019_se
+  )
+
+# Updated build_table with aggregates rows
+build_table <- function(df, outcome_abbrev) {
+  # Match aggregates row for this outcome
+  agg_row <- agg_lookup %>% filter(abbrev_variable == outcome_abbrev)
+  
+  # Create the three top rows
+  top_rows <- tibble::tibble(
+    section  = "AGGREGATE",
+    label    = c("2000 Value", "2019 Value", "Change"),
+    estimate = c(
+      agg_row$mean_2000,
+      agg_row$mean_2019,
+      agg_row$mean_2019 - agg_row$mean_2000
+    ),
+    se       = c(
+      agg_row$mean_2000_se,
+      agg_row$mean_2019_se,
+      sqrt(agg_row$mean_2000_se^2 + agg_row$mean_2019_se^2)
+    )
+  ) %>%
+    mutate(
+      stars     = stars(estimate, se),
+      value_fmt = fmt_cell(estimate, se, stars)
+    )
+  
+  # ----- existing code -----
   intercept <- df %>%
     filter(term == "(Intercept)") %>%
     transmute(
@@ -46,7 +82,6 @@ build_table <- function(df) {
     ) %>%
     mutate(stars = stars(estimate, se))
   
-  # Coefficients by dimension (rename + order)
   coeff_by_dim <- df %>%
     filter(term != "(Intercept)") %>%
     group_by(variable) %>%
@@ -55,13 +90,11 @@ build_table <- function(df) {
       se       = sqrt(sum(c_se^2, na.rm = TRUE)),
       .groups  = "drop"
     ) %>%
-    # keep only variables we know/how we want to show
     filter(variable %in% var_order) %>%
     mutate(
       label   = unname(pretty_map[variable]),
       section = "COEFFICIENTS"
     ) %>%
-    # enforce desired order
     mutate(label = factor(label, levels = unname(pretty_map[var_order]))) %>%
     arrange(label) %>%
     mutate(stars = stars(estimate, se)) %>%
@@ -77,7 +110,6 @@ build_table <- function(df) {
     ) %>%
     mutate(stars = stars(estimate, se))
   
-  # Endowments by dimension (rename + order)
   endow_by_dim <- df %>%
     filter(term != "(Intercept)") %>%
     group_by(variable) %>%
@@ -106,26 +138,26 @@ build_table <- function(df) {
     ) %>%
     mutate(stars = stars(estimate, se))
   
-  # ---- final ordering EXACTLY as requested ----
+  # Combine
   out <- bind_rows(
-    intercept,          # INTERCEPT single total
-    coeff_total,        # COEFFICIENTS total
-    coeff_by_dim,       # then coefficients by dimension (ordered)
-    endow_total,        # ENDOWMENTS total
-    endow_by_dim        # then endowments by dimension (ordered)
-  )
-  
-  # Add a formatted cell for Excel-friendly 2-column export
-  out %>%
+    top_rows,            # NEW aggregate rows
+    intercept,
+    coeff_total,
+    coeff_by_dim,
+    endow_total,
+    endow_by_dim
+  ) %>%
     mutate(value_fmt = fmt_cell(estimate, se, stars))
+  
+  out
 }
 
-# ---------- build tables (no files yet) ----------
-tbl_p    <- build_table(kob_output$p)
-tbl_b    <- build_table(kob_output$b)
-tbl_r    <- build_table(kob_output$r)
-tbl_ppbr <- build_table(kob_output$ppbr)
-tbl_ppr  <- build_table(kob_output$ppr)
+# Call with abbrev
+tbl_p    <- build_table(kob_output$p,    "p")
+tbl_b    <- build_table(kob_output$b,    "b")
+tbl_r    <- build_table(kob_output$r,    "r")
+tbl_ppbr <- build_table(kob_output$ppbr, "ppbr")
+tbl_ppr  <- build_table(kob_output$ppr,  "ppr")
 
 # ---------- write full (tidy) tables ----------
 dir.create("output/tables/table_A01", recursive = TRUE, showWarnings = FALSE)
