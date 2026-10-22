@@ -77,7 +77,7 @@ plot_year_subgroup_bars <- function(
 # Observed vs counterfactual bars
 # row argument must be a df with one row containing
 # name (will become plot title), observed_2000, observed_2019, expected_2019
-make_observed_cf_barplot <- function(row, yaxis_override = NULL, label_format = "%.3f") {
+make_observed_cf_barplot <- function(row, yaxis_override = NULL, label_format = "%.3f", label_size = 4) {
   
   # Validate yaxis_override if provided
   if (!is.null(yaxis_override)) {
@@ -105,7 +105,7 @@ make_observed_cf_barplot <- function(row, yaxis_override = NULL, label_format = 
   # Create and return the plot
   ggplot(fig_data, aes(x = Category, y = Household_Size, fill = Type, linetype = Type)) +
     geom_bar(stat = "identity", color = "black", linewidth = 0.2, width = 0.6) +
-    geom_text(aes(label = sprintf(label_format, Household_Size)), vjust = 1.5, color = "white", size = 4) +
+    geom_text(aes(label = sprintf(label_format, Household_Size)), vjust = 1.5, color = "white", size = label_size) +
     scale_fill_manual(values = c(
       "Observed" = "steelblue", 
       "Expected" = scales::alpha("steelblue", 0.5)
