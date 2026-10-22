@@ -7,7 +7,8 @@ plot_year_subgroup_bars <- function(
     ymax = NULL,
     ytitle = "Average Household Size",
     legend = TRUE,
-    title = NULL
+    title = NULL,
+    label_size = 3
 ) {
   # Extract year styling
   fill_colors <- c("2000" = bar_fills$per1$color, "2019" = bar_fills$per2$color)
@@ -32,7 +33,7 @@ plot_year_subgroup_bars <- function(
       aes(x = subgroup, label = round({{ yvar }}, 2), group = year),
       position = position_dodge(width = 0.8),
       vjust = -0.5,
-      size = 3
+      size = label_size
     ) +
     scale_fill_manual(
       values = c(
